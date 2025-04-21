@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02484" />
+      <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02484" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02484" />
+      <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Secrets.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+</Project>
