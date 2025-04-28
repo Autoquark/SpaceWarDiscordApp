@@ -11,13 +11,13 @@ namespace SpaceWarDiscordApp;
 
 static class Program
 {
-    public static FirestoreDb FirestoreDb { get; set; }
+    public static FirestoreDb FirestoreDb { get; private set; }
 
-    public static DiscordClient DiscordClient { get; set; }
+    public static DiscordClient DiscordClient { get; private set; }
 
     private static readonly ThreadLocal<Random> _random = new(() => new Random());
     
-    public static Random Random => _random.Value;
+    public static Random Random => _random.Value!;
 
     static async Task Main()
     {
@@ -45,7 +45,7 @@ static class Program
 
         discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
         {
-            extension.AddCommands([typeof(GameManagementCommands)]);
+            extension.AddCommands([typeof(GameManagementCommands), typeof(GameplayCommands)]);
             /*TextCommandProcessor textCommandProcessor = new(new()
             {
                 // The default behavior is that the bot reacts to direct
@@ -63,9 +63,12 @@ static class Program
             RegisterDefaultCommandProcessors = true,
             DebugGuildId = secrets.TestGuildId,
         });
+
+        discordBuilder.ConfigureEventHandlers(x => x.AddEventHandlers<GameplayCommands>());
         
         DiscordClient = discordBuilder.Build();
         await DiscordClient.ConnectAsync();
+        
         await Task.Delay(-1);
     }
 }

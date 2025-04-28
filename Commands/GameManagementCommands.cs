@@ -107,8 +107,6 @@ public static class GameManagementCommands
         }
         
         await context.RespondAsync($"The game has started.");
-        /*var builder = new DiscordMessageBuilder()
-            .WithContent($"{game.CurrentTurnPlayer}, it is your turn. Choose an action:")
-            .AddComponents(new DiscordButtonComponent(DiscordButtonStyle.Primary, ));*/
+        await context.RespondAsync(GameplayCommands.CreateTurnBeginMessage(game));
     }
 }

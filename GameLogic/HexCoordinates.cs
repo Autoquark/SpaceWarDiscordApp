@@ -13,14 +13,13 @@ public readonly struct HexCoordinates
     }
 
     /// <summary>
-    /// Offset from the centre in the Q axis. +Q is up and right
+    /// Offset from the centre in the Q axis. +Q is to the right
     /// </summary>
     public int Q { get; } = 0;
     
     /// <summary>
-    /// Offset from the centre in the R axis. +R is down and right
+    /// Offset from the centre in the R axis. +R is down and left
     /// </summary>
-
     public int R { get; } = 0;
 
     /// <summary>
