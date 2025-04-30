@@ -36,7 +36,17 @@ public static class GameManagementCommands
                     GamePlayerId = 1
                 }],
                 GameChannelId = gameChannel.Id,
-                Hexes = [new BoardHex()]
+                Hexes = [new BoardHex
+                {
+                    Planet = new Planet
+                    {
+                        ForcesPresent = 3,
+                        OwningPlayerId = 1,
+                        Production = 3,
+                        Science = 1,
+                        Stars = 2
+                    }
+                }]
             });
         });
         

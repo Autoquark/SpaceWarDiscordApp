@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.DatabaseModels.Converters;
+namespace SpaceWarDiscordApp.Database.Converters;
 
 public class HexCoordinateConverter : IFirestoreConverter<HexCoordinates>
 {
