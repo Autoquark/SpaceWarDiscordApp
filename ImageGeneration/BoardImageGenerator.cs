@@ -23,7 +23,7 @@ public static class BoardImageGenerator
     private const float ProductionCircleRadius = 25;
     private const float PlanetIconSpacingDegrees = 16;
     private const int PlanetIconSize = 50;
-    private const int DieIconSize = 60;
+    private const int DieIconSize = 80;
     
     // Icons
     private static readonly Image ScienceIcon = Image.Load("Icons/materials-science.png");
@@ -69,6 +69,7 @@ public static class BoardImageGenerator
 
             if (hex.Planet != null)
             {
+                // Draw planet circle
                 var planetCircle = new EllipsePolygon(hexCentre, PlanetCircleRadius)
                     .GenerateOutline(2.0f);
                 image.Mutate(x => x.Fill(Color.Black, planetCircle));
@@ -91,6 +92,7 @@ public static class BoardImageGenerator
                     angle += PlanetIconSpacingDegrees;
                 }
 
+                // Draw production
                 var circleCentre = hexCentre + GetPointPolar(PlanetCircleRadius + ProductionCircleRadius + 10, 135);
                 var productionCircle = new EllipsePolygon(circleCentre, ProductionCircleRadius)
                     .GenerateOutline(2.0f);
@@ -99,6 +101,14 @@ public static class BoardImageGenerator
                     .DrawText(new RichTextOptions(Font){ TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Origin = circleCentre },
                         hex.Planet.Production.ToString(),
                         Color.Black));
+                
+                // Draw forces
+                if (hex.Planet.ForcesPresent > 0)
+                {
+                    var recolorBrush = new RecolorBrush(Color.White, game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColor, 0.5f);
+                    using var dieImage = DieIcons[hex.Planet.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
+                    image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
+                }
             }
         }
         

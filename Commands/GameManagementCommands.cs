@@ -2,6 +2,7 @@ using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
+using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.DatabaseModels;
 
 namespace SpaceWarDiscordApp.Commands;
@@ -11,6 +12,9 @@ public static class GameManagementCommands
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless"]);
     private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance"]);
     private static string GameChannelCategoryName = "Spacewar Games";
+
+    private static readonly IReadOnlyList<Color> DefaultPlayerColours =
+        new List<Color>([Color.Red, Color.Blue, Color.Green, Color.Purple, Color.Yellow, Color.Orange]);
     
     [Command("CreateGame")]
     [RequireGuild]
@@ -33,7 +37,8 @@ public static class GameManagementCommands
                 Players = [new GamePlayer
                 {
                     DiscordUserId = context.User.Id,
-                    GamePlayerId = 1
+                    GamePlayerId = 1,
+                    PlayerColor = DefaultPlayerColours[0]
                 }],
                 GameChannelId = gameChannel.Id,
                 Hexes = [new BoardHex
@@ -72,7 +77,8 @@ public static class GameManagementCommands
             game.Players.Add(new GamePlayer
             {
                 DiscordUserId = user.Id,
-                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
+                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
+                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count]
             });
             
             transaction.Set(game);

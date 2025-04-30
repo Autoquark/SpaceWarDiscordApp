@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using SixLabors.ImageSharp;
 
 namespace SpaceWarDiscordApp.DatabaseModels;
 
@@ -16,4 +17,7 @@ public class GamePlayer
     
     [FirestoreProperty]
     public int Science { get; set; } = 0;
+    
+    [FirestoreProperty]
+    public Color PlayerColor { get; set; }
 }

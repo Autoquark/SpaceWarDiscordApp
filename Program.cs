@@ -6,6 +6,7 @@ using DSharpPlus.Commands;
 using Google.Cloud.Firestore;
 using Newtonsoft.Json;
 using SpaceWarDiscordApp.Commands;
+using SpaceWarDiscordApp.Database.Converters;
 
 namespace SpaceWarDiscordApp;
 
@@ -39,6 +40,7 @@ static class Program
             ProjectId = secrets.FirestoreProjectId,
             //Credential = SslCredentials.Insecure,
         };
+        firestoreBuilder.ConverterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         FirestoreDb = await firestoreBuilder.BuildAsync();
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
