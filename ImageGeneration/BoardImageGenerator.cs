@@ -17,12 +17,12 @@ public static class BoardImageGenerator
     
     // Sizes
     private static readonly int HexOuterDiameter = 420;
-    private static readonly double HexInnerDiameter = HexOuterDiameter / InnerToOuterRatio;
-    private const int Margin = 10;
+    private static readonly float HexInnerDiameter = (float)(HexOuterDiameter / InnerToOuterRatio);
+    private const int Margin = 100;
     private const float PlanetCircleRadius = 100;
     private const float ProductionCircleRadius = 25;
     private const float PlanetIconSpacingDegrees = 16;
-    private const int PlanetIconSize = 50;
+    private const int PlanetIconSize = 60;
     private const int DieIconSize = 80;
     
     // Icons
@@ -52,19 +52,24 @@ public static class BoardImageGenerator
     
     public static Image GenerateBoardImage(Game game)
     {
-        var boardWidthHexes = game.Hexes.Max(x => x.Coordinates.Q) - game.Hexes.Min(x => x.Coordinates.Q) + 1;
-        var boardHeightHexes = (game.Hexes.Max(x => x.Coordinates.S - x.Coordinates.R) - game.Hexes.Min(x => x.Coordinates.S - x.Coordinates.R)) / 2 + 1;
+        var minX = game.Hexes.Min(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).X);
+        var minY = game.Hexes.Min(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).Y);
+        var maxX = game.Hexes.Max(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).X);
+        var maxY = game.Hexes.Max(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).Y);
         
-        var image = new Image<Rgba32>(boardWidthHexes * HexOuterDiameter + Margin, (int)(boardHeightHexes * HexInnerDiameter + Margin));
+        var image = new Image<Rgba32>((int)(maxX - minX + HexOuterDiameter + Margin * 2), (int)(maxY - minY + HexInnerDiameter + Margin * 2));
+        var offset = new PointF(minX - HexOuterDiameter / 2.0f - Margin, minY - HexInnerDiameter / 2.0f - Margin);
         var imageCentre = new PointF(image.Width / 2, image.Height / 2);
+        
+        image.Mutate(x => x.BackgroundColor(Color.White));
         
         foreach(var hex in game.Hexes)
         {
-            var hexCentre = imageCentre + GetHexCentrePixelCoordinatesOffset(hex.Coordinates);
+            var hexOffset = GetHexCentrePixelCoordinatesOffset(hex.Coordinates);
+            var hexCentre = hexOffset - offset;
             var hexPolygon = new RegularPolygon(hexCentre, 6,
                 HexOuterDiameter / 2, GeometryUtilities.DegreeToRadian(30)).GenerateOutline(2.0f);
             
-            image.Mutate(x => x.Fill(Color.White));
             image.Mutate(x => x.Fill(Color.Black, hexPolygon));
 
             if (hex.Planet != null)
@@ -117,6 +122,6 @@ public static class BoardImageGenerator
     
     private static PointF GetPointPolar(float distance, float angleDegrees) => new PointF(0, -distance).Rotate(angleDegrees);
 
-    private static PointF GetHexCentrePixelCoordinatesOffset(HexCoordinates hexCoordinates) =>
-        new((float)(hexCoordinates.Q * 3.0/4.0 * HexOuterDiameter), (float)(HexOuterDiameter * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
+    private static PointF GetHexCentrePixelCoordinatesOffset(in HexCoordinates hexCoordinates) =>
+        new((float)(hexCoordinates.Q * (3.0/4.0) * HexOuterDiameter), (float)(HexOuterDiameter/2 * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
 }

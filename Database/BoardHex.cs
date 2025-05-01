@@ -11,8 +11,20 @@ public enum HexType
 }
 
 [FirestoreData]
-public class BoardHex
+public record class BoardHex
 {
+    public BoardHex() { }
+    
+    public BoardHex(BoardHex other)
+    {
+        if (other.Planet != null)
+        {
+            Planet = new Planet(other.Planet);
+        }
+
+        Coordinates = other.Coordinates;
+    }
+    
     [FirestoreProperty]
     public Planet? Planet { get; set; }
     

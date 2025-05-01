@@ -55,7 +55,7 @@ public class GameplayCommands : IEventHandler<InteractionCreatedEventArgs>
             var user = await context.Client.GetUserAsync(game.CurrentTurnPlayer.DiscordUserId);
             
             var messagebuilder = new DiscordMessageBuilder()
-                .WithContent($"Board state for {game.Name} at turn {game.TurnNumber} ({user.GlobalName}'s turn)")
+                .WithContent($"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({user.GlobalName}'s turn)")
                 .AddFile("board.png", stream);
             await context.RespondAsync(messagebuilder);
         }

@@ -11,10 +11,12 @@ public static class GameManagementCommands
 {
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless"]);
     private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance"]);
-    private static string GameChannelCategoryName = "Spacewar Games";
+    private const string GameChannelCategoryName = "Spacewar Games";
 
     private static readonly IReadOnlyList<Color> DefaultPlayerColours =
         new List<Color>([Color.Red, Color.Blue, Color.Green, Color.Purple, Color.Yellow, Color.Orange]);
+    
+    private static readonly MapGenerator MapGenerator = new MapGenerator();
     
     [Command("CreateGame")]
     [RequireGuild]
@@ -31,32 +33,27 @@ public static class GameManagementCommands
         await Program.FirestoreDb.RunTransactionAsync(async transaction =>
         {
             DocumentReference gameRef = transaction.Database.Collection("Games").Document();
-            transaction.Create(gameRef, new Game
+            Game game = new Game
             {
                 Name = name,
-                Players = [new GamePlayer
-                {
-                    DiscordUserId = context.User.Id,
-                    GamePlayerId = 1,
-                    PlayerColor = DefaultPlayerColours[0]
-                }],
-                GameChannelId = gameChannel.Id,
-                Hexes = [new BoardHex
-                {
-                    Planet = new Planet
+                Players =
+                [
+                    new GamePlayer
                     {
-                        ForcesPresent = 3,
-                        OwningPlayerId = 1,
-                        Production = 3,
-                        Science = 1,
-                        Stars = 2
+                        DiscordUserId = context.User.Id,
+                        GamePlayerId = 1,
+                        PlayerColor = DefaultPlayerColours[0]
                     }
-                }]
-            });
+                ],
+                GameChannelId = gameChannel.Id,
+            };
+            MapGenerator.GenerateMap(game);
+            
+            transaction.Create(gameRef, game);
         });
         
         await context.RespondAsync($"Game created. Game channel is {gameChannel.Mention}. To add more players, use /addplayer from that channel.");
-        await context.Client.SendMessageAsync(gameChannel, $"Welcome to your new game, {name} {context.User.Mention}. To add more players use /addplayer from this channel.");
+        await context.Client.SendMessageAsync(gameChannel, $"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To add more players use /addplayer from this channel.");
     }
 
     [Command("AddPlayer")]

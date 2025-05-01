@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
+using System.Globalization;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using Google.Cloud.Firestore;
@@ -19,6 +20,8 @@ static class Program
     private static readonly ThreadLocal<Random> _random = new(() => new Random());
     
     public static Random Random => _random.Value!;
+    
+    public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo; 
 
     static async Task Main()
     {
