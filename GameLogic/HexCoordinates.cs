@@ -4,7 +4,7 @@ using SpaceWarDiscordApp.Database.Converters;
 namespace SpaceWarDiscordApp.GameLogic;
 
 [FirestoreData(ConverterType = typeof(HexCoordinateConverter))]
-public readonly struct HexCoordinates
+public readonly record struct HexCoordinates
 {
     public HexCoordinates(int q, int r)
     {
@@ -26,4 +26,19 @@ public readonly struct HexCoordinates
     /// Offset from the centre in the S axis. +S is up and left
     /// </summary>
     public int S => -Q - R;
+
+    public IEnumerable<HexCoordinates> GetNeighbors()
+    {
+        yield return new HexCoordinates(Q + 1, R);
+        yield return new HexCoordinates(Q + 1, R - 1);
+        yield return new HexCoordinates(Q, R - 1);
+        yield return new HexCoordinates(Q - 1, R);
+        yield return new HexCoordinates(Q - 1, R + 1);
+        yield return new HexCoordinates(Q, R + 1);
+    }
+
+    public override string ToString()
+    {
+        return $"({Q}, {R})";
+    }
 }

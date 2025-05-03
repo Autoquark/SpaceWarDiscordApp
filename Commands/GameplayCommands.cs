@@ -6,6 +6,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.Commands;
@@ -45,32 +46,34 @@ public class GameplayCommands : IEventHandler<InteractionCreatedEventArgs>
             return;
         }
 
-        using (var image = BoardImageGenerator.GenerateBoardImage(game))
-        {
-            await image.SaveAsBmpAsync("./test.bmp");
-            var stream = new MemoryStream();
-            await image.SaveAsPngAsync(stream);
-            stream.Position = 0;
+        await context.RespondAsync(await CreateBoardStateMessageAsync(game));
+    }
 
-            var user = await context.Client.GetUserAsync(game.CurrentTurnPlayer.DiscordUserId);
-            
-            var messagebuilder = new DiscordMessageBuilder()
-                .WithContent($"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({user.GlobalName}'s turn)")
-                .AddFile("board.png", stream);
-            await context.RespondAsync(messagebuilder);
-        }
+    public static async Task<DiscordMessageBuilder> CreateBoardStateMessageAsync(Game game)
+    {
+        using var image = BoardImageGenerator.GenerateBoardImage(game);
+        var stream = new MemoryStream();
+        await image.SaveAsPngAsync(stream);
+        stream.Position = 0;
+
+        var name = await game.CurrentTurnPlayer.GetNameAsync(false);
+        return new DiscordMessageBuilder()
+            .WithContent(
+                $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
+            .AddFile("board.png", stream);
     }
     
-    public static DiscordMessageBuilder CreateTurnBeginMessage(Game game)
+    public static async Task<IList<DiscordMessageBuilder>> CreateTurnBeginMessagesAsync(Game game)
     {
+        var name = await game.CurrentTurnPlayer.GetNameAsync(true);
         var builder = new DiscordMessageBuilder()
-            .WithContent($"{game.CurrentTurnPlayer}, it is your turn. Choose an action:")
+            .WithContent($"{name}, it is your turn. Choose an action:")
             .AddComponents(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, CreateInteractionId("BeginMoveAction", game.CurrentTurnPlayer.DiscordUserId), "Move Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, CreateInteractionId("BeginProduceAction", game.CurrentTurnPlayer.DiscordUserId), "Produce Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, CreateInteractionId("RefreshAction", game.CurrentTurnPlayer.DiscordUserId), "Refresh Action")
             );
-        return builder;
+        return [await CreateBoardStateMessageAsync(game), builder];
     }
 
     public Task HandleEventAsync(DiscordClient sender, InteractionCreatedEventArgs eventArgs)

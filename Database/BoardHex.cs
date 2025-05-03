@@ -11,7 +11,7 @@ public enum HexType
 }
 
 [FirestoreData]
-public record class BoardHex
+public class BoardHex
 {
     public BoardHex() { }
     
@@ -30,4 +30,26 @@ public record class BoardHex
     
     [FirestoreProperty]
     public HexCoordinates Coordinates { get; set; }
+
+    [FirestoreProperty]
+    public IList<HyperlaneConnection> HyperlaneConnections { get; set; } = [];
+
+    [FirestoreProperty]
+    public bool HasAsteroids { get; set; } = false;
+}
+
+public enum HexDirection
+{
+    North,
+    NorthEast,
+    SouthEast,
+    South,
+    SouthWest,
+    NorthWest
+}
+
+[FirestoreData]
+public record struct HyperlaneConnection([property: FirestoreProperty] HexDirection First, [property: FirestoreProperty] HexDirection Second)
+{
+    
 }

@@ -20,4 +20,9 @@ public class GamePlayer
     
     [FirestoreProperty]
     public Color PlayerColor { get; set; }
+    
+    [FirestoreProperty]
+    public string DummyPlayerName { get; set; }
+
+    public bool IsDummyPlayer => DiscordUserId == 0;
 }

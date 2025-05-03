@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
@@ -9,46 +10,61 @@ namespace SpaceWarDiscordApp.Commands;
 
 public static class GameManagementCommands
 {
-    private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless"]);
-    private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance"]);
+    private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary"]);
+    private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff"]);
     private const string GameChannelCategoryName = "Spacewar Games";
 
     private static readonly IReadOnlyList<Color> DefaultPlayerColours =
         new List<Color>([Color.Red, Color.Blue, Color.Green, Color.Purple, Color.Yellow, Color.Orange]);
+
+    private static readonly IReadOnlyList<string> DummyPlayerNames =
+        new List<string>(["Lorelent", "Gerg", "Goodcoe", "Neutralcoe", "Zogak"]);
     
     private static readonly MapGenerator MapGenerator = new MapGenerator();
     
     [Command("CreateGame")]
     [RequireGuild]
-    public static async Task CreateGame(CommandContext context)
+    public static async Task CreateGame(CommandContext context, int dummyPlayers = 0)
     {
+        await context.DeferResponseAsync();
+        
         var name = $"The {NameAdjectives[Program.Random.Next(0, NameAdjectives.Count)]} {NameNouns[Program.Random.Next(0, NameNouns.Count)]}";
         
         var channelName = name.ToLowerInvariant().Replace(" ", "-");
         var category = (await context.Guild!.GetChannelsAsync()).FirstOrDefault(x => x.Name == GameChannelCategoryName)
                        ?? await context.Guild.CreateChannelCategoryAsync(GameChannelCategoryName);
         var gameChannel = await context.Guild.CreateTextChannelAsync(channelName, category);
+        
+        DocumentReference gameRef = Program.FirestoreDb.Collection("Games").Document();
+        var game = new Game
+        {
+            Name = name,
+            Players =
+            [
+                new GamePlayer
+                {
+                    DiscordUserId = context.User.Id,
+                    GamePlayerId = 1,
+                    PlayerColor = DefaultPlayerColours[0]
+                }
+            ],
+            GameChannelId = gameChannel.Id,
+        };
 
-        await context.DeferResponseAsync();
+        for (int i = 0; i < dummyPlayers; i++)
+        {
+            game.Players.Add(new GamePlayer
+            {
+                DummyPlayerName = DummyPlayerNames.Random(),
+                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count],
+                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
+            });
+        }
+        
+        MapGenerator.GenerateMap(game);
+        
         await Program.FirestoreDb.RunTransactionAsync(async transaction =>
         {
-            DocumentReference gameRef = transaction.Database.Collection("Games").Document();
-            Game game = new Game
-            {
-                Name = name,
-                Players =
-                [
-                    new GamePlayer
-                    {
-                        DiscordUserId = context.User.Id,
-                        GamePlayerId = 1,
-                        PlayerColor = DefaultPlayerColours[0]
-                    }
-                ],
-                GameChannelId = gameChannel.Id,
-            };
-            MapGenerator.GenerateMap(game);
-            
             transaction.Create(gameRef, game);
         });
         
@@ -82,6 +98,40 @@ public static class GameManagementCommands
         });
         
         await context.RespondAsync($"{user.Mention} added to the game");
+    }
+
+    [Command("AddDummyPlayer")]
+    [Description("Adds a dummy player to the game. Dummy players can be controlled by anyone in the game.")]
+    [RequireGuild]
+    public static async Task AddDummyPlayerToGame(CommandContext context, string name = "")
+    {
+        await context.DeferResponseAsync();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = DummyPlayerNames.Random();
+        }
+        
+        await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+        {
+            var game = await transaction.GetGameForChannelAsync(context.Channel.Id);
+            if (game == null)
+            {
+                await context.RespondAsync("This command must be used from a game channel");
+                return;
+            }
+            
+            game.Players.Add(new GamePlayer
+            {
+                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
+                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count],
+                DummyPlayerName = name
+            });
+            
+            transaction.Set(game);
+        });
+        
+        await context.RespondAsync($"Dummy player {name} added to the game");
     }
 
     [Command("StartGame")]
@@ -119,7 +169,7 @@ public static class GameManagementCommands
             return;
         }
         
-        await context.RespondAsync($"The game has started.");
-        await context.RespondAsync(GameplayCommands.CreateTurnBeginMessage(game));
+        await context.RespondAsync("The game has started.");
+        await context.RespondAsync(await GameplayCommands.CreateTurnBeginMessagesAsync(game));
     }
 }

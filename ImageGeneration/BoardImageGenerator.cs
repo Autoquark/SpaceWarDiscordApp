@@ -7,6 +7,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
+using Path = SixLabors.ImageSharp.Drawing.Path;
 
 namespace SpaceWarDiscordApp.ImageGeneration;
 
@@ -24,6 +25,8 @@ public static class BoardImageGenerator
     private const float PlanetIconSpacingDegrees = 16;
     private const int PlanetIconSize = 60;
     private const int DieIconSize = 80;
+    private const float HyperlaneThickness = 20;
+    private const float AsteroidTriangleSideLength = 40;
     
     // Icons
     private static readonly Image ScienceIcon = Image.Load("Icons/materials-science.png");
@@ -52,20 +55,19 @@ public static class BoardImageGenerator
     
     public static Image GenerateBoardImage(Game game)
     {
-        var minX = game.Hexes.Min(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).X);
-        var minY = game.Hexes.Min(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).Y);
-        var maxX = game.Hexes.Max(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).X);
-        var maxY = game.Hexes.Max(x => GetHexCentrePixelCoordinatesOffset(x.Coordinates).Y);
+        var minX = game.Hexes.Min(x => HexToPixel(x.Coordinates).X);
+        var minY = game.Hexes.Min(x => HexToPixel(x.Coordinates).Y);
+        var maxX = game.Hexes.Max(x => HexToPixel(x.Coordinates).X);
+        var maxY = game.Hexes.Max(x => HexToPixel(x.Coordinates).Y);
         
         var image = new Image<Rgba32>((int)(maxX - minX + HexOuterDiameter + Margin * 2), (int)(maxY - minY + HexInnerDiameter + Margin * 2));
         var offset = new PointF(minX - HexOuterDiameter / 2.0f - Margin, minY - HexInnerDiameter / 2.0f - Margin);
-        var imageCentre = new PointF(image.Width / 2, image.Height / 2);
         
         image.Mutate(x => x.BackgroundColor(Color.White));
         
         foreach(var hex in game.Hexes)
         {
-            var hexOffset = GetHexCentrePixelCoordinatesOffset(hex.Coordinates);
+            var hexOffset = HexToPixel(hex.Coordinates);
             var hexCentre = hexOffset - offset;
             var hexPolygon = new RegularPolygon(hexCentre, 6,
                 HexOuterDiameter / 2, GeometryUtilities.DegreeToRadian(30)).GenerateOutline(2.0f);
@@ -115,13 +117,55 @@ public static class BoardImageGenerator
                     image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
                 }
             }
+
+            foreach (var connection in hex.HyperlaneConnections)
+            {
+                var end1 = hexCentre + HexToPixel(connection.First.ToHexOffset()) * 0.5f;
+                var end2 = hexCentre + HexToPixel(connection.Second.ToHexOffset()) * 0.5f;
+                var bezier = new Path(new CubicBezierLineSegment(end1, hexCentre, hexCentre, end2))
+                    .GenerateOutline(HyperlaneThickness);
+                
+                image.Mutate(x => x.Fill(Color.Black, bezier));
+            }
+
+            if (hex.HasAsteroids)
+            {
+                var centres = GetPolygonVertices(hexCentre, AsteroidTriangleSideLength * 2, 3);
+
+                foreach (var centre in centres)
+                {
+                    var triangle = new RegularPolygon(centre, 3,
+                        AsteroidTriangleSideLength, GeometryUtilities.DegreeToRadian(180));
+                
+                    image.Mutate(x => x.Fill(Color.Black, triangle));
+                }
+            }
         }
         
         return image;
     }
+
+    private static PointF[] GetPolygonVertices(PointF location, float radius, int vertices, float angle = 0.0f)
+    {
+        var distanceVector = new PointF(0, radius);
+
+        float anglePerSegments = (float)(2 * Math.PI / vertices);
+        float current = angle;
+        var points = new PointF[vertices];
+        for (int i = 0; i < vertices; i++)
+        {
+            var rotated = PointF.Transform(distanceVector, Matrix3x2.CreateRotation(current));
+
+            points[i] = rotated + location;
+
+            current += anglePerSegments;
+        }
+        
+        return points;
+    }
     
     private static PointF GetPointPolar(float distance, float angleDegrees) => new PointF(0, -distance).Rotate(angleDegrees);
 
-    private static PointF GetHexCentrePixelCoordinatesOffset(in HexCoordinates hexCoordinates) =>
+    private static PointF HexToPixel(in HexCoordinates hexCoordinates) =>
         new((float)(hexCoordinates.Q * (3.0/4.0) * HexOuterDiameter), (float)(HexOuterDiameter/2 * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
 }
