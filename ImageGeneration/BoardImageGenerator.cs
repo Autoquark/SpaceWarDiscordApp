@@ -41,7 +41,8 @@ public static class BoardImageGenerator
         Image.Load("Icons/dice-six-faces-six.png")
     ];
     
-    private static readonly Font Font = SystemFonts.CreateFont("Arial", 22);
+    private static readonly Font ProductionNumberFont = SystemFonts.CreateFont("Arial", 22);
+    private static readonly Font CoordinatesFont = SystemFonts.CreateFont("Arial", 36);
 
     static BoardImageGenerator()
     {
@@ -106,7 +107,13 @@ public static class BoardImageGenerator
                     .GenerateOutline(2.0f);
                 
                 image.Mutate(x => x.Fill(Color.Black, productionCircle)
-                    .DrawText(new RichTextOptions(Font){ TextAlignment = TextAlignment.Center, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, Origin = circleCentre },
+                    .DrawText(new RichTextOptions(ProductionNumberFont)
+                        {
+                            TextAlignment = TextAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Origin = circleCentre
+                        },
                         hex.Planet.Production.ToString(),
                         Color.Black));
                 
@@ -141,6 +148,20 @@ public static class BoardImageGenerator
                     image.Mutate(x => x.Fill(Color.Black, triangle));
                 }
             }
+
+            var textOrigin = hexCentre + new PointF(0, HexInnerDiameter * 0.4f);
+            SizeF textAreaSize = new SizeF(100, 50);
+            image.Mutate(x => x.Fill(new DrawingOptions() { GraphicsOptions = new GraphicsOptions() { BlendPercentage = 0.5f } }, Color.White , new RectangleF(textOrigin - textAreaSize/2, textAreaSize)));
+            
+            image.Mutate(x => x.DrawText(new RichTextOptions(CoordinatesFont)
+                {
+                    TextAlignment = TextAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Origin = textOrigin
+                },
+                hex.Coordinates.ToString(),
+                Color.Black));
         }
         
         return image;

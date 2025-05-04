@@ -3,6 +3,7 @@
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
@@ -77,7 +78,9 @@ static class Program
             DebugGuildId = secrets.TestGuildId,
         });
         
-        RegisterInteractionHandler(new GameplayCommands()); // TODO: Register for multiple interaction types?
+        // We are actually registering this as a handler for multiple interaction types,
+        // but to make the call compile we have to specify one
+        RegisterInteractionHandler<ShowMoveOptionsInteraction>(new GameplayCommands()); // TODO: Register for multiple interaction types?
 
         discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));
         
@@ -144,10 +147,18 @@ static class Program
 
     private static void RegisterInteractionHandler<T>(IInteractionHandler<T> interactionHandler) where T : InteractionData
     {
-        if (InteractionHandlers.ContainsKey(typeof(T)))
+        foreach (var interactionType in interactionHandler.GetType()
+                     .GetInterfaces()
+                     .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IInteractionHandler<>))
+                     .Select(x => x.GetGenericArguments()[0]))
         {
-            throw new Exception($"Interaction handler for {typeof(T)} is already registered");
+            if (InteractionHandlers.ContainsKey(interactionType))
+            {
+                throw new Exception($"Handler already registered for {interactionType}");
+            }
+            
+            InteractionHandlers[typeof(T)] = interactionHandler;
         }
-        InteractionHandlers[typeof(T)] = interactionHandler;
+        
     }
 }

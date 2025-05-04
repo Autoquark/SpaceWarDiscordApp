@@ -14,7 +14,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.Commands;
 
-public class GameplayCommands : IInteractionHandler<ShowMoveOptionsInteraction>
+public class GameplayCommands : IInteractionHandler<ShowMoveOptionsInteraction>, IInteractionHandler<BeginMoveActionInteraction>
 {
     private static Regex InteractionIdRegex = new Regex(@"^([0-9a-zA-Z])\.(\d+)$");
     private static string BoardImageBucketName = "space-war-discord-app.board-images";
@@ -195,5 +195,10 @@ public class GameplayCommands : IInteractionHandler<ShowMoveOptionsInteraction>
         }
         
         return results;
+    }
+
+    public Task HandleInteractionAsync(BeginMoveActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    {
+        throw new NotImplementedException();
     }
 }
