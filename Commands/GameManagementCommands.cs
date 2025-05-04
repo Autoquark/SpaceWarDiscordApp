@@ -4,6 +4,7 @@ using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 using SixLabors.ImageSharp;
+using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.DatabaseModels;
 
 namespace SpaceWarDiscordApp.Commands;
@@ -35,7 +36,7 @@ public static class GameManagementCommands
                        ?? await context.Guild.CreateChannelCategoryAsync(GameChannelCategoryName);
         var gameChannel = await context.Guild.CreateTextChannelAsync(channelName, category);
         
-        DocumentReference gameRef = Program.FirestoreDb.Collection("Games").Document();
+        DocumentReference gameRef = Program.FirestoreDb.Games().Document();
         var game = new Game
         {
             Name = name,
@@ -60,8 +61,6 @@ public static class GameManagementCommands
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
             });
         }
-        
-        MapGenerator.GenerateMap(game);
         
         await Program.FirestoreDb.RunTransactionAsync(async transaction =>
         {
@@ -153,6 +152,8 @@ public static class GameManagementCommands
             {
                 await context.RespondAsync("Not enough players");
             }
+            
+            MapGenerator.GenerateMap(game);
 
             // Shuffle turn order
             game.Players = game.Players.Shuffled().ToList();

@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.DatabaseModels;
@@ -36,16 +37,6 @@ public class BoardHex
 
     [FirestoreProperty]
     public bool HasAsteroids { get; set; } = false;
-}
-
-public enum HexDirection
-{
-    North,
-    NorthEast,
-    SouthEast,
-    South,
-    SouthWest,
-    NorthWest
 }
 
 [FirestoreData]

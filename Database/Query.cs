@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 // Represents a Firestore query with a corresponding C# type for the resulting documents
 public class Query<T>

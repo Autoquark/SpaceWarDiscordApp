@@ -1,13 +1,19 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using DSharpPlus;
 using DSharpPlus.Commands;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Newtonsoft.Json;
 using SpaceWarDiscordApp.Commands;
+using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
+using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.DatabaseModels;
 
 namespace SpaceWarDiscordApp;
 
@@ -21,7 +27,9 @@ static class Program
     
     public static Random Random => _random.Value!;
     
-    public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo; 
+    public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
+
+    private static readonly Dictionary<Type, object> InteractionHandlers = new();
 
     static async Task Main()
     {
@@ -41,9 +49,9 @@ static class Program
         {
             //EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
             ProjectId = secrets.FirestoreProjectId,
+            ConverterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() }
             //Credential = SslCredentials.Insecure,
         };
-        firestoreBuilder.ConverterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         FirestoreDb = await firestoreBuilder.BuildAsync();
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
@@ -68,12 +76,78 @@ static class Program
             RegisterDefaultCommandProcessors = true,
             DebugGuildId = secrets.TestGuildId,
         });
+        
+        RegisterInteractionHandler(new GameplayCommands()); // TODO: Register for multiple interaction types?
 
-        discordBuilder.ConfigureEventHandlers(x => x.AddEventHandlers<GameplayCommands>());
+        discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));
         
         DiscordClient = discordBuilder.Build();
         await DiscordClient.ConnectAsync();
         
         await Task.Delay(-1);
+    }
+
+    private static async Task HandleInteractionCreated(DiscordClient client, InteractionCreatedEventArgs args)
+    {
+        await args.Interaction.DeferAsync();
+
+        if (!Guid.TryParse(args.Interaction.Data.CustomId, out _))
+        {
+            return;
+        }
+
+        var snapshot = (await new Query<InteractionData>(FirestoreDb.InteractionData()).WhereEqualTo(x => x.InteractionId, args.Interaction.Data.CustomId)
+            .Limit(1)
+            .GetSnapshotAsync()).FirstOrDefault();
+
+        if (snapshot == null)
+        {
+            throw new Exception("InteractionData not found");
+        }
+
+        var typeName = snapshot.GetValue<string>(nameof(InteractionData.SubtypeName));
+        var type = Type.GetType(typeName);
+
+        if (type == null)
+        {
+            throw new Exception($"InteractionData subtype {typeName} not found");
+        }
+
+        InteractionData interactionData = (InteractionData)typeof(DocumentSnapshot).GetMethod(nameof(DocumentSnapshot.ConvertTo))!.MakeGenericMethod(type)
+            .Invoke(snapshot, [])!;
+
+        var game = await FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(args.Interaction.ChannelId));
+
+        if (game == null)
+        {
+            throw new Exception("Game not found");
+        }
+
+        var player = game.GetGamePlayerByDiscordId(args.Interaction.User.Id);
+        if (player == null)
+        {
+            // Player is not part of this game, can't click any buttons
+            return;
+        }
+
+        if (!interactionData.PlayerAllowedToTrigger(player))
+        {
+            await args.Interaction.CreateFollowupMessageAsync(new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!"));
+            return;
+        }
+
+        var handler = InteractionHandlers[type];
+
+        typeof(IInteractionHandler<>).MakeGenericType(type)
+            .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!.Invoke(handler, [interactionData, game, args]);
+    }
+
+    private static void RegisterInteractionHandler<T>(IInteractionHandler<T> interactionHandler) where T : InteractionData
+    {
+        if (InteractionHandlers.ContainsKey(typeof(T)))
+        {
+            throw new Exception($"Interaction handler for {typeof(T)} is already registered");
+        }
+        InteractionHandlers[typeof(T)] = interactionHandler;
     }
 }

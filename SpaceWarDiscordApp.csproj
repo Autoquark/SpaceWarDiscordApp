@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02484" />
-      <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02484" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02484" />
+      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02499" />
+      <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02499" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02499" />
       <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
       <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
     </ItemGroup>

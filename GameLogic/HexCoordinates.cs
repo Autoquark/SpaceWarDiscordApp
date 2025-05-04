@@ -41,4 +41,20 @@ public readonly record struct HexCoordinates
     {
         return $"({Q}, {R})";
     }
+    
+    public static HexCoordinates operator +(HexCoordinates coordinates, HexDirection direction)
+        => coordinates + direction.ToHexOffset();
+
+    public static HexCoordinates operator +(HexCoordinates coordinates, HexCoordinates coordinates2)
+        => new(coordinates.Q + coordinates2.Q, coordinates.R + coordinates2.R);
+}
+
+public enum HexDirection
+{
+    North,
+    NorthEast,
+    SouthEast,
+    South,
+    SouthWest,
+    NorthWest
 }

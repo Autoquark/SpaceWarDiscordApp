@@ -1,11 +1,11 @@
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 public enum GamePhase
 {
-    GatherPlayers,
     Setup,
     Play,
     Finished
@@ -24,7 +24,7 @@ public class Game : FirestoreModel
     public string Name { get; set; } = "Untitled Game";
 
     [FirestoreProperty]
-    public GamePhase Phase { get; set; } = GamePhase.GatherPlayers;
+    public GamePhase Phase { get; set; } = GamePhase.Setup;
     
     [FirestoreProperty]
     public int TurnNumber { get; set; } = 1;
@@ -46,4 +46,8 @@ public class Game : FirestoreModel
     public GamePlayer ScoringTokenPlayer => Players[ScoringTokenPlayerIndex];
 
     public GamePlayer GetGamePlayerByGameId(int id) => Players.First(x => x.GamePlayerId == id);
+    
+    public GamePlayer? GetGamePlayerByDiscordId(ulong id) => Players.FirstOrDefault(x => x.DiscordUserId == id);
+    
+    public BoardHex? GetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
 }

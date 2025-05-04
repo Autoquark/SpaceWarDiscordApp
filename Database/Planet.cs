@@ -1,9 +1,9 @@
 using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
-public record class Planet
+public class Planet
 {
     public Planet() { }
 
