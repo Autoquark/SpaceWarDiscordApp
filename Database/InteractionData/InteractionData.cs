@@ -8,7 +8,7 @@ public abstract class InteractionData : FirestoreModel
 {
     protected InteractionData()
     {
-        SubtypeName = GetType().FullName;
+        SubtypeName = GetType().FullName!;
     }
     
     [FirestoreProperty]
@@ -24,7 +24,7 @@ public abstract class InteractionData : FirestoreModel
     /// GamePlayer ids of players that are allowed to trigger this interaction. Empty means any player
     /// </summary>
     [FirestoreProperty]
-    public IList<int> AllowedGamePlayerIds { get; set; } = [];
+    public required IList<int> AllowedGamePlayerIds { get; set; }
     
     /// <summary>
     /// If true, the interaction response will be treated as an update to the original message

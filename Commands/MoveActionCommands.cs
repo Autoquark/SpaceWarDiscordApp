@@ -12,7 +12,8 @@ namespace SpaceWarDiscordApp.Commands;
 public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction>,
     IInteractionHandler<BeginPlanningMoveActionInteraction>,
     IInteractionHandler<ShowSpecifyMovementAmountFromPlanetInteraction>,
-    IInteractionHandler<SubmitSpecifyMovementAmountFromPlanetInteraction>
+    IInteractionHandler<SubmitSpecifyMovementAmountFromPlanetInteraction>,
+    IInteractionHandler<PerformPlannedMoveInteraction>
 {
     public async Task HandleInteractionAsync(ShowMoveOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
@@ -93,10 +94,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
                 // Save updated planned move data
                 transaction.Set(game);
 
-                foreach (var interaction in interactionsToSetUp)
-                {
-                    InteractionsHelper.SetUpInteraction(interaction, transaction);
-                }
+                InteractionsHelper.SetUpInteractions(interactionsToSetUp, transaction);
 
                 return Task.CompletedTask;
             });
@@ -183,7 +181,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 
         return builder;
     }
-
+    
     public async Task<List<ShowSpecifyMovementAmountFromPlanetInteraction>> ShowSpecifyMovementSourceButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, BoardHex destination)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
@@ -222,7 +220,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         var player = game.GetGamePlayerByGameId(interactionData.MovingPlayerId);
 
         var entry = player.PlannedMove!.Sources.FirstOrDefault(x => x.Source == interactionData.From);
-        if (entry == null)
+        if (entry == null && interactionData.Amount > 0)
         {
             entry = new SourceAndAmount
             {
@@ -231,21 +229,24 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             };
             player.PlannedMove.Sources.Add(entry);
         }
-        else
+        else if(interactionData.Amount > 0)
         {
-            entry.Amount = interactionData.Amount;
+            entry!.Amount = interactionData.Amount;
         }
-
-        await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
+        else if(entry != null)
+        {
+            player.PlannedMove.Sources.Remove(entry);
+        }
 
         var destinationHex = game.GetHexAt(player.PlannedMove.Destination);
         Debug.Assert(destinationHex != null);
         
         var builder = new DiscordWebhookBuilder();
         
-        // If this was the only place we could move from, perform the move now
-        var sources = BoardUtils.GetStandardMoveSources(game, destinationHex!, player);
-        if (sources.Count == 1)
+        List<InteractionData> interactions = new List<InteractionData>();
+        // If this was the only place we could move from, and a nonzero amount was specified, perform the move now
+        var sources = BoardUtils.GetStandardMoveSources(game, destinationHex, player);
+        if (sources.Count == 1 && entry != null)
         {
             Debug.Assert(entry.Source == sources.First().Coordinates);
             await PerformPlannedMoveAsync(builder, game, player);
@@ -254,8 +255,24 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         {
             // Otherwise, go back to showing possible sources
             ShowPlannedMove(builder, player);
-            await ShowSpecifyMovementSourceButtonsAsync(builder, game, player, destinationHex);
+            interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder, game, player, destinationHex));
+            var confirmInteraction = new PerformPlannedMoveInteraction()
+            {
+                Game = game.DocumentId,
+                PlayerId = player.GamePlayerId,
+                AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId]
+            };
+            interactions.Add(confirmInteraction);
+            builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success,
+                confirmInteraction.InteractionId, "Confirm move"));
         }
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        {
+            transaction.Set(game);
+            InteractionsHelper.SetUpInteractions(interactions, transaction);
+            return Task.CompletedTask;
+        });
         
         await args.Interaction.EditOriginalResponseAsync(builder);
     }
@@ -291,7 +308,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             throw new Exception();
         }
         
-        var destinationHex = game.GetHexAt(player.PlannedMove.Destination);
+        var destinationHex = game.GetHexAt(player.PlannedMove!.Destination);
         if (destinationHex?.Planet == null)
         {
             throw new Exception();
@@ -311,6 +328,12 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 
             sourceHex.Planet.SubtractForces(source.Amount);
             totalMoving += source.Amount;
+            builder.AppendContentNewline($"Moving {source.Amount} from {source.Source}");
+        }
+
+        if (plannedMove.Sources.Count > 1)
+        {
+            builder.AppendContentNewline($"Moving a total of {totalMoving} forces");
         }
 
         // Stage 2: Resolve combat or merging with allied forces
@@ -345,9 +368,19 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             destinationHex.Planet.ForcesPresent = totalPostCapacityLimit;
             destinationHex.Planet.OwningPlayerId = player.GamePlayerId;
         }
+
+        player.PlannedMove = null;
         
         await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
 
         builder.AppendContentNewline($"{moverName} now has {totalPostCapacityLimit} forces present on {destinationHex.Coordinates}");
+    }
+
+    public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    {
+        var builder = new DiscordFollowupMessageBuilder();
+        await PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.PlayerId));
+        await args.Interaction.DeleteOriginalResponseAsync();
+        await args.Interaction.CreateFollowupMessageAsync(builder);
     }
 }

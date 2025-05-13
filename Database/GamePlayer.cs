@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Google.Cloud.Firestore;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;

@@ -12,7 +12,7 @@ public static class GamePlayerExtensions
     {
         if (player.IsDummyPlayer)
         {
-            return player.DummyPlayerName;
+            return player.DummyPlayerName!;
         }
 
         var user = await Program.DiscordClient.GetUserAsync(player.DiscordUserId);
