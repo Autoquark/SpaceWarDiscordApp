@@ -80,7 +80,7 @@ static class Program
         
         // We are actually registering this as a handler for multiple interaction types,
         // but to make the call compile we have to specify one
-        RegisterInteractionHandler<ShowMoveOptionsInteraction>(new GameplayCommands()); // TODO: Register for multiple interaction types?
+        RegisterInteractionHandler<ShowMoveOptionsInteraction>(new MoveActionCommands());
 
         discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));
         
@@ -92,9 +92,7 @@ static class Program
 
     private static async Task HandleInteractionCreated(DiscordClient client, InteractionCreatedEventArgs args)
     {
-        await args.Interaction.DeferAsync();
-
-        if (!Guid.TryParse(args.Interaction.Data.CustomId, out _))
+        if (args.Interaction.Type == DiscordInteractionType.ApplicationCommand || !Guid.TryParse(args.Interaction.Data.CustomId, out _))
         {
             return;
         }
@@ -116,8 +114,17 @@ static class Program
             throw new Exception($"InteractionData subtype {typeName} not found");
         }
 
-        InteractionData interactionData = (InteractionData)typeof(DocumentSnapshot).GetMethod(nameof(DocumentSnapshot.ConvertTo))!.MakeGenericMethod(type)
+        var interactionData = (InteractionData)typeof(DocumentSnapshot).GetMethod(nameof(DocumentSnapshot.ConvertTo))!.MakeGenericMethod(type)
             .Invoke(snapshot, [])!;
+
+        if (interactionData.EditOriginalMessage)
+        {
+            await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.DeferredMessageUpdate);
+        }
+        else
+        {
+            await args.Interaction.DeferAsync();
+        }
 
         var game = await FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(args.Interaction.ChannelId));
 
@@ -139,7 +146,10 @@ static class Program
             return;
         }
 
-        var handler = InteractionHandlers[type];
+        if (!InteractionHandlers.TryGetValue(type, out var handler))
+        {
+            throw new Exception("Handler not found");
+        }
 
         typeof(IInteractionHandler<>).MakeGenericType(type)
             .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!.Invoke(handler, [interactionData, game, args]);
@@ -152,12 +162,10 @@ static class Program
                      .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IInteractionHandler<>))
                      .Select(x => x.GetGenericArguments()[0]))
         {
-            if (InteractionHandlers.ContainsKey(interactionType))
+            if (!InteractionHandlers.TryAdd(interactionType, interactionHandler))
             {
                 throw new Exception($"Handler already registered for {interactionType}");
             }
-            
-            InteractionHandlers[typeof(T)] = interactionHandler;
         }
         
     }

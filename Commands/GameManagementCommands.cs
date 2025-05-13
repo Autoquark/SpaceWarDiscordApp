@@ -11,8 +11,8 @@ namespace SpaceWarDiscordApp.Commands;
 
 public static class GameManagementCommands
 {
-    private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary"]);
-    private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff"]);
+    private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish", "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary", "ignoble", "infamous", "dishonourable", "sinister", "dire"]);
+    private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement", "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff", "fracas", "occurrence"]);
     private const string GameChannelCategoryName = "Spacewar Games";
 
     private static readonly IReadOnlyList<Color> DefaultPlayerColours =
@@ -36,7 +36,7 @@ public static class GameManagementCommands
                        ?? await context.Guild.CreateChannelCategoryAsync(GameChannelCategoryName);
         var gameChannel = await context.Guild.CreateTextChannelAsync(channelName, category);
         
-        DocumentReference gameRef = Program.FirestoreDb.Games().Document();
+        var gameRef = Program.FirestoreDb.Games().Document();
         var game = new Game
         {
             Name = name,

@@ -1,5 +1,6 @@
 using Google.Cloud.Firestore;
 using SixLabors.ImageSharp;
+using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.DatabaseModels;
 
@@ -22,7 +23,10 @@ public class GamePlayer
     public Color PlayerColor { get; set; }
     
     [FirestoreProperty]
-    public string DummyPlayerName { get; set; }
+    public string? DummyPlayerName { get; set; }
+    
+    [FirestoreProperty]
+    public PlannedMove? PlannedMove { get; set; }
 
     public bool IsDummyPlayer => DiscordUserId == 0;
 }

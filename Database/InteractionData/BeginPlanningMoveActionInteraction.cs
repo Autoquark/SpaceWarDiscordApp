@@ -3,12 +3,15 @@ using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.InteractionData;
 
+/// <summary>
+/// Fires when a player clicks a button to begin planning a move to a specific destination
+/// </summary>
 [FirestoreData]
-public class BeginMoveActionInteraction : InteractionData
+public class BeginPlanningMoveActionInteraction : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Destination { get; set; }
     
     [FirestoreProperty]
-    public int MovingGamePlayerId { get; set; }
+    public required int MovingGamePlayerId { get; set; }
 }

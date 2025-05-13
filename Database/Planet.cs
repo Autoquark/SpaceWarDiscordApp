@@ -38,4 +38,18 @@ public class Planet
     public bool IsExhausted { get; set; } = false;
     
     public bool IsNeutral => OwningPlayerId == -1;
+
+    public void SubtractForces(int amount)
+    {
+        if (amount > ForcesPresent)
+        {
+            throw new Exception();
+        }
+        
+        ForcesPresent -= amount;
+        if (ForcesPresent == 0)
+        {
+            OwningPlayerId = -1;
+        }
+    }
 }

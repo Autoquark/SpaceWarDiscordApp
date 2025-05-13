@@ -25,6 +25,14 @@ public abstract class InteractionData : FirestoreModel
     /// </summary>
     [FirestoreProperty]
     public IList<int> AllowedGamePlayerIds { get; set; } = [];
+    
+    /// <summary>
+    /// If true, the interaction response will be treated as an update to the original message
+    /// (i.e. the root handler will respond with DeferredMessageUpdate instead of a DeferredChannelMessageWithSource,
+    /// so that calling EditOriginalResponseAsync edits the message with the buttons instead of creating a new message)
+    /// </summary>
+    [FirestoreProperty]
+    public bool EditOriginalMessage { get; set; } = false;
 
     public bool PlayerAllowedToTrigger(GamePlayer player) 
         => !AllowedGamePlayerIds.Any() || AllowedGamePlayerIds.Contains(player.GamePlayerId);
