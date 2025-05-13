@@ -35,6 +35,9 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public List<BoardHex> Hexes { get; set; } = [];
     
+    /// <summary>
+    /// Index into the Players list of the player whose turn it is. This is NOT a GamePlayerId.
+    /// </summary>
     [FirestoreProperty]
     public int CurrentTurnPlayerIndex { get; set; } = 0;
     

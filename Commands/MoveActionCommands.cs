@@ -26,7 +26,8 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerName = await player.GetNameAsync(true);
         var messageBuilder = new DiscordWebhookBuilder()
-            .WithContent($"{playerName}, you may move to the following hexes: ");
+            .EnableV2Components()
+            .AppendContentNewline($"{playerName}, you may move to the following hexes: ");
 
         IDictionary<BoardHex, string> interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
             => destinations.ToDictionary(
@@ -73,7 +74,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             throw new Exception();
         }
 
-        var messageBuilder = new DiscordWebhookBuilder();
+        var messageBuilder = new DiscordWebhookBuilder().EnableV2Components();
         ShowPlannedMove(messageBuilder, player);
         
         if (sources.Count == 1)
@@ -98,33 +99,6 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 
                 return Task.CompletedTask;
             });
-            /*var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-                =>
-            {
-                // Save updated planned move data
-                transaction.Set(game);
-
-                return Task.FromResult(sources.ToDictionary(
-                    x => x,
-                    x => InteractionsHelper.SetUpInteraction(new ShowSpecifyMovementAmountFromPlanetInteraction
-                    {
-                        Game = game.DocumentId,
-                        Source = x.Coordinates,
-                        AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
-                        MovingPlayerId = player.GamePlayerId,
-                        EditOriginalMessage = true
-                    }, transaction)));
-            });
-
-
-            messageBuilder.AppendContentNewline($"{playerName}, choose a planet to move forces from: ");
-            messageBuilder.AddActionRowComponent();
-
-            foreach(var group in sources.ZipWithIndices().GroupBy(x => x.Item2 / 5))
-            {
-                messageBuilder.AddActionRowComponent(
-                    group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x.Item1], x.Item1.Coordinates.ToString())));
-            }*/
         }
         
         await args.Interaction.EditOriginalResponseAsync(messageBuilder);
@@ -142,7 +116,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         
         await args.Interaction.EditOriginalResponseAsync(
             await ShowSpecifyMovementAmountButtonsAsync(
-                new DiscordWebhookBuilder(),
+                new DiscordWebhookBuilder().EnableV2Components(),
                 game,
                 player,
                 game.GetHexAt(interactionData.Source),
@@ -241,7 +215,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         var destinationHex = game.GetHexAt(player.PlannedMove.Destination);
         Debug.Assert(destinationHex != null);
         
-        var builder = new DiscordWebhookBuilder();
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         List<InteractionData> interactions = new List<InteractionData>();
         // If this was the only place we could move from, and a nonzero amount was specified, perform the move now
@@ -378,7 +352,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
-        var builder = new DiscordFollowupMessageBuilder();
+        var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
         await PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.PlayerId));
         await args.Interaction.DeleteOriginalResponseAsync();
         await args.Interaction.CreateFollowupMessageAsync(builder);
