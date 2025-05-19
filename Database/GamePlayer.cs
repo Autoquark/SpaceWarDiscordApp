@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Google.Cloud.Firestore;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.DatabaseModels;
 
@@ -21,7 +22,7 @@ public class GamePlayer
     public int Science { get; set; } = 0;
     
     [FirestoreProperty]
-    public Color PlayerColor { get; set; }
+    public PlayerColour PlayerColor { get; set; }
     
     [FirestoreProperty]
     public string? DummyPlayerName { get; set; }
@@ -30,4 +31,6 @@ public class GamePlayer
     public PlannedMove? PlannedMove { get; set; }
 
     public bool IsDummyPlayer => DiscordUserId == 0;
+    
+    public PlayerColourInfo PlayerColourInfo => PlayerColourInfo.Get(PlayerColor);
 }

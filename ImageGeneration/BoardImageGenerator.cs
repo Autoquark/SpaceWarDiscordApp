@@ -40,7 +40,7 @@ public static class BoardImageGenerator
     // Icons
     private static readonly Image ScienceIcon = Image.Load("Icons/materials-science.png");
     private static readonly Image StarIcon = Image.Load("Icons/staryu.png");
-    private static readonly List<Image> DieIcons = [
+    public static readonly IReadOnlyList<Image> ColourlessDieIcons = [
         Image.Load("Icons/dice-six-faces-one.png"),
         Image.Load("Icons/dice-six-faces-two.png"),
         Image.Load("Icons/dice-six-faces-three.png"),
@@ -57,7 +57,7 @@ public static class BoardImageGenerator
         ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
         StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
         
-        foreach (var dieIcon in DieIcons)
+        foreach (var dieIcon in ColourlessDieIcons)
         {
             dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
         }
@@ -148,8 +148,9 @@ public static class BoardImageGenerator
                 // Draw forces
                 if (hex.Planet.ForcesPresent > 0)
                 {
-                    var recolorBrush = new RecolorBrush(Color.White, game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColor, 0.5f);
-                    using var dieImage = DieIcons[hex.Planet.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
+                    var colourInfo = PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColor);
+                    var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
+                    using var dieImage = ColourlessDieIcons[hex.Planet.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
                     image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
                 }
             }

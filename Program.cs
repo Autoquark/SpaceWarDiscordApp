@@ -28,6 +28,8 @@ static class Program
     
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
 
+    public static IReadOnlyDictionary<string, DiscordEmoji> AppEmojisByName { get; private set; }
+
     private static readonly Dictionary<Type, object> InteractionHandlers = new();
 
     static async Task Main()
@@ -57,7 +59,14 @@ static class Program
 
         discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
         {
-            extension.AddCommands([typeof(GameManagementCommands), typeof(GameplayCommands)]);
+            extension.AddCommands(
+            [
+                    typeof(GameManagementCommands), 
+                    typeof(GameplayCommands),
+                    typeof(MoveActionCommands),
+                    typeof(RefreshCommands),
+                    typeof(BotManagementCommands)
+            ]);
             /*TextCommandProcessor textCommandProcessor = new(new()
             {
                 // The default behavior is that the bot reacts to direct
@@ -86,6 +95,8 @@ static class Program
         
         DiscordClient = discordBuilder.Build();
         await DiscordClient.ConnectAsync();
+        
+        AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
         
         await Task.Delay(-1);
     }

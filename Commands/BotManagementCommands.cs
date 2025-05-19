@@ -1,0 +1,72 @@
+using System.ComponentModel;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.ContextChecks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Processing;
+using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.ImageGeneration;
+
+namespace SpaceWarDiscordApp.Commands;
+
+public class BotManagementCommands
+{
+    private const string DieEmojiDirectoryPath = "./Icons/Emoji/Dice";
+
+    [Command("UpdateEmoji")]
+    [Description("Deletes and reuploads all the bot's emojis")]
+    [RequireApplicationOwner]
+    public static async Task UpdateEmoji(CommandContext context)
+    {
+        await context.DeferResponseAsync();
+        
+        foreach (var emoji in await context.Client.GetApplicationEmojisAsync())
+        {
+            await context.Client.DeleteApplicationEmojiAsync(emoji.Id);
+        }
+        
+        var directories = new Queue<string>([DieEmojiDirectoryPath]);
+        while (directories.TryDequeue(out var directoryPath))
+        {
+            foreach (var filePath in Directory.EnumerateFiles(directoryPath))
+            {
+                await using var stream = File.OpenRead(filePath);
+                await context.Client.CreateApplicationEmojiAsync(Path.GetFileNameWithoutExtension(filePath), stream);
+            }
+            
+            foreach (var subDirectory in Directory.EnumerateDirectories(directoryPath))
+            {
+                directories.Enqueue(subDirectory);
+            }
+        }
+
+        await context.RespondAsync("Emojis updated!");
+    }
+
+    [Command("RegenerateDiceEmoji")]
+    [Description("Regenerates the dice emoji images")]
+    [RequireApplicationOwner]
+    public static async Task RegenerateDiceEmoji(CommandContext context)
+    {
+        await context.DeferResponseAsync();
+        
+        Directory.CreateDirectory(DieEmojiDirectoryPath);
+        foreach (var file in Directory.EnumerateFiles(DieEmojiDirectoryPath, "*.png"))
+        {
+            File.Delete(file);
+        }
+        
+        foreach (var playerColour in Enum.GetValues<PlayerColour>().Select(PlayerColourInfo.Get))
+        {
+            foreach (var (image, i) in BoardImageGenerator.ColourlessDieIcons.ZipWithIndices())
+            {
+                var recolorBrush = new RecolorBrush(Color.White, playerColour.ImageSharpColor, 0.5f);
+                using var dieImage = image.Clone(x => x.Fill(recolorBrush));
+                await using var fileStream = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_{i + 1}.png"), FileMode.Create);
+                await dieImage.SaveAsPngAsync(fileStream);
+            }
+        }
+        
+        await context.RespondAsync("Emojis regenerated!");
+    }
+}

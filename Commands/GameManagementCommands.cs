@@ -2,10 +2,10 @@ using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using Google.Cloud.Firestore;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Commands;
 
@@ -13,16 +13,21 @@ public static class GameManagementCommands
 {
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish",
         "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary", "ignoble",
-        "infamous", "dishonourable", "sinister", "dire", "unfortunate", "stupid", "weird", "unusual", "unpredictable"]);
+        "infamous", "dishonourable", "sinister", "dire", "unfortunate", "stupid", "weird", "unusual", "unpredictable", "shameful",
+        "interminable", "unending", "bizarre", "asinine", "awful", "rowdy", "lurid", "gruesome", "insufferable", "pungent",
+        "unsavoury", "disagreeable", "scufflesome", "kerfufflesome", "disturbing", "frightful", "frightening", "farcical", "comical", "underwhelming",
+        "perplexing", "inane", "insane", "mad", "maddening", "crazy", "bonkers", "wild", "fitful", "woeful", "furious", "furtive", "ghastly",
+        "startling", "troublesome", "inconvenient", "dubious", "unwelcome", "unlikely", "improbable", "unbelievable", "implausible",
+        "persnickety", "perfidious", "rambunctious", "troubling", "burdensome"]);
     private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement",
-        "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff", "fracas", "occurrence"]);
+        "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff", "fracas", "occurrence", "besmirchment",
+        "brawl", "farce", "belligerence", "craziness", "lunacy", "fiasco", "furore", "faff", "perfidy", "quarrel"]);
     private const string GameChannelCategoryName = "Spacewar Games";
 
-    private static readonly IReadOnlyList<Color> DefaultPlayerColours =
-        new List<Color>([Color.Red, Color.Blue, Color.Green, Color.Purple, Color.Yellow, Color.Orange]);
+    private static readonly IReadOnlyList<PlayerColour> PlayerColours = Enum.GetValues<PlayerColour>();
 
     private static readonly IReadOnlyList<string> DummyPlayerNames =
-        new List<string>(["Lorelent", "Gerg", "Goodcoe", "Neutralcoe", "Zogak"]);
+        new List<string>(["Lorelentenei", "Gerg", "Goodcoe", "Neutralcoe", "Zogak", "Benjermy", "Georgery"]);
     
     private static readonly MapGenerator MapGenerator = new MapGenerator();
     
@@ -49,7 +54,7 @@ public static class GameManagementCommands
                 {
                     DiscordUserId = context.User.Id,
                     GamePlayerId = 1,
-                    PlayerColor = DefaultPlayerColours[0]
+                    PlayerColor = PlayerColours[0]
                 }
             ],
             GameChannelId = gameChannel.Id,
@@ -60,7 +65,7 @@ public static class GameManagementCommands
             game.Players.Add(new GamePlayer
             {
                 DummyPlayerName = DummyPlayerNames.Random(),
-                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count],
+                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count],
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
             });
         }
@@ -93,7 +98,7 @@ public static class GameManagementCommands
             {
                 DiscordUserId = user.Id,
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count]
+                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count]
             });
             
             transaction.Set(game);
@@ -126,7 +131,7 @@ public static class GameManagementCommands
             game.Players.Add(new GamePlayer
             {
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColor = DefaultPlayerColours[game.Players.Count % DefaultPlayerColours.Count],
+                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count],
                 DummyPlayerName = name
             });
             
