@@ -37,10 +37,13 @@ public class GameplayCommands
             return;
         }
         
-        await context.RespondAsync(await CreateBoardStateMessageAsync(game));
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        await ShowBoardStateMessageAsync(builder, game);
+        await context.RespondAsync(builder);
     }
 
-    public static async Task<DiscordMessageBuilder> CreateBoardStateMessageAsync(Game game)
+    public static async Task<TBuilder> ShowBoardStateMessageAsync<TBuilder>(TBuilder builder, Game game) 
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         using var image = BoardImageGenerator.GenerateBoardImage(game);
         var stream = new MemoryStream();
@@ -48,32 +51,75 @@ public class GameplayCommands
         stream.Position = 0;
 
         var name = await game.CurrentTurnPlayer.GetNameAsync(false);
-        return new DiscordMessageBuilder()
-            .WithContent(
+        return builder
+            .AppendContentNewline(
                 $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
-            .AddFile("board.png", stream);
+            .AddFile("board.png", stream)
+        //.AddFileComponent(new DiscordFileComponent("attachment://board.png", false));
+        .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
     }
     
-    public static async Task<IList<DiscordMessageBuilder>> CreateTurnBeginMessagesAsync(Game game)
+    public static async Task<TBuilder> ShowTurnBeginMessageAsync<TBuilder>(TBuilder builder, Game game) 
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
-        
-        var interactionId = await InteractionsHelper.SetUpInteractionAsync(new ShowMoveOptionsInteraction()
+
+        List<int> allowedIds = game.CurrentTurnPlayer.IsDummyPlayer ? [] : [game.CurrentTurnPlayer.GamePlayerId];
+        var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowMoveOptionsInteraction()
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-            AllowedGamePlayerIds = game.CurrentTurnPlayer.IsDummyPlayer ? [] : [game.CurrentTurnPlayer.GamePlayerId]
+            AllowedGamePlayerIds = allowedIds, 
+        });
+
+        var produceInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowProduceOptionsInteraction
+        {
+            Game = game.DocumentId,
+            ForPlayerGameId = game.CurrentTurnPlayer.GamePlayerId,
+            AllowedGamePlayerIds = allowedIds,
+        });
+
+        var refreshInteractionId = await InteractionsHelper.SetUpInteractionAsync(new RefreshActionInteraction
+        {
+            Game = game.DocumentId,
+            ForPlayerId = game.CurrentTurnPlayer.GamePlayerId,
+            AllowedGamePlayerIds = allowedIds
         });
         
-        var builder = new DiscordMessageBuilder()
-            .WithContent($"{name}, it is your turn. Choose an action:")
+        await ShowBoardStateMessageAsync(builder, game);
+        builder.AppendContentNewline($"{name}, it is your turn. Choose an action:")
             .AddActionRowComponent(
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionId, "Move Action")
-                //new DiscordButtonComponent(DiscordButtonStyle.Primary, CreateInteractionId("BeginProduceAction", game.CurrentTurnPlayer.DiscordUserId), "Produce Action"),
-                //new DiscordButtonComponent(DiscordButtonStyle.Primary, CreateInteractionId("RefreshAction", game.CurrentTurnPlayer.DiscordUserId), "Refresh Action")
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action"),
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, produceInteractionId, "Produce Action"),
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, refreshInteractionId, "Refresh Action")
             );
-        return [await CreateBoardStateMessageAsync(game), builder];
+        return builder;
     }
 
-    
+    public static async Task NextTurnAsync<TBuilder>(TBuilder builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        game.CurrentTurnPlayerIndex = (game.CurrentTurnPlayerIndex + 1) % game.Players.Count;
+        game.TurnNumber++;
+        
+        await ShowTurnBeginMessageAsync(builder, game);
+    }
+
+    [Command("Test")]
+    [RequireGuild]
+    public static async Task TestCommand(CommandContext context)
+    {
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AddTextDisplayComponent("Test Message");
+        await using var file = new FileStream("Icons\\dice-six-faces-six.png", FileMode.Open);
+        builder.AddFile("test.png", file);
+        builder.AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://test.png"));
+        await context.RespondAsync(builder);
+
+        await Task.Delay(1000);
+
+        var editBuilder = new DiscordMessageBuilder(builder);
+        editBuilder.AddSeparatorComponent(new DiscordSeparatorComponent(true, DiscordSeparatorSpacing.Large));
+        editBuilder.AddTextDisplayComponent("Is image still there?");
+        await context.EditResponseAsync(editBuilder);
+    }
 }

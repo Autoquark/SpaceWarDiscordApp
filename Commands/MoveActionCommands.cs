@@ -135,7 +135,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         }
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
-            => Enumerable.Range(0, source.Planet.ForcesPresent).Select(x => InteractionsHelper.SetUpInteraction(
+            => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
                 new SubmitSpecifyMovementAmountFromPlanetInteraction
                 {
                     Amount = x + 1,
@@ -150,7 +150,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         foreach(var group in Enumerable.Range(0, source.Planet!.ForcesPresent).GroupBy(x => x / 5))
         {
             builder.AddActionRowComponent(
-                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], (x + 1).ToString())));
+                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
         }
 
         return builder;
@@ -344,10 +344,11 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         }
 
         player.PlannedMove = null;
-        
-        await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
 
         builder.AppendContentNewline($"{moverName} now has {totalPostCapacityLimit} forces present on {destinationHex.Coordinates}");
+        
+        await GameplayCommands.NextTurnAsync(builder, game);
+        await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
     }
 
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)

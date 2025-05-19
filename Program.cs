@@ -1,9 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
@@ -81,6 +79,8 @@ static class Program
         // We are actually registering this as a handler for multiple interaction types,
         // but to make the call compile we have to specify one
         RegisterInteractionHandler<ShowMoveOptionsInteraction>(new MoveActionCommands());
+        RegisterInteractionHandler<ShowProduceOptionsInteraction>(new ProduceActionCommands());
+        RegisterInteractionHandler<RefreshActionInteraction>(new RefreshCommands());
 
         discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));
         

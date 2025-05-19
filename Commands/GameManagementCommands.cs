@@ -173,7 +173,9 @@ public static class GameManagementCommands
             return;
         }
         
-        await context.RespondAsync("The game has started.");
-        await context.RespondAsync(await GameplayCommands.CreateTurnBeginMessagesAsync(game));
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline("The game has started.");
+        await GameplayCommands.ShowTurnBeginMessageAsync(builder, game);
+        await context.RespondAsync(builder);
     }
 }

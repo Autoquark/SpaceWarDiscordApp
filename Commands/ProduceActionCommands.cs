@@ -1,0 +1,77 @@
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.GameLogic;
+
+namespace SpaceWarDiscordApp.Commands;
+
+public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
+    IInteractionHandler<ProduceInteraction>
+{
+    public async Task HandleInteractionAsync(ShowProduceOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    {
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
+        var player = game.GetGamePlayerByGameId(interactionData.ForPlayerGameId);
+        var candidates = game.Hexes
+            .Where(x => x.Planet?.OwningPlayerId == interactionData.ForPlayerGameId && !x.Planet.IsExhausted)
+            .ToList();
+        
+        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
+            => candidates.ToDictionary(
+                x => x,
+                x => InteractionsHelper.SetUpInteraction(new ProduceInteraction
+                {
+                    Game = game.DocumentId,
+                    AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
+                    Hex = x.Coordinates,
+                    EditOriginalMessage = true
+                }, transaction))
+        );
+
+        builder.AppendContentNewline("Choose a ready planet to produce on:");
+        foreach (var group in candidates.ZipWithIndices().GroupBy(x => x.Item2 / 5))
+        {
+            builder.AddActionRowComponent(
+                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x.Item1], x.Item1.Coordinates.ToString())));
+        }
+
+        await args.Interaction.EditOriginalResponseAsync(builder);
+    }
+
+    public async Task HandleInteractionAsync(ProduceInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    {
+        var hex = game.GetHexAt(interactionData.Hex);
+        if (hex?.Planet?.IsExhausted != false)
+        {
+            throw new Exception();
+        }
+        
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
+        var player = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
+        var name = await player.GetNameAsync(false);
+        
+        hex.Planet.ForcesPresent += hex.Planet.Production;
+        hex.Planet.IsExhausted = true;
+        player.Science += hex.Planet.Science;
+        var producedScience = hex.Planet.Science > 0;
+
+        builder.AppendContentNewline(
+            $"{name} is producing on {hex.Coordinates}. Produced {hex.Planet.Production} forces" + (producedScience ? $" and {hex.Planet.Science} science" : ""));
+        if (producedScience)
+        {
+            builder.AppendContentNewline($"{name} now has {player.Science} science");
+        }
+
+        await GameplayCommands.NextTurnAsync(builder, game);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        {
+            transaction.Set(game);
+            return Task.CompletedTask;
+        });
+        
+        await args.Interaction.EditOriginalResponseAsync(builder);
+    }
+}
