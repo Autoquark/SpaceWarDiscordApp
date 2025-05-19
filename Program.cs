@@ -18,17 +18,19 @@ namespace SpaceWarDiscordApp;
 
 static class Program
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public static FirestoreDb FirestoreDb { get; private set; }
 
     public static DiscordClient DiscordClient { get; private set; }
 
     private static readonly ThreadLocal<Random> _random = new(() => new Random());
     
+    public static IReadOnlyDictionary<string, DiscordEmoji> AppEmojisByName { get; private set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+    
     public static Random Random => _random.Value!;
     
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
-
-    public static IReadOnlyDictionary<string, DiscordEmoji> AppEmojisByName { get; private set; }
 
     private static readonly Dictionary<Type, object> InteractionHandlers = new();
 

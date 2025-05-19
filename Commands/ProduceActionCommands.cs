@@ -18,7 +18,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
             .Where(x => x.Planet?.OwningPlayerId == interactionData.ForPlayerGameId && !x.Planet.IsExhausted)
             .ToList();
         
-        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
+        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
             => candidates.ToDictionary(
                 x => x,
                 x => InteractionsHelper.SetUpInteraction(new ProduceInteraction

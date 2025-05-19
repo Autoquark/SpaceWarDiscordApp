@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.DatabaseModels;
@@ -29,7 +28,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             .EnableV2Components()
             .AppendContentNewline($"{playerName}, you may move to the following hexes: ");
 
-        IDictionary<BoardHex, string> interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
+        IDictionary<BoardHex, string> interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
             => destinations.ToDictionary(
                 x => x,
                 x => InteractionsHelper.SetUpInteraction(new BeginPlanningMoveActionInteraction
@@ -134,7 +133,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             throw new Exception();
         }
 
-        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(async transaction
+        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
             => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
                 new SubmitSpecifyMovementAmountFromPlanetInteraction
                 {
@@ -348,7 +347,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         builder.AppendContentNewline($"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}");
         
         await GameplayCommands.NextTurnAsync(builder, game);
-        await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)

@@ -70,10 +70,7 @@ public static class GameManagementCommands
             });
         }
         
-        await Program.FirestoreDb.RunTransactionAsync(async transaction =>
-        {
-            transaction.Create(gameRef, game);
-        });
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Create(gameRef, game));
         
         await context.RespondAsync($"Game created. Game channel is {gameChannel.Mention}. To add more players, use /addplayer from that channel.");
         await context.Client.SendMessageAsync(gameChannel, $"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To add more players use /addplayer from this channel.");
