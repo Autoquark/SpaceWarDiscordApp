@@ -22,7 +22,7 @@ public static class BoardUtils
             var neighbour = game.GetHexAt(coordinates);
             if (neighbour != null)
             {
-                toExplore.Push((neighbour, coordinates));
+                toExplore.Push((neighbour, hex.Coordinates));
             }
         }
 
@@ -39,24 +39,25 @@ public static class BoardUtils
             {
                 foreach (var connection in exploring.HyperlaneConnections)
                 {
-                    if (exploring.Coordinates + connection.First == from)
+                    var firstEnd = exploring.Coordinates + connection.First;
+                    var secondEnd = exploring.Coordinates + connection.Second;
+                    if (firstEnd == from)
                     {
-                        var neighbour = game.GetHexAt(exploring.Coordinates + connection.Second);
+                        var neighbour = game.GetHexAt(secondEnd);
                         if (neighbour != null)
                         {
-                            toExplore.Push((exploring, exploring.Coordinates));
+                            toExplore.Push((neighbour, exploring.Coordinates));
                         }
                     }
-                    else if (exploring.Coordinates + connection.Second == from)
+                    else if (secondEnd == from)
                     {
-                        var neighbour = game.GetHexAt(exploring.Coordinates + connection.First);
+                        var neighbour = game.GetHexAt(firstEnd);
                         if (neighbour != null)
                         {
-                            toExplore.Push((exploring, exploring.Coordinates));
+                            toExplore.Push((neighbour, exploring.Coordinates));
                         }
                     }
                 }
-                continue;
             }
         }
         

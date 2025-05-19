@@ -138,7 +138,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
                 new SubmitSpecifyMovementAmountFromPlanetInteraction
                 {
-                    Amount = x + 1,
+                    Amount = x,
                     From = source.Coordinates,
                     Game = game.DocumentId,
                     AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
@@ -147,7 +147,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
                 }, transaction))
             .ToList());
         
-        foreach(var group in Enumerable.Range(0, source.Planet!.ForcesPresent).GroupBy(x => x / 5))
+        foreach(var group in Enumerable.Range(0, source.Planet!.ForcesPresent + 1).GroupBy(x => x / 5))
         {
             builder.AddActionRowComponent(
                 group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
