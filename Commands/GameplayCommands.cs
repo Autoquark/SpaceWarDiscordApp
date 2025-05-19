@@ -58,9 +58,17 @@ public class GameplayCommands
             .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
 
         builder.AppendContentNewline("### Player Info");
+        
+        List<(GamePlayer player, int)>? playerScores = game.Players.Select(x => (x, GetPlayerStars(game, x)))
+            .OrderByDescending(x => x.Item2)
+            .ToList();
+
+        var playerWillScore = playerScores[0].Item2 > playerScores[1].Item2 ? playerScores[0].player : null;
+        
         foreach (var player in game.Players)
         {
-            List<string> parts = [await player.GetNameAsync(false), $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6"];
+            List<string> parts = [await player.GetNameAsync(false), $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6",
+                $"Stars: {GetPlayerStars(game, player)}"];
             if (game.CurrentTurnPlayer == player)
             {
                 parts.Add("[Current Turn]");
@@ -70,6 +78,12 @@ public class GameplayCommands
             {
                 parts.Add("[Scoring Token]");
             }
+
+            if (player == playerWillScore)
+            {
+                parts.Add("[Most Stars]");
+            }
+            
             builder.AppendContentNewline(string.Join(" ", parts));
         }
 
@@ -116,6 +130,29 @@ public class GameplayCommands
 
     public static async Task NextTurnAsync<TBuilder>(TBuilder builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        if (game.IsScoringTurn)
+        {
+            List<(GamePlayer player, int)> playerScores = game.Players.Select(x => (x, GetPlayerStars(game, x)))
+                .OrderByDescending(x => x.Item2)
+                .ToList();
+
+            if (playerScores[1].Item2 < playerScores[0].Item2)
+            {
+                var scoringPlayer = playerScores[0].player;
+                scoringPlayer.VictoryPoints++;
+                var name = await scoringPlayer.GetNameAsync(true);
+                builder.AppendContentNewline($"**{name} scores and is now on {game.CurrentTurnPlayer.VictoryPoints}/6 VP!**");
+            }
+
+            game.ScoringTokenPlayerIndex--;
+            if (game.ScoringTokenPlayerIndex < 0)
+            {
+                game.ScoringTokenPlayerIndex = game.Players.Count - 1;
+            }
+            var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
+            builder.AppendContentNewline($"**The scoring token passes to {scoringName}**");
+        }
+        
         game.CurrentTurnPlayerIndex = (game.CurrentTurnPlayerIndex + 1) % game.Players.Count;
         game.TurnNumber++;
         
@@ -140,4 +177,8 @@ public class GameplayCommands
         editBuilder.AddTextDisplayComponent("Is image still there?");
         await context.EditResponseAsync(editBuilder);
     }
+
+    public static int GetPlayerStars(Game game, GamePlayer player)
+        => game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId)
+            .Sum(x => x.Planet!.Stars);
 }
