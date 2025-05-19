@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using CommunityToolkit.HighPerformance.Helpers;
 using DSharpPlus;
@@ -141,7 +142,14 @@ public class GameplayCommands
                 var scoringPlayer = playerScores[0].player;
                 scoringPlayer.VictoryPoints++;
                 var name = await scoringPlayer.GetNameAsync(true);
-                builder.AppendContentNewline($"**{name} scores and is now on {game.CurrentTurnPlayer.VictoryPoints}/6 VP!**");
+                builder.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**");
+
+                if (scoringPlayer.VictoryPoints >= 6)
+                {
+                    builder.AppendContentNewline($"# {name} has won the game!");
+                    builder.AppendContentNewline($"If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
+                    game.Phase = GamePhase.Finished;
+                }
             }
 
             game.ScoringTokenPlayerIndex--;
@@ -149,6 +157,14 @@ public class GameplayCommands
             {
                 game.ScoringTokenPlayerIndex = game.Players.Count - 1;
             }
+
+            // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
+            // but don't post any messages about it.
+            if (game.Phase == GamePhase.Finished)
+            {
+                return;
+            }
+            
             var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
             builder.AppendContentNewline($"**The scoring token passes to {scoringName}**");
         }
@@ -159,23 +175,23 @@ public class GameplayCommands
         await ShowTurnBeginMessageAsync(builder, game);
     }
 
-    [Command("Test")]
+    [Command("TurnMessage")]
+    [Description("Repost the start of turn message for the current player")]
     [RequireGuild]
-    public static async Task TestCommand(CommandContext context)
+    public static async Task TurnMessageCommand(CommandContext context)
     {
+        await context.DeferResponseAsync();
+        
+        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetGameForChannelAsync(context.Channel.Id));
+        if (game == null)
+        {
+            throw new Exception("This command can only be used in a game channel");
+        }
+        
         var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AddTextDisplayComponent("Test Message");
-        await using var file = new FileStream("Icons\\dice-six-faces-six.png", FileMode.Open);
-        builder.AddFile("test.png", file);
-        builder.AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://test.png"));
+        await ShowTurnBeginMessageAsync(builder, game);
+
         await context.RespondAsync(builder);
-
-        await Task.Delay(1000);
-
-        var editBuilder = new DiscordMessageBuilder(builder);
-        editBuilder.AddSeparatorComponent(new DiscordSeparatorComponent(true, DiscordSeparatorSpacing.Large));
-        editBuilder.AddTextDisplayComponent("Is image still there?");
-        await context.EditResponseAsync(editBuilder);
     }
 
     public static int GetPlayerStars(Game game, GamePlayer player)

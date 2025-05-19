@@ -160,6 +160,11 @@ public static class GameManagementCommands
             {
                 await context.RespondAsync("Not enough players");
             }
+
+            if (game.Phase != GamePhase.Setup)
+            {
+                await context.RespondAsync("Game has already started");
+            }
             
             MapGenerator.GenerateMap(game);
 
