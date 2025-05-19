@@ -345,7 +345,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 
         player.PlannedMove = null;
 
-        builder.AppendContentNewline($"{moverName} now has {totalPostCapacityLimit} forces present on {destinationHex.Coordinates}");
+        builder.AppendContentNewline($"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}");
         
         await GameplayCommands.NextTurnAsync(builder, game);
         await Program.FirestoreDb.RunTransactionAsync(async transaction => transaction.Set(game));
