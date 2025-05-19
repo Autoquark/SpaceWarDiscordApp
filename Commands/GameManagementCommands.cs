@@ -64,7 +64,7 @@ public static class GameManagementCommands
         {
             game.Players.Add(new GamePlayer
             {
-                DummyPlayerName = DummyPlayerNames.Random(),
+                DummyPlayerName = DummyPlayerNames[game.Players.Count % DummyPlayerNames.Count],
                 PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count],
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
             });
@@ -113,11 +113,6 @@ public static class GameManagementCommands
     public static async Task AddDummyPlayerToGame(CommandContext context, string name = "")
     {
         await context.DeferResponseAsync();
-
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            name = DummyPlayerNames.Random();
-        }
         
         await Program.FirestoreDb.RunTransactionAsync(async transaction =>
         {
@@ -126,6 +121,11 @@ public static class GameManagementCommands
             {
                 await context.RespondAsync("This command must be used from a game channel");
                 return;
+            }
+            
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = DummyPlayerNames[game.Players.Count % DummyPlayerNames.Count];
             }
             
             game.Players.Add(new GamePlayer

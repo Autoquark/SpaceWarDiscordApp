@@ -51,12 +51,30 @@ public class GameplayCommands
         stream.Position = 0;
 
         var name = await game.CurrentTurnPlayer.GetNameAsync(false);
-        return builder
+        builder
             .AppendContentNewline(
                 $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
             .AddFile("board.png", stream)
-        //.AddFileComponent(new DiscordFileComponent("attachment://board.png", false));
-        .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
+            .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
+
+        builder.AppendContentNewline("### Player Info");
+        foreach (var player in game.Players)
+        {
+            List<string> parts = [await player.GetNameAsync(false), $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6"];
+            if (game.CurrentTurnPlayer == player)
+            {
+                parts.Add("[Current Turn]");
+            }
+
+            if (game.ScoringTokenPlayer == player)
+            {
+                parts.Add("[Scoring Token]");
+            }
+            builder.AppendContentNewline(string.Join(" ", parts));
+        }
+
+        builder.AppendContentNewline("### Your Turn");
+        return builder;
     }
     
     public static async Task<TBuilder> ShowTurnBeginMessageAsync<TBuilder>(TBuilder builder, Game game) 
