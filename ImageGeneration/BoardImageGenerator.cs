@@ -17,14 +17,22 @@ public static class BoardImageGenerator
     private static readonly double Root3 = Math.Sqrt(3);
     private static readonly double InnerToOuterRatio = 1.0 / (Root3 / 2.0);
     
-    // Sizes
+    // *** Image Constants ***
+    
+    // * Hexes *
     private static readonly int HexOuterDiameter = 420;
     private static readonly float HexInnerDiameter = (float)(HexOuterDiameter / InnerToOuterRatio);
+    
+    // Additional Margin around edge of map image
     private const int Margin = 100;
+    
+    // * Planets *
     private const float PlanetCircleRadius = 100;
+    private const float HomePlanetInnerCircleRadius = 80;
     private const float ProductionCircleRadius = 25;
     private const float PlanetIconSpacingDegrees = 16;
     private const int PlanetIconSize = 60;
+    
     private const int DieIconSize = 80;
     private const float HyperlaneThickness = 20;
     private const float AsteroidTriangleSideLength = 40;
@@ -82,10 +90,30 @@ public static class BoardImageGenerator
                 var planetCircle = new EllipsePolygon(hexCentre, PlanetCircleRadius)
                     .GenerateOutline(2.0f);
                 image.Mutate(x => x.Fill(Color.Black, planetCircle));
+                
+                // Draw inner circle for home planet
+                if (hex.Planet.IsHomeSystem)
+                {
+                    var innerCircle = new EllipsePolygon(hexCentre, HomePlanetInnerCircleRadius)
+                        .GenerateOutline(2.0f);
+                    image.Mutate(x => x.Fill(Color.Black, innerCircle));
+                }
+
+                if (hex.Planet.IsExhausted)
+                {
+                    image.Mutate(x => x.DrawLine(Color.Black,
+                        2.0f,
+                        hexCentre + GetPointPolar(PlanetCircleRadius, 45),
+                        hexCentre + GetPointPolar(PlanetCircleRadius, 225)));
+                    image.Mutate(x => x.DrawLine(Color.Black,
+                        2.0f,
+                        hexCentre + GetPointPolar(PlanetCircleRadius, -45),
+                        hexCentre + GetPointPolar(PlanetCircleRadius, 135)));
+                }
 
                 // Draw science icons
                 var angle = 30 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Science - 1));
-                for (int i = 0; i < hex.Planet.Science; i++)
+                for (var i = 0; i < hex.Planet.Science; i++)
                 {
                     var point = GetPointPolar((PlanetCircleRadius + 30), -angle);
                     image.Mutate(x => x.DrawImageCentred(ScienceIcon, (Point)(hexCentre + point)));
@@ -94,7 +122,7 @@ public static class BoardImageGenerator
                 
                 // Draw star icons
                 angle = 90 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Stars - 1));
-                for (int i = 0; i < hex.Planet.Stars; i++)
+                for (var i = 0; i < hex.Planet.Stars; i++)
                 {
                     var point = GetPointPolar((PlanetCircleRadius + 30), -angle);
                     image.Mutate(x => x.DrawImageCentred(StarIcon, (Point)(hexCentre + point)));
