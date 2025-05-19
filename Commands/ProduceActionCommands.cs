@@ -34,7 +34,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
         foreach (var group in candidates.ZipWithIndices().GroupBy(x => x.Item2 / 5))
         {
             builder.AddActionRowComponent(
-                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x.Item1], x.Item1.Coordinates.ToString())));
+                group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1])));
         }
 
         await args.Interaction.EditOriginalResponseAsync(builder);

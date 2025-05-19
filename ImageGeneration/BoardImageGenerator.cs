@@ -148,7 +148,7 @@ public static class BoardImageGenerator
                 // Draw forces
                 if (hex.Planet.ForcesPresent > 0)
                 {
-                    var colourInfo = PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColor);
+                    var colourInfo = PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColour);
                     var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
                     using var dieImage = ColourlessDieIcons[hex.Planet.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
                     image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));

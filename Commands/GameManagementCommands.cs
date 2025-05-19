@@ -54,7 +54,7 @@ public static class GameManagementCommands
                 {
                     DiscordUserId = context.User.Id,
                     GamePlayerId = 1,
-                    PlayerColor = PlayerColours[0]
+                    PlayerColour = PlayerColours[0]
                 }
             ],
             GameChannelId = gameChannel.Id,
@@ -65,7 +65,7 @@ public static class GameManagementCommands
             game.Players.Add(new GamePlayer
             {
                 DummyPlayerName = DummyPlayerNames.Random(),
-                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count],
+                PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count],
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
             });
         }
@@ -98,7 +98,7 @@ public static class GameManagementCommands
             {
                 DiscordUserId = user.Id,
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count]
+                PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
             });
             
             transaction.Set(game);
@@ -131,7 +131,7 @@ public static class GameManagementCommands
             game.Players.Add(new GamePlayer
             {
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColor = PlayerColours[game.Players.Count % PlayerColours.Count],
+                PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count],
                 DummyPlayerName = name
             });
             

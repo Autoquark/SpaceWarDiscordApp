@@ -45,7 +45,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         foreach(var group in destinations.ZipWithIndices().GroupBy(x => x.Item2 / 5))
         {
             messageBuilder.AddActionRowComponent(
-                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x.Item1], x.Item1.Coordinates.ToString())));
+                group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1])));
         }
         
         await args.Interaction.EditOriginalResponseAsync(messageBuilder);
@@ -182,7 +182,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         foreach(var group in sources.ZipWithIndices().GroupBy(x => x.Item2 / 5))
         {
             builder.AddActionRowComponent(
-                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x.Item1].InteractionId, x.Item1.Coordinates.ToString())));
+                group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1].InteractionId)));
         }
         
         return interactionIds.Values.ToList();

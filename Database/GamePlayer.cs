@@ -22,7 +22,7 @@ public class GamePlayer
     public int Science { get; set; } = 0;
     
     [FirestoreProperty]
-    public PlayerColour PlayerColor { get; set; }
+    public PlayerColour PlayerColour { get; set; }
     
     [FirestoreProperty]
     public string? DummyPlayerName { get; set; }
@@ -32,5 +32,5 @@ public class GamePlayer
 
     public bool IsDummyPlayer => DiscordUserId == 0;
     
-    public PlayerColourInfo PlayerColourInfo => PlayerColourInfo.Get(PlayerColor);
+    public PlayerColourInfo PlayerColourInfo => PlayerColourInfo.Get(PlayerColour);
 }
