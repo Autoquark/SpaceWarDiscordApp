@@ -1,8 +1,6 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.DatabaseModels;
-using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.GameLogic;
 
 public class MapGenerator
 {

@@ -1,5 +1,4 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database;

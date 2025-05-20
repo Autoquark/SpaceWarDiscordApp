@@ -14,6 +14,9 @@ namespace SpaceWarDiscordApp
             return copy;
         }
 
+        /// <summary>
+        /// Randomly reorders a list in place
+        /// </summary>
         public static void Shuffle<T>(this IList<T> list)
         {
             /* To shuffle an array a of n elements (indices 0..n-1):
@@ -30,6 +33,6 @@ namespace SpaceWarDiscordApp
 
         public static IEnumerable<int> Indices(this ICollection collection) => Enumerable.Range(0, collection.Count);
 
-        public static IEnumerable<(T, int)> ZipWithIndices<T>(this IEnumerable<T> collection) => collection.Select((x, i) => (x, i));
+        public static IEnumerable<(T item, int index)> ZipWithIndices<T>(this IEnumerable<T> collection) => collection.Select((x, i) => (x, i));
     }
 }

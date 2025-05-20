@@ -1,9 +1,8 @@
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 public enum HexType
 {

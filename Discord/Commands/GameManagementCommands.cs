@@ -2,13 +2,11 @@ using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.Discord.Commands;
 
 public static class GameManagementCommands
 {

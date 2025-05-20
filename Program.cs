@@ -2,17 +2,18 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Newtonsoft.Json;
-using SpaceWarDiscordApp.Commands;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Discord.Commands;
 
 namespace SpaceWarDiscordApp;
 
@@ -61,14 +62,7 @@ static class Program
 
         discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
         {
-            extension.AddCommands(
-            [
-                    typeof(GameManagementCommands), 
-                    typeof(GameplayCommands),
-                    typeof(MoveActionCommands),
-                    typeof(RefreshCommands),
-                    typeof(BotManagementCommands)
-            ]);
+            extension.AddCommands(Assembly.GetExecutingAssembly());
             /*TextCommandProcessor textCommandProcessor = new(new()
             {
                 // The default behavior is that the bot reacts to direct

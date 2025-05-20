@@ -1,6 +1,6 @@
 ﻿using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
 public class FirestoreModel

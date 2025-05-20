@@ -1,5 +1,4 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.DatabaseModels;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 

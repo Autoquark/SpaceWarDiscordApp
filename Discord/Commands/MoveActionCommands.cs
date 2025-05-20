@@ -3,11 +3,11 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction>,
     IInteractionHandler<BeginPlanningMoveActionInteraction>,

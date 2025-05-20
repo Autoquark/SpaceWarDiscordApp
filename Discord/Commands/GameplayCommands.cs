@@ -1,21 +1,11 @@
-using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
-using CommunityToolkit.HighPerformance.Helpers;
-using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
-using SixLabors.ImageSharp;
-using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
-using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
-using SpaceWarDiscordApp.ImageGeneration;
+using TransactionExtensions = SpaceWarDiscordApp.Database.TransactionExtensions;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class GameplayCommands
 {
@@ -25,7 +15,7 @@ public class GameplayCommands
     {
         await context.DeferResponseAsync();
 
-        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetGameForChannelAsync(context.Channel.Id));
+        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await TransactionExtensions.GetGameForChannelAsync(transaction, context.Channel.Id));
 
         if (game == null)
         {
@@ -51,7 +41,7 @@ public class GameplayCommands
     {
         await context.DeferResponseAsync();
         
-        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetGameForChannelAsync(context.Channel.Id));
+        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await TransactionExtensions.GetGameForChannelAsync(transaction, context.Channel.Id));
         if (game == null)
         {
             throw new Exception("This command can only be used in a game channel");

@@ -1,10 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using Google.Cloud.Firestore;
-using SixLabors.ImageSharp;
-using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
 public class GamePlayer

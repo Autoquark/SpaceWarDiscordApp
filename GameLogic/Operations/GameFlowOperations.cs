@@ -1,9 +1,9 @@
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
-using SpaceWarDiscordApp.Commands;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;

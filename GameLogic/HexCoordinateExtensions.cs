@@ -1,5 +1,3 @@
-using SpaceWarDiscordApp.DatabaseModels;
-
 namespace SpaceWarDiscordApp.GameLogic;
 
 public static class HexCoordinateExtensions

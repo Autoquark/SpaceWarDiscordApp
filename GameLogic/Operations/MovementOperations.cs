@@ -1,8 +1,8 @@
 using DSharpPlus.Entities;
-using SpaceWarDiscordApp.Commands;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 

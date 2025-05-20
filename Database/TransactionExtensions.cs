@@ -1,7 +1,6 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database;
 
-namespace SpaceWarDiscordApp.DatabaseModels;
+namespace SpaceWarDiscordApp.Database;
 
 public static class TransactionExtensions
 {

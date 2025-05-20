@@ -1,8 +1,7 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.DatabaseModels;
 
-namespace SpaceWarDiscordApp;
+namespace SpaceWarDiscordApp.Discord;
 
 public static class DiscordHelpers
 {

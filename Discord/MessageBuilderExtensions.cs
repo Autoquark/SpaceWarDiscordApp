@@ -1,6 +1,6 @@
 using DSharpPlus.Entities;
 
-namespace SpaceWarDiscordApp;
+namespace SpaceWarDiscordApp.Discord;
 
 public static class MessageBuilderExtensions
 {

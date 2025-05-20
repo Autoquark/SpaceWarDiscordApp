@@ -7,7 +7,7 @@ using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.ImageGeneration;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class BotManagementCommands
 {

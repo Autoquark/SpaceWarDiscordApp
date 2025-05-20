@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.InteractionData;
+namespace SpaceWarDiscordApp.Database.InteractionData.Move;
 
 /// <summary>
 /// Fires when the player submits a quantity of forces to move from a specific planet as part of planning a move action

@@ -1,4 +1,4 @@
-using SpaceWarDiscordApp.DatabaseModels;
+using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.GameLogic;
 

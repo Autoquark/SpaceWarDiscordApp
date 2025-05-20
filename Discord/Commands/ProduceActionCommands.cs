@@ -2,11 +2,10 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
-namespace SpaceWarDiscordApp.Commands;
+namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
