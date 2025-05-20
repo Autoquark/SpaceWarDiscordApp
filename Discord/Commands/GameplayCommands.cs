@@ -1,27 +1,20 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
-using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
+using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using TransactionExtensions = SpaceWarDiscordApp.Database.TransactionExtensions;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
+[RequireGameChannel]
 public class GameplayCommands
 {
     [Command("ShowBoard")]
-    [RequireGuild]
     public static async Task ShowBoardStateCommand(CommandContext context)
     {
-        await context.DeferResponseAsync();
-
-        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await TransactionExtensions.GetGameForChannelAsync(transaction, context.Channel.Id));
-
-        if (game == null)
-        {
-            await context.RespondAsync("This command must be used from a game channel");
-            return;
-        }
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
 
         if (game.Hexes.Count == 0)
         {
@@ -36,16 +29,9 @@ public class GameplayCommands
 
     [Command("TurnMessage")]
     [Description("Repost the start of turn message for the current player")]
-    [RequireGuild]
     public static async Task TurnMessageCommand(CommandContext context)
     {
-        await context.DeferResponseAsync();
-        
-        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction => await TransactionExtensions.GetGameForChannelAsync(transaction, context.Channel.Id));
-        if (game == null)
-        {
-            throw new Exception("This command can only be used in a game channel");
-        }
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);

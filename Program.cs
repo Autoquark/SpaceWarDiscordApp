@@ -8,11 +8,13 @@ using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 
 namespace SpaceWarDiscordApp;
@@ -60,9 +62,12 @@ static class Program
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
 
+        discordBuilder.ConfigureServices(x => x.AddScoped<SpaceWarCommandContextData>());
         discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
         {
-            extension.AddCommands(Assembly.GetExecutingAssembly());
+            var assembly = Assembly.GetExecutingAssembly();
+            extension.AddCommands(assembly);
+            extension.AddChecks(assembly);
             /*TextCommandProcessor textCommandProcessor = new(new()
             {
                 // The default behavior is that the bot reacts to direct
@@ -79,6 +84,7 @@ static class Program
             // The default value is true, however it's shown here for clarity
             RegisterDefaultCommandProcessors = true,
             DebugGuildId = secrets.TestGuildId,
+            CommandExecutor = new SpaceWarCommandExecutor()
         });
         
         // We are actually registering this as a handler for multiple interaction types,

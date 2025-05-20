@@ -2,7 +2,9 @@ using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -34,8 +36,6 @@ public static class GameManagementCommands
     [RequireGuild]
     public static async Task CreateGameCommand(CommandContext context, int dummyPlayers = 0)
     {
-        await context.DeferResponseAsync();
-        
         var name = $"The {NameAdjectives[Program.Random.Next(0, NameAdjectives.Count)]} {NameNouns[Program.Random.Next(0, NameNouns.Count)]}";
         
         var channelName = name.ToLowerInvariant().Replace(" ", "-");
@@ -76,20 +76,13 @@ public static class GameManagementCommands
     }
 
     [Command("AddPlayer")]
-    [RequireGuild]
+    [RequireGameChannel]
     public static async Task AddPlayerToGameCommand(CommandContext context, DiscordMember user)
     {
-        await context.DeferResponseAsync();
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         
-        await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+        await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
-            var game = await transaction.GetGameForChannelAsync(context.Channel.Id);
-            if (game == null)
-            {
-                await context.RespondAsync("This command must be used from a game channel");
-                return;
-            }
-            
             game.Players.Add(new GamePlayer
             {
                 DiscordUserId = user.Id,
@@ -105,20 +98,13 @@ public static class GameManagementCommands
 
     [Command("AddDummyPlayer")]
     [Description("Adds a dummy player to the game. Dummy players can be controlled by anyone in the game.")]
-    [RequireGuild]
+    [RequireGameChannel]
     public static async Task AddDummyPlayerToGameCommand(CommandContext context, string name = "")
     {
-        await context.DeferResponseAsync();
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         
-        await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+        await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
-            var game = await transaction.GetGameForChannelAsync(context.Channel.Id);
-            if (game == null)
-            {
-                await context.RespondAsync("This command must be used from a game channel");
-                return;
-            }
-            
             if (string.IsNullOrWhiteSpace(name))
             {
                 name = DummyPlayerNames[game.Players.Count % DummyPlayerNames.Count];
@@ -138,46 +124,29 @@ public static class GameManagementCommands
     }
 
     [Command("StartGame")]
-    [RequireGuild]
+    [RequireGameChannel]
     public static async Task StartGameCommand(CommandContext context)
     {
-        await context.DeferResponseAsync();
-
-        var game = await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        
+        if (game.Players.Count <= 1)
         {
-            var game = await transaction.GetGameForChannelAsync(context.Channel.Id);
-            if (game == null)
-            {
-                await context.RespondAsync("This command must be used from a game channel");
-                return null;
-            }
-            
-            if (game.Players.Count <= 1)
-            {
-                await context.RespondAsync("Not enough players");
-            }
-
-            if (game.Phase != GamePhase.Setup)
-            {
-                await context.RespondAsync("Game has already started");
-            }
-            
-            MapGenerator.GenerateMap(game);
-
-            // Shuffle turn order
-            game.Players = game.Players.Shuffled().ToList();
-            game.ScoringTokenPlayerIndex = game.Players.Count - 1;
-            game.Phase = GamePhase.Play;
-
-            transaction.Set(game);
-
-            return game;
-        });
-
-        if (game == null)
-        {
-            return;
+            await context.RespondAsync("Not enough players");
         }
+
+        if (game.Phase != GamePhase.Setup)
+        {
+            await context.RespondAsync("Game has already started");
+        }
+        
+        MapGenerator.GenerateMap(game);
+        
+        // Shuffle turn order
+        game.Players = game.Players.Shuffled().ToList();
+        game.ScoringTokenPlayerIndex = game.Players.Count - 1;
+        game.Phase = GamePhase.Play;
+
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline("The game has started.");
