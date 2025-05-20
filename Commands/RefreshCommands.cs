@@ -4,6 +4,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Commands;
 
@@ -34,7 +35,7 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
             builder.AppendContentNewline("Nothing to refresh!");
         }
 
-        await GameplayCommands.NextTurnAsync(builder, game);
+        await GameFlowOperations.NextTurnAsync(builder, game);
 
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {

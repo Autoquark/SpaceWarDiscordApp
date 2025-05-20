@@ -6,6 +6,7 @@ using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Commands;
 
@@ -33,7 +34,7 @@ public static class GameManagementCommands
     
     [Command("CreateGame")]
     [RequireGuild]
-    public static async Task CreateGame(CommandContext context, int dummyPlayers = 0)
+    public static async Task CreateGameCommand(CommandContext context, int dummyPlayers = 0)
     {
         await context.DeferResponseAsync();
         
@@ -78,7 +79,7 @@ public static class GameManagementCommands
 
     [Command("AddPlayer")]
     [RequireGuild]
-    public static async Task AddPlayerToGame(CommandContext context, DiscordMember user)
+    public static async Task AddPlayerToGameCommand(CommandContext context, DiscordMember user)
     {
         await context.DeferResponseAsync();
         
@@ -107,7 +108,7 @@ public static class GameManagementCommands
     [Command("AddDummyPlayer")]
     [Description("Adds a dummy player to the game. Dummy players can be controlled by anyone in the game.")]
     [RequireGuild]
-    public static async Task AddDummyPlayerToGame(CommandContext context, string name = "")
+    public static async Task AddDummyPlayerToGameCommand(CommandContext context, string name = "")
     {
         await context.DeferResponseAsync();
         
@@ -140,7 +141,7 @@ public static class GameManagementCommands
 
     [Command("StartGame")]
     [RequireGuild]
-    public static async Task StartGame(CommandContext context)
+    public static async Task StartGameCommand(CommandContext context)
     {
         await context.DeferResponseAsync();
 
@@ -182,7 +183,7 @@ public static class GameManagementCommands
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline("The game has started.");
-        await GameplayCommands.ShowTurnBeginMessageAsync(builder, game);
+        await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
         await context.RespondAsync(builder);
     }
 }

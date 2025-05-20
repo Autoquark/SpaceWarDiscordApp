@@ -48,7 +48,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="GameLogic\Operations\" />
       <Folder Include="Icons\Emoji\" />
     </ItemGroup>
 

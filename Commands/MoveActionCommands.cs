@@ -5,6 +5,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Commands;
 
@@ -74,7 +75,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         }
 
         var messageBuilder = new DiscordWebhookBuilder().EnableV2Components();
-        ShowPlannedMove(messageBuilder, player);
+        MovementOperations.ShowPlannedMove(messageBuilder, player);
         
         if (sources.Count == 1)
         {
@@ -84,11 +85,11 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
                 return Task.CompletedTask;
             });
             // Only one planet we can move from, skip straight to specifying amount
-            await ShowSpecifyMovementAmountButtonsAsync(messageBuilder, game, player, sources.Single(), destination);
+            await MovementOperations.ShowSpecifyMovementAmountButtonsAsync(messageBuilder, game, player, sources.Single(), destination);
         }
         else
         {
-            var interactionsToSetUp = await ShowSpecifyMovementSourceButtonsAsync(messageBuilder, game, player, destination);
+            var interactionsToSetUp = await MovementOperations.ShowSpecifyMovementSourceButtonsAsync(messageBuilder, game, player, destination);
             await Program.FirestoreDb.RunTransactionAsync(transaction =>
             {
                 // Save updated planned move data
@@ -114,77 +115,13 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         }
         
         await args.Interaction.EditOriginalResponseAsync(
-            await ShowSpecifyMovementAmountButtonsAsync(
+            await MovementOperations.ShowSpecifyMovementAmountButtonsAsync(
                 new DiscordWebhookBuilder().EnableV2Components(),
                 game,
                 player,
                 game.GetHexAt(interactionData.Source),
                 game.GetHexAt(player.PlannedMove.Destination))
             );
-    }
-
-    public async Task<TBuilder> ShowSpecifyMovementAmountButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, BoardHex source, BoardHex destination)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        builder.AppendContentNewline($"How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
-
-        if (source.Planet == null)
-        {
-            throw new Exception();
-        }
-
-        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-            => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
-                new SubmitSpecifyMovementAmountFromPlanetInteraction
-                {
-                    Amount = x,
-                    From = source.Coordinates,
-                    Game = game.DocumentId,
-                    AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
-                    MovingPlayerId = player.GamePlayerId,
-                    EditOriginalMessage = true
-                }, transaction))
-            .ToList());
-        
-        foreach(var group in Enumerable.Range(0, source.Planet!.ForcesPresent + 1).GroupBy(x => x / 5))
-        {
-            builder.AddActionRowComponent(
-                group.Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
-        }
-
-        return builder;
-    }
-    
-    public async Task<List<ShowSpecifyMovementAmountFromPlanetInteraction>> ShowSpecifyMovementSourceButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, BoardHex destination)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        var sources = BoardUtils.GetStandardMoveSources(game, destination, player);
-        if (sources.Count == 0)
-        {
-            throw new Exception();
-        }
-        
-        var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, choose a planet to move forces from: ");
-        builder.AddActionRowComponent();
-
-        var interactionIds = sources.ToDictionary(x => x,
-            x => new ShowSpecifyMovementAmountFromPlanetInteraction
-            {
-                Game = game.DocumentId,
-                Source = x.Coordinates,
-                AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
-                MovingPlayerId = player.GamePlayerId,
-                EditOriginalMessage = true
-            });
-            
-        foreach(var group in sources.ZipWithIndices().GroupBy(x => x.Item2 / 5))
-        {
-            builder.AddActionRowComponent(
-                group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1].InteractionId)));
-        }
-        
-        return interactionIds.Values.ToList();
     }
 
     public async Task HandleInteractionAsync(SubmitSpecifyMovementAmountFromPlanetInteraction interactionData, Game game,
@@ -222,13 +159,13 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         if (sources.Count == 1 && entry != null)
         {
             Debug.Assert(entry.Source == sources.First().Coordinates);
-            await PerformPlannedMoveAsync(builder, game, player);
+            await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
         }
         else
         {
             // Otherwise, go back to showing possible sources
-            ShowPlannedMove(builder, player);
-            interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder, game, player, destinationHex));
+            MovementOperations.ShowPlannedMove(builder, player);
+            interactions.AddRange(await MovementOperations.ShowSpecifyMovementSourceButtonsAsync(builder, game, player, destinationHex));
             var confirmInteraction = new PerformPlannedMoveInteraction()
             {
                 Game = game.DocumentId,
@@ -250,110 +187,10 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         await args.Interaction.EditOriginalResponseAsync(builder);
     }
 
-    /// <summary>
-    /// Display a summary of the given player's current planned move
-    /// </summary>
-    /// <returns></returns>
-    public TBuilder ShowPlannedMove<TBuilder>(TBuilder builder, GamePlayer player)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        var plannedMove = player.PlannedMove;
-        if (plannedMove == null)
-        {
-            throw new Exception();
-        }
-        
-        builder.AppendContentNewline($"Moving to {plannedMove.Destination}");
-        
-        foreach (var source in plannedMove.Sources)
-        {
-            builder.AppendContentNewline($"{source.Amount} from {source.Source}");
-        }
-        return builder;
-    }
-
-    private static async Task PerformPlannedMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        var plannedMove = player.PlannedMove;
-        if (plannedMove == null)
-        {
-            throw new Exception();
-        }
-        
-        var destinationHex = game.GetHexAt(player.PlannedMove!.Destination);
-        if (destinationHex?.Planet == null)
-        {
-            throw new Exception();
-        }
-        
-        var moverName = await player.GetNameAsync(true);
-
-        // Stage 1: Subtract moving forces from each source planet and calculate total forces moving
-        var totalMoving = 0;
-        foreach (var source in plannedMove.Sources)
-        {
-            var sourceHex = game.GetHexAt(source.Source);
-            if (sourceHex?.Planet == null || sourceHex.Planet.ForcesPresent < source.Amount)
-            {
-                throw new Exception();
-            }
-
-            sourceHex.Planet.SubtractForces(source.Amount);
-            totalMoving += source.Amount;
-            builder.AppendContentNewline($"Moving {source.Amount} from {source.Source}");
-        }
-
-        if (plannedMove.Sources.Count > 1)
-        {
-            builder.AppendContentNewline($"Moving a total of {totalMoving} forces");
-        }
-
-        // Stage 2: Resolve combat or merging with allied forces
-        var totalPreCapacityLimit = totalMoving;
-        if (destinationHex.Planet.OwningPlayerId == player.GamePlayerId || destinationHex.Planet.IsNeutral)
-        {
-            totalPreCapacityLimit += destinationHex.Planet.ForcesPresent;
-        }
-        else
-        {
-            var defenderName =
-                await game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId).GetNameAsync(true);
-            var combatLoss = Math.Min(totalMoving, destinationHex.Planet.ForcesPresent);
-            totalPreCapacityLimit -= combatLoss;
-            destinationHex.Planet.SubtractForces(combatLoss);
-
-            builder.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat");
-        }
-
-        // Stage 3: Apply planet capacity limit
-        var totalPostCapacityLimit = Math.Min(GameConstants.MaxForcesPerPlanet, totalPreCapacityLimit);
-        var lossToCapacityLimit = Math.Max(0, totalPreCapacityLimit - totalPostCapacityLimit);
-
-        if (lossToCapacityLimit > 0)
-        {
-            builder.AppendContentNewline($"{moverName} lost {lossToCapacityLimit} forces that were exceeding the planet capacity");
-        }
-        
-        // Stage 4: Save back to game state
-        if (totalPostCapacityLimit > 0)
-        {
-            destinationHex.Planet.ForcesPresent = totalPostCapacityLimit;
-            destinationHex.Planet.OwningPlayerId = player.GamePlayerId;
-        }
-
-        player.PlannedMove = null;
-
-        builder.AppendContentNewline($"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}");
-        
-        await GameplayCommands.NextTurnAsync(builder, game);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-    }
-
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
-        await PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.PlayerId));
+        await MovementOperations.PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.PlayerId));
         await args.Interaction.DeleteOriginalResponseAsync();
         await args.Interaction.CreateFollowupMessageAsync(builder);
     }

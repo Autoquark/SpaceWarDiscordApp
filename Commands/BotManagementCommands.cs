@@ -40,7 +40,7 @@ public class BotManagementCommands
             }
         }
 
-        await context.RespondAsync("Emojis updated!");
+        await context.RespondAsync("Emojis updated! Bot should now be restarted to rebuild emoji ID caches");
     }
 
     [Command("RegenerateDiceEmoji")]

@@ -4,6 +4,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.DatabaseModels;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Commands;
 
@@ -64,7 +65,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
             builder.AppendContentNewline($"{name} now has {player.Science} science");
         }
 
-        await GameplayCommands.NextTurnAsync(builder, game);
+        await GameFlowOperations.NextTurnAsync(builder, game);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
