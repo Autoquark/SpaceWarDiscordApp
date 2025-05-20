@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
@@ -68,6 +69,11 @@ static class Program
             var assembly = Assembly.GetExecutingAssembly();
             extension.AddCommands(assembly);
             extension.AddChecks(assembly);
+
+            var commandProcessor = new SlashCommandProcessor();
+            commandProcessor.AddConverters(assembly);
+            extension.AddProcessor(commandProcessor);
+            
             /*TextCommandProcessor textCommandProcessor = new(new()
             {
                 // The default behavior is that the bot reacts to direct

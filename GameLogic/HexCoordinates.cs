@@ -1,11 +1,39 @@
+using System.Text.RegularExpressions;
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.Database.Converters;
 
 namespace SpaceWarDiscordApp.GameLogic;
 
 [FirestoreData(ConverterType = typeof(HexCoordinateConverter))]
-public readonly record struct HexCoordinates
+public readonly partial record struct HexCoordinates
 {
+    public static readonly Regex HexCoordsRegex = MyRegex();
+
+    public static bool TryParse(string input, out HexCoordinates coordinates)
+    {
+        input = new string(input.Where(x => !char.IsWhiteSpace(x)).ToArray());
+        var matches = HexCoordsRegex.Match(input);
+        if (!matches.Success
+            || !int.TryParse(matches.Groups[1].Value, out var q)
+            || !int.TryParse(matches.Groups[2].Value, out var r))
+        {
+            coordinates = default;
+            return false;
+        }
+
+        coordinates = new HexCoordinates(q, r);
+        return true;
+    }
+    public static HexCoordinates Parse(string coordinates)
+    {
+        if (TryParse(coordinates, out var result))
+        {
+            return result;
+        }
+        
+        throw new ArgumentException($"Invalid hex coordinates string: {coordinates}");
+    }
+    
     public HexCoordinates(int q, int r)
     {
         this.Q = q;
@@ -47,6 +75,9 @@ public readonly record struct HexCoordinates
 
     public static HexCoordinates operator +(HexCoordinates coordinates, HexCoordinates coordinates2)
         => new(coordinates.Q + coordinates2.Q, coordinates.R + coordinates2.R);
+
+    [GeneratedRegex(@"\(?(-?[0-9]+),(-?[0-9]+)\)?")]
+    private static partial Regex MyRegex();
 }
 
 public enum HexDirection
