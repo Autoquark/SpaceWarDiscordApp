@@ -25,9 +25,10 @@ public static class GameFlowOperations
             .AddFile("board.png", stream)
             .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
 
-        builder.AppendContentNewline("### Player Info");
+        builder.AppendContentNewline("Player Info".DiscordHeading3());
         
-        List<(GamePlayer player, int)>? playerScores = game.Players.Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
+        List<(GamePlayer player, int)>? playerScores = game.Players.Where(x => !x.IsEliminated)
+            .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
             .OrderByDescending(x => x.Item2)
             .ToList();
 
@@ -51,11 +52,22 @@ public static class GameFlowOperations
             {
                 parts.Add("[Most Stars]");
             }
+
+            var text = string.Join(" ", parts);
+
+            if (player.IsEliminated)
+            {
+                text = text.DiscordStrikeThrough();
+            }
+            else if (player == game.CurrentTurnPlayer)
+            {
+                text = text.DiscordBold();
+            }
             
-            builder.AppendContentNewline(string.Join(" ", parts));
+            builder.AppendContentNewline(text);
         }
 
-        builder.AppendContentNewline("### Your Turn");
+        builder.AppendContentNewline("Your Turn".DiscordHeading3());
         return builder;
     }
 
@@ -99,11 +111,12 @@ public static class GameFlowOperations
     /// <summary>
     /// Advances the game to the next turn
     /// </summary>
-    public static async Task NextTurnAsync<TBuilder>(TBuilder builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (game.IsScoringTurn)
         {
-            List<(GamePlayer player, int)> playerScores = game.Players.Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
+            List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)
+                .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
                 .OrderByDescending(x => x.Item2)
                 .ToList();
 
@@ -112,36 +125,92 @@ public static class GameFlowOperations
                 var scoringPlayer = playerScores[0].player;
                 scoringPlayer.VictoryPoints++;
                 var name = await scoringPlayer.GetNameAsync(true);
-                builder.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**");
+                builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**");
 
                 if (scoringPlayer.VictoryPoints >= 6)
                 {
-                    builder.AppendContentNewline($"# {name} has won the game!");
-                    builder.AppendContentNewline($"If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
+                    builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1());
+                    builder?.AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
                     game.Phase = GamePhase.Finished;
                 }
             }
 
+            // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
+            // but don't post any messages about it.
+            await CycleScoringTokenAsync(game.Phase == GamePhase.Finished ? null : builder, game);
+        }
+
+        do
+        {
+            game.CurrentTurnPlayerIndex = (game.CurrentTurnPlayerIndex + 1) % game.Players.Count;
+        }
+        while (game.CurrentTurnPlayer.IsEliminated);
+        
+        game.TurnNumber++;
+        
+        if (game.Phase == GamePhase.Finished || builder == null)
+        {
+            return;
+        }
+        
+        await ShowTurnBeginMessageAsync(builder, game);
+    }
+
+    /// <summary>
+    /// Check if any players have been eliminated. Note that this can end the game.
+    /// </summary>
+    public static async Task CheckForPlayerEliminationsAsync<TBuilder>(TBuilder builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        foreach (var player in game.Players.Where(x => !x.IsEliminated))
+        {
+            if (game.Hexes.Any(x => x.Planet?.OwningPlayerId == player.GamePlayerId && x.Planet.ForcesPresent > 0))
+            {
+                continue;
+            }
+
+            player.IsEliminated = true;
+            
+            var name = await player.GetNameAsync(true);
+            builder.AppendContentNewline($"{name} has been eliminated!".DiscordBold());
+
+            if (game.ScoringTokenPlayer == player)
+            {
+                await CycleScoringTokenAsync(builder, game);
+            }
+        }
+
+        var remainingPlayers = game.Players.Count(x => !x.IsEliminated); 
+        if (remainingPlayers == 1)
+        {
+            var name = await game.Players.First(x => !x.IsEliminated).GetNameAsync(true);
+            builder.AppendContentNewline($"{name} wins the game through glorious violence by being the last one standing!".DiscordBold());
+            game.Phase = GamePhase.Finished;
+        }
+        else if (remainingPlayers == 0)
+        {
+            builder.AppendContentNewline("It would appear that you have all wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold());
+            game.Phase = GamePhase.Finished;
+        }
+    }
+
+    /// <summary>
+    /// Passes the scoring token to the previous valid player in turn order
+    /// </summary>
+    private static async Task CycleScoringTokenAsync<TBuilder>(TBuilder? builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        do
+        {
             game.ScoringTokenPlayerIndex--;
             if (game.ScoringTokenPlayerIndex < 0)
             {
                 game.ScoringTokenPlayerIndex = game.Players.Count - 1;
             }
-
-            // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
-            // but don't post any messages about it.
-            if (game.Phase == GamePhase.Finished)
-            {
-                return;
-            }
-            
-            var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
-            builder.AppendContentNewline($"**The scoring token passes to {scoringName}**");
         }
+        while (game.ScoringTokenPlayer.IsEliminated);
         
-        game.CurrentTurnPlayerIndex = (game.CurrentTurnPlayerIndex + 1) % game.Players.Count;
-        game.TurnNumber++;
-        
-        await ShowTurnBeginMessageAsync(builder, game);
+        var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
+        builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
 }

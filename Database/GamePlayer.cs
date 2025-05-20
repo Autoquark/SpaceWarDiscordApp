@@ -17,7 +17,7 @@ public class GamePlayer
     
     [FirestoreProperty]
     public int VictoryPoints { get; set; } = 0;
-    
+
     [FirestoreProperty]
     public int Science { get; set; } = 0;
     
@@ -29,6 +29,9 @@ public class GamePlayer
     
     [FirestoreProperty]
     public PlannedMove? PlannedMove { get; set; }
+
+    [FirestoreProperty]
+    public bool IsEliminated { get; set; } = false;
 
     public bool IsDummyPlayer => DiscordUserId == 0;
     

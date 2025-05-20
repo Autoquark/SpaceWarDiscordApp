@@ -80,9 +80,17 @@ public static class MovementOperations
 
         player.PlannedMove = null;
 
-        builder.AppendContentNewline($"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}");
+        builder.AppendContentNewline(
+            totalPostCapacityLimit > 0
+                ? $"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}"
+                : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
         
-        await GameFlowOperations.NextTurnAsync(builder, game);
+        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
+
+        // If game is finished, process the end of turn silently just in case we fix up and resume play
+        var finished = game.Phase == GamePhase.Finished;
+        
+        await GameFlowOperations.NextTurnAsync(finished ? null : builder, game);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 
