@@ -50,11 +50,7 @@ public class Game : FirestoreModel
     public bool IsScoringTurn => CurrentTurnPlayerIndex == ScoringTokenPlayerIndex;
 
     public GamePlayer GetGamePlayerByGameId(int id) => Players.First(x => x.GamePlayerId == id);
-    public bool TryGetGamePlayerByGameId(int id, [NotNullWhen(true)] out GamePlayer? player)
-    {
-        player = Players.FirstOrDefault(x => x.GamePlayerId == id);
-        return player != null;
-    }
+    public GamePlayer? TryGetGamePlayerByGameId(int id) => Players.FirstOrDefault(x => x.GamePlayerId == id);
 
     public GamePlayer? GetGamePlayerByDiscordId(ulong id) => Players.FirstOrDefault(x => x.DiscordUserId == id);
     

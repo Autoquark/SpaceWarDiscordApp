@@ -36,24 +36,28 @@ public class FixupCommands
             await context.RespondAsync($"Invalid coordinates {coordinates}");
             return;
         }
-
-        if (amount > -1)
+        
+        var newAmount = amount > -1 ? amount : hex.Planet.ForcesPresent;
+        GamePlayer? newOwner = null;
+        
+        if (newAmount > 0)
         {
-            hex.Planet.ForcesPresent = amount;
-            if (amount == 0)
+            newOwner = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId) ?? game.GetGamePlayerByDiscordId(context.User.Id);
+            if (newOwner == null)
             {
-                hex.Planet.OwningPlayerId = -1;
+                await context.RespondAsync($"Must specify a player");
+                return;
             }
         }
 
-        if (game.TryGetGamePlayerByGameId(player, out var gamePlayer) && hex.Planet.ForcesPresent > 0)
-        {
-            hex.Planet.OwningPlayerId = player;
-        }
+        hex.Planet.ForcesPresent = newAmount;
+        hex.Planet.OwningPlayerId = newOwner?.GamePlayerId ?? 0;
 
-        if (game.TryGetGamePlayerByGameId(player, out gamePlayer))
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        
+        if (newOwner != null)
         {
-            await context.RespondAsync($"Set forces at {coordinates} to {gamePlayer.PlayerColourInfo.GetDieEmoji(hex.Planet.ForcesPresent)}");
+            await context.RespondAsync($"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.Planet.ForcesPresent)}");
         }
         else
         {
