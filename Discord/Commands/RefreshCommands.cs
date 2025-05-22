@@ -36,7 +36,7 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
             builder.AppendContentNewline("Nothing to refresh!");
         }
 
-        await GameFlowOperations.NextTurnAsync(builder, game);
+        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
 
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {

@@ -103,7 +103,7 @@ public class Tech_WarpNodes : Tech,
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         var source = game.GetHexAt(playerTech.Source);
 
-        var builder = new DiscordWebhookBuilder();
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         if (interactionData.Amount > 0)
         {
@@ -123,9 +123,12 @@ public class Tech_WarpNodes : Tech,
             // Go back to destination selection
             await ShowChooseDestinationAsync(builder, game, player, source); 
         }
+        else
+        {
+            await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        }
         
         await args.Interaction.EditOriginalResponseAsync(builder);
-        
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 

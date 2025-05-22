@@ -66,7 +66,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
             builder.AppendContentNewline($"{name} now has {player.Science} science");
         }
 
-        await GameFlowOperations.NextTurnAsync(builder, game);
+        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {

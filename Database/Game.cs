@@ -50,6 +50,9 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public List<string> MarketTechs { get; set; } = [];
     
+    [FirestoreProperty]
+    public bool ActionTakenThisTurn { get; set; }
+    
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     
     public GamePlayer ScoringTokenPlayer => Players[ScoringTokenPlayerIndex];

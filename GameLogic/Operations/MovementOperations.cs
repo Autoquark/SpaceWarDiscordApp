@@ -19,7 +19,7 @@ public static class MovementOperations
 
         await ResolveMoveAsync(builder, game, player, plannedMove);
         
-        await GameFlowOperations.NextTurnAsync(game.Phase == GamePhase.Finished ? null : builder, game);
+        await GameFlowOperations.MarkActionTakenForTurn(game.Phase == GamePhase.Finished ? null : builder, game);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 

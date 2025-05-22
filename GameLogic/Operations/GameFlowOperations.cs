@@ -110,25 +110,41 @@ public static class GameFlowOperations
             }));
         
         await ShowBoardStateMessageAsync(builder, game);
-        builder.AppendContentNewline("Your Turn".DiscordHeading3());
-        builder.AppendContentNewline($"{name}, it is your turn. Choose an action:")
+        builder.AppendContentNewline("Your Turn".DiscordHeading3())
+            .AppendContentNewline($"{name}, it is your turn. Choose an action:")
+
+            .AppendContentNewline("Basic Actions:")
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, produceInteractionId, "Produce Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, refreshInteractionId, "Refresh Action")
+
             );
 
-        builder.AppendButtonRows(
-            techActions.Zip(techInteractionIds)
-                .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second)));
-        
+        if (techActions.Count > 0)
+        {
+            builder.AppendContentNewline("Tech Actions:")
+                .AppendButtonRows(
+                    techActions.Zip(techInteractionIds)
+                        .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second)));
+        }
+
+        return builder;
+    }
+    
+    public static async Task<TBuilder?> MarkActionTakenForTurn<TBuilder>(TBuilder? builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        game.ActionTakenThisTurn = true;
+        await NextTurnAsync(builder, game);
         return builder;
     }
 
     /// <summary>
     /// Advances the game to the next turn
     /// </summary>
-    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (game.IsScoringTurn)
         {
@@ -164,6 +180,7 @@ public static class GameFlowOperations
         while (game.CurrentTurnPlayer.IsEliminated);
         
         game.TurnNumber++;
+        game.ActionTakenThisTurn = false;
         
         if (game.Phase == GamePhase.Finished || builder == null)
         {
