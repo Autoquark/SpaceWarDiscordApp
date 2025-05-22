@@ -3,16 +3,8 @@ using Google.Cloud.Firestore;
 namespace SpaceWarDiscordApp.Database.InteractionData;
 
 [FirestoreData]
-public abstract class InteractionData : FirestoreModel
+public abstract class InteractionData : PolymorphicFirestoreModel
 {
-    protected InteractionData()
-    {
-        SubtypeName = GetType().FullName!;
-    }
-    
-    [FirestoreProperty]
-    public string SubtypeName { get; set; }
-
     [FirestoreProperty]
     public string InteractionId { get; } = Guid.NewGuid().ToString();
     
@@ -20,10 +12,10 @@ public abstract class InteractionData : FirestoreModel
     public required DocumentReference? Game { get; set; }
 
     /// <summary>
-    /// GamePlayer ids of players that are allowed to trigger this interaction. Empty means any player
+    /// GamePlayer ids of player that is expected to perform the interaction, or -1 if it's not player specific
     /// </summary>
     [FirestoreProperty]
-    public required IList<int> AllowedGamePlayerIds { get; set; }
+    public required int ForGamePlayerId { get; set; }
     
     /// <summary>
     /// If true, the interaction response will be treated as an update to the original message
@@ -33,6 +25,8 @@ public abstract class InteractionData : FirestoreModel
     [FirestoreProperty]
     public bool EditOriginalMessage { get; set; } = false;
 
-    public bool PlayerAllowedToTrigger(GamePlayer player) 
-        => !AllowedGamePlayerIds.Any() || AllowedGamePlayerIds.Contains(player.GamePlayerId);
+    public bool PlayerAllowedToTrigger(Game game, GamePlayer player)
+        => ForGamePlayerId == -1
+           || ForGamePlayerId == player.GamePlayerId
+           || game.GetGamePlayerByGameId(ForGamePlayerId).IsDummyPlayer;
 }

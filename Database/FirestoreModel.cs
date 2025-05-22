@@ -3,7 +3,7 @@
 namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
-public class FirestoreModel
+public abstract class FirestoreModel
 {
     [FirestoreDocumentId]
     public DocumentReference? DocumentId { get; set; }

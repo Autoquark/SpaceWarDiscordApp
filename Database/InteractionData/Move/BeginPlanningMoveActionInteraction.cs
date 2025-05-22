@@ -11,7 +11,4 @@ public class BeginPlanningMoveActionInteraction : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Destination { get; set; }
-    
-    [FirestoreProperty]
-    public required int MovingGamePlayerId { get; set; }
 }

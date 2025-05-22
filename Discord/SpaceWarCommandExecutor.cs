@@ -17,16 +17,11 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         if (context.Command.Attributes.OfType<RequireGameChannelAttribute>().Any())
         {
             // Attempt to find the relevant game for this channel and store it in the context data
-            var snapshot = await new Query<Game>(Program.FirestoreDb.Collection("Games"))
+            context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel.Id), cancellationToken: cancellationToken);
+            /*var snapshot = await new Query<Game>(Program.FirestoreDb.Collection("Games"))
                 .WhereEqualTo(x => x.GameChannelId, context.Channel.Id)
                 .Limit(1)
-                .GetSnapshotAsync();
-
-            if (snapshot.Count > 0)
-            {
-                context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game =
-                    snapshot[0].ConvertTo<Game>();
-            }
+                .GetSnapshotAsync();*/
         }
 
         await base.ExecuteAsync(context, cancellationToken);

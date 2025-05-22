@@ -15,9 +15,9 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
     public async Task HandleInteractionAsync(ShowProduceOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
-        var player = game.GetGamePlayerByGameId(interactionData.ForPlayerGameId);
+        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var candidates = game.Hexes
-            .Where(x => x.Planet?.OwningPlayerId == interactionData.ForPlayerGameId && !x.Planet.IsExhausted)
+            .Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId && !x.Planet.IsExhausted)
             .ToList();
         
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
@@ -26,9 +26,9 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
                 x => InteractionsHelper.SetUpInteraction(new ProduceInteraction
                 {
                     Game = game.DocumentId,
-                    AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
                     Hex = x.Coordinates,
-                    EditOriginalMessage = true
+                    EditOriginalMessage = true,
+                    ForGamePlayerId = player.GamePlayerId
                 }, transaction))
         );
 

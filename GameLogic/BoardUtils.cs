@@ -7,7 +7,10 @@ public static class BoardUtils
     public static ISet<BoardHex> GetStandardMoveSources(Game game, BoardHex destination, GamePlayer movingPlayer)
         => GetNeighbouringHexes(game, destination)
             .Where(x => x.Planet?.OwningPlayerId == movingPlayer.GamePlayerId)
-            .ToHashSet(); 
+            .ToHashSet();
+
+    public static ISet<BoardHex> GetNeighbouringHexes(Game game, HexCoordinates hex) =>
+        GetNeighbouringHexes(game, game.GetHexAt(hex));
     
     public static ISet<BoardHex> GetNeighbouringHexes(Game game, BoardHex hex)
     {
@@ -18,7 +21,7 @@ public static class BoardUtils
         foreach (var hexDirection in Enum.GetValues<HexDirection>())
         {
             var coordinates = hex.Coordinates + hexDirection;
-            var neighbour = game.GetHexAt(coordinates);
+            var neighbour = game.TryGetHexAt(coordinates);
             if (neighbour != null)
             {
                 toExplore.Push((neighbour, hex.Coordinates));
@@ -42,7 +45,7 @@ public static class BoardUtils
                     var secondEnd = exploring.Coordinates + connection.Second;
                     if (firstEnd == from)
                     {
-                        var neighbour = game.GetHexAt(secondEnd);
+                        var neighbour = game.TryGetHexAt(secondEnd);
                         if (neighbour != null)
                         {
                             toExplore.Push((neighbour, exploring.Coordinates));
@@ -50,7 +53,7 @@ public static class BoardUtils
                     }
                     else if (secondEnd == from)
                     {
-                        var neighbour = game.GetHexAt(firstEnd);
+                        var neighbour = game.TryGetHexAt(firstEnd);
                         if (neighbour != null)
                         {
                             toExplore.Push((neighbour, exploring.Coordinates));

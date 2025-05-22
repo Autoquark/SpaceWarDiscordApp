@@ -5,6 +5,9 @@ namespace SpaceWarDiscordApp.Database;
 
 public static class InteractionsHelper
 {
+    public static async Task<List<string>> SetUpInteractionsAsync(IEnumerable<InteractionData.InteractionData> interactions) =>
+        await Program.FirestoreDb.RunTransactionAsync(transaction => SetUpInteractions(interactions, transaction));
+    
     public static List<string> SetUpInteractions(IEnumerable<InteractionData.InteractionData> interactions,
         Transaction transaction) =>
         interactions.Select(x => SetUpInteraction(x, transaction)).ToList();

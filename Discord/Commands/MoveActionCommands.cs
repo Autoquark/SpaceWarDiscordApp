@@ -38,8 +38,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
                 {
                     Game = game.DocumentId,
                     Destination = x.Coordinates,
-                    AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId],
-                    MovingGamePlayerId = player.GamePlayerId,
+                    ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = true
                 }, transaction))
             );
@@ -61,13 +60,13 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             throw new Exception();
         }
 
-        game.GetGamePlayerByGameId(interactionData.MovingGamePlayerId)
+        game.GetGamePlayerByGameId(interactionData.ForGamePlayerId)
             .PlannedMove = new PlannedMove
             {
                 Destination = interactionData.Destination
             };
 
-        var player = game.GetGamePlayerByGameId(interactionData.MovingGamePlayerId);
+        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var sources = BoardUtils.GetStandardMoveSources(game, destination, player);
         var playerName = await player.GetNameAsync(true);
 
@@ -109,7 +108,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
     public async Task HandleInteractionAsync(ShowSpecifyMovementAmountFromPlanetInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
-        var player = game.GetGamePlayerByGameId(interactionData.MovingPlayerId);
+        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
         if (player.PlannedMove == null)
         {
@@ -129,7 +128,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
     public async Task HandleInteractionAsync(SubmitSpecifyMovementAmountFromPlanetInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
-        var player = game.GetGamePlayerByGameId(interactionData.MovingPlayerId);
+        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
         var entry = player.PlannedMove!.Sources.FirstOrDefault(x => x.Source == interactionData.From);
         if (entry == null && interactionData.Amount > 0)
@@ -171,8 +170,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
             var confirmInteraction = new PerformPlannedMoveInteraction()
             {
                 Game = game.DocumentId,
-                PlayerId = player.GamePlayerId,
-                AllowedGamePlayerIds = player.IsDummyPlayer ? [] : [player.GamePlayerId]
+                ForGamePlayerId = player.GamePlayerId,
             };
             interactions.Add(confirmInteraction);
             builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success,
@@ -192,7 +190,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
-        await MovementOperations.PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.PlayerId));
+        await MovementOperations.PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
         await args.Interaction.DeleteOriginalResponseAsync();
         await args.Interaction.CreateFollowupMessageAsync(builder);
     }

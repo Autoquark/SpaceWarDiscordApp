@@ -14,7 +14,4 @@ public class SubmitSpecifyMovementAmountFromPlanetInteraction : InteractionData
     
     [FirestoreProperty]
     public required int Amount { get; set; }
-    
-    [FirestoreProperty]
-    public required int MovingPlayerId { get; set; }
 }

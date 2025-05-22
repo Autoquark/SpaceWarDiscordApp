@@ -8,9 +8,4 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Move;
 [FirestoreData]
 public class ShowMoveOptionsInteraction : InteractionData
 {
-    /// <summary>
-    /// GameId of the player to show move options for
-    /// </summary>
-    [FirestoreProperty]
-    public required int ForGamePlayerId { get; set; }
 }

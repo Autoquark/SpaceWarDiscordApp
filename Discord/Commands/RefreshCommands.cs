@@ -14,11 +14,11 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
     public async Task HandleInteractionAsync(RefreshActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
-        var name = await game.GetGamePlayerByGameId(interactionData.ForPlayerId).GetNameAsync(false);
+        var name = await game.GetGamePlayerByGameId(interactionData.ForGamePlayerId).GetNameAsync(false);
         builder.AppendContentNewline($"{name} is refreshing");
 
         var refreshed = new HashSet<BoardHex>();
-        foreach (var hex in game.Hexes.Where(x => x.Planet?.OwningPlayerId == interactionData.ForPlayerId))
+        foreach (var hex in game.Hexes.Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId))
         {
             if (hex.Planet?.IsExhausted == true)
             {

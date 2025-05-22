@@ -53,7 +53,8 @@ public static class GameManagementCommands
                 {
                     DiscordUserId = context.User.Id,
                     GamePlayerId = 1,
-                    PlayerColour = PlayerColours[0]
+                    PlayerColour = PlayerColours[0],
+                    Science = 10
                 }
             ],
             GameChannelId = gameChannel.Id,
@@ -139,16 +140,22 @@ public static class GameManagementCommands
             await context.RespondAsync("Game has already started");
         }
         
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        
         MapGenerator.GenerateMap(game);
+
+        game.UniversalTechs = ["warpNodes"];
         
         // Shuffle turn order
         game.Players = game.Players.Shuffled().ToList();
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
 
+        await TechOperations.PurchaseTechAsync(builder, game, game.Players.First(x => !x.IsDummyPlayer),
+            game.UniversalTechs[0], 2);
+
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline("The game has started.");
         await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
         await context.RespondAsync(builder);

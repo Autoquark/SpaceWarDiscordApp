@@ -11,7 +11,4 @@ public class ShowSpecifyMovementAmountFromPlanetInteraction : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Source { get; set; }
-    
-    [FirestoreProperty]
-    public required int MovingPlayerId { get; set; }
 }

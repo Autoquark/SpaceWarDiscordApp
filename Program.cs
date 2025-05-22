@@ -17,6 +17,7 @@ using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp;
 
@@ -93,11 +94,19 @@ static class Program
             CommandExecutor = new SpaceWarCommandExecutor()
         });
         
-        // We are actually registering this as a handler for multiple interaction types,
-        // but to make the call compile we have to specify one
-        RegisterInteractionHandler<ShowMoveOptionsInteraction>(new MoveActionCommands());
-        RegisterInteractionHandler<ShowProduceOptionsInteraction>(new ProduceActionCommands());
-        RegisterInteractionHandler<RefreshActionInteraction>(new RefreshCommands());
+        RegisterInteractionHandler(new MoveActionCommands());
+        RegisterInteractionHandler(new ProduceActionCommands());
+        RegisterInteractionHandler(new RefreshCommands());
+        RegisterInteractionHandler(new TechCommands());
+        
+        // Create tech singletons
+        foreach (var techType in Assembly.GetExecutingAssembly()
+                     .GetTypes()
+                     .Where(x => x.IsAssignableTo(typeof(Tech)) && !x.IsAbstract))
+        {
+            var instance = Activator.CreateInstance(techType) as Tech ?? throw new Exception();
+            RegisterInteractionHandler(instance);
+        }
 
         discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));
         
@@ -125,16 +134,7 @@ static class Program
             throw new Exception("InteractionData not found");
         }
 
-        var typeName = snapshot.GetValue<string>(nameof(InteractionData.SubtypeName));
-        var type = Type.GetType(typeName);
-
-        if (type == null)
-        {
-            throw new Exception($"InteractionData subtype {typeName} not found");
-        }
-
-        var interactionData = (InteractionData)typeof(DocumentSnapshot).GetMethod(nameof(DocumentSnapshot.ConvertTo))!.MakeGenericMethod(type)
-            .Invoke(snapshot, [])!;
+        var interactionData = snapshot.ConvertToPolymorphic<InteractionData>();
 
         if (interactionData.EditOriginalMessage)
         {
@@ -159,22 +159,23 @@ static class Program
             return;
         }
 
-        if (!interactionData.PlayerAllowedToTrigger(player))
+        if (!interactionData.PlayerAllowedToTrigger(game, player))
         {
             await args.Interaction.CreateFollowupMessageAsync(new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!"));
             return;
         }
 
-        if (!InteractionHandlers.TryGetValue(type, out var handler))
+        var interactionType = interactionData.GetType();
+        if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
         {
             throw new Exception("Handler not found");
         }
 
-        typeof(IInteractionHandler<>).MakeGenericType(type)
+        typeof(IInteractionHandler<>).MakeGenericType(interactionType)
             .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!.Invoke(handler, [interactionData, game, args]);
     }
 
-    private static void RegisterInteractionHandler<T>(IInteractionHandler<T> interactionHandler) where T : InteractionData
+    private static void RegisterInteractionHandler(object interactionHandler)
     {
         foreach (var interactionType in interactionHandler.GetType()
                      .GetInterfaces()

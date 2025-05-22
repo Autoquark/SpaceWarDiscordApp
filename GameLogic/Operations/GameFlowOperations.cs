@@ -4,6 +4,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
@@ -27,7 +28,7 @@ public static class GameFlowOperations
 
         builder.AppendContentNewline("Player Info".DiscordHeading3());
         
-        List<(GamePlayer player, int)>? playerScores = game.Players.Where(x => !x.IsEliminated)
+        List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)
             .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
             .OrderByDescending(x => x.Item2)
             .ToList();
@@ -36,7 +37,8 @@ public static class GameFlowOperations
         
         foreach (var player in game.Players)
         {
-            List<string> parts = [await player.GetNameAsync(false), $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6",
+            List<string> parts = [await player.GetNameAsync(false),
+                $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6",
                 $"Stars: {GameStateOperations.GetPlayerStars(game, player)}"];
             if (game.CurrentTurnPlayer == player)
             {
@@ -66,8 +68,7 @@ public static class GameFlowOperations
             
             builder.AppendContentNewline(text);
         }
-
-        builder.AppendContentNewline("Your Turn".DiscordHeading3());
+        
         return builder;
     }
 
@@ -75,36 +76,52 @@ public static class GameFlowOperations
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
-
-        List<int> allowedIds = game.CurrentTurnPlayer.IsDummyPlayer ? [] : [game.CurrentTurnPlayer.GamePlayerId];
+        
         var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowMoveOptionsInteraction()
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-            AllowedGamePlayerIds = allowedIds, 
         });
 
         var produceInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowProduceOptionsInteraction
         {
             Game = game.DocumentId,
-            ForPlayerGameId = game.CurrentTurnPlayer.GamePlayerId,
-            AllowedGamePlayerIds = allowedIds,
+            ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
         });
 
         var refreshInteractionId = await InteractionsHelper.SetUpInteractionAsync(new RefreshActionInteraction
         {
             Game = game.DocumentId,
-            ForPlayerId = game.CurrentTurnPlayer.GamePlayerId,
-            AllowedGamePlayerIds = allowedIds
+            ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
         });
+
+        var techActions = game.CurrentTurnPlayer.Techs
+            .SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, game.CurrentTurnPlayer))
+            .ToList();
+
+        var techInteractionIds = await InteractionsHelper.SetUpInteractionsAsync(
+            techActions.Select(x => new UseTechActionInteraction
+            {
+                Game = game.DocumentId,
+                ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
+                TechId = x.Tech.Id,
+                ActionId = x.Id,
+                UsingPlayerId = game.CurrentTurnPlayer.GamePlayerId
+            }));
         
-        await GameFlowOperations.ShowBoardStateMessageAsync(builder, game);
+        await ShowBoardStateMessageAsync(builder, game);
+        builder.AppendContentNewline("Your Turn".DiscordHeading3());
         builder.AppendContentNewline($"{name}, it is your turn. Choose an action:")
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, produceInteractionId, "Produce Action"),
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, refreshInteractionId, "Refresh Action")
             );
+
+        builder.AppendButtonRows(
+            techActions.Zip(techInteractionIds)
+                .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second)));
+        
         return builder;
     }
 

@@ -43,6 +43,12 @@ public class Game : FirestoreModel
     
     [FirestoreProperty]
     public int ScoringTokenPlayerIndex { get; set; } = 0;
+
+    [FirestoreProperty]
+    public List<string> UniversalTechs { get; set; } = [];
+    
+    [FirestoreProperty]
+    public List<string> MarketTechs { get; set; } = [];
     
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     
@@ -54,5 +60,6 @@ public class Game : FirestoreModel
 
     public GamePlayer? GetGamePlayerByDiscordId(ulong id) => Players.FirstOrDefault(x => x.DiscordUserId == id);
     
-    public BoardHex? GetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
+    public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
+    public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);
 }
