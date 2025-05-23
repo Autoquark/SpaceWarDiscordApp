@@ -137,8 +137,8 @@ public class FixupCommands
     }
 
     [Command("setTechExhausted")]
-    [Description("Exhausts a player's tech")]
-    public static async Task ExhaustTech(CommandContext context,
+    [Description("Exhausts or unexhausts a player's tech")]
+    public static async Task SetTechExhausted(CommandContext context,
         [SlashAutoCompleteProvider<TechIdChoiceProvider>]
         string techId,
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
@@ -168,6 +168,26 @@ public class FixupCommands
         playerTech.IsExhausted = exhausted;
         
         await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
+
+    [Command("setPlanetExhausted")]
+    [Description("Exhausts or unexhausts a planet")]
+    public static async Task SetPlanetExhausted(CommandContext context,
+        [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates coordinates,
+        bool exhausted = true)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var hex = game.GetHexAt(coordinates);
+        if (hex.Planet == null)
+        {
+            await context.RespondAsync($"Invalid coordinates {coordinates}");
+            return;
+        }
+        
+        hex.Planet.IsExhausted = exhausted;
+        
+        await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }
