@@ -98,6 +98,7 @@ static class Program
         RegisterInteractionHandler(new ProduceActionCommands());
         RegisterInteractionHandler(new RefreshCommands());
         RegisterInteractionHandler(new TechCommands());
+        RegisterInteractionHandler(new GameplayCommands());
         
         // Create tech singletons
         foreach (var techType in Assembly.GetExecutingAssembly()

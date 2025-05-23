@@ -1,7 +1,10 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using Microsoft.Extensions.DependencyInjection;
+using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using TransactionExtensions = SpaceWarDiscordApp.Database.TransactionExtensions;
@@ -9,7 +12,7 @@ using TransactionExtensions = SpaceWarDiscordApp.Database.TransactionExtensions;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel]
-public class GameplayCommands
+public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
 {
     [Command("ShowBoard")]
     public static async Task ShowBoardStateCommand(CommandContext context)
@@ -37,5 +40,13 @@ public class GameplayCommands
         await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
 
         await context.RespondAsync(builder);
+    }
+
+    public async Task HandleInteractionAsync(EndTurnInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    {
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
+        await GameFlowOperations.NextTurnAsync(builder, game);
+        await args.Interaction.EditOriginalResponseAsync(builder);
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }

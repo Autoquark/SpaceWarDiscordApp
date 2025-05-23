@@ -135,4 +135,39 @@ public class FixupCommands
         await context.RespondAsync($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}");
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
+
+    [Command("setTechExhausted")]
+    [Description("Exhausts a player's tech")]
+    public static async Task ExhaustTech(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        string techId,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int player = -1,
+        bool exhausted = true)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            await context.RespondAsync("Unknown tech");
+            return;
+        }
+
+        var playerTech = gamePlayer.TryGetPlayerTechById(techId);
+        if (playerTech == null)
+        {
+            await context.RespondAsync("Player does not have that tech");
+            return;
+        }
+        playerTech.IsExhausted = exhausted;
+        
+        await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
 }

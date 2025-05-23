@@ -102,6 +102,13 @@ public static class GameFlowOperations
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
         });
 
+        var endTurnInteractionId = await InteractionsHelper.SetUpInteractionAsync(new EndTurnInteraction
+        {
+            ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
+            Game = game.DocumentId,
+            EditOriginalMessage = false
+        });
+
         var techActions = game.CurrentTurnPlayer.Techs
             .SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, game.CurrentTurnPlayer))
             .ToList();
@@ -135,6 +142,8 @@ public static class GameFlowOperations
                     techActions.Zip(techInteractionIds)
                         .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second)));
         }
+        
+        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn"));
 
         return builder;
     }

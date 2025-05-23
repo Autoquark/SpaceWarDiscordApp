@@ -50,5 +50,6 @@ public class GamePlayer
     public PlayerColourInfo PlayerColourInfo => PlayerColourInfo.Get(PlayerColour);
 
     public PlayerTech GetPlayerTechById(string techId) => Techs.First(x => x.TechId == techId);
+    public PlayerTech? TryGetPlayerTechById(string techId) => Techs.FirstOrDefault(x => x.TechId == techId);
     public T GetPlayerTechById<T>(string techId) where T : PlayerTech => (T)Techs.First(x => x.TechId == techId);
 }
