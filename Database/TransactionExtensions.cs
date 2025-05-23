@@ -19,20 +19,8 @@ public static class TransactionExtensions
 
         foreach (var gamePlayer in game.Players)
         {
-            await gamePlayer.Techs.PopulateAsync(transaction);
+            await gamePlayer.Techs.PopulateAsync(transaction); //TODO: Fetch in parallel?
         }
-        
-        /*game.Players[0].TechsCollection.d
-
-        // Fetch techs for all players in parallel
-        await Task.WhenAll(
-            game.Players.Select(player => transaction.GetSnapshotAsync(player.TechsCollection)
-                .ContinueWith(x =>
-                    {
-                        player.Techs = x.Result.Select(snapshot => snapshot.ConvertToPolymorphic<PlayerTech>())
-                            .ToList();
-                    },
-                    TaskContinuationOptions.OnlyOnRanToCompletion)));*/
         
         return game;
     }

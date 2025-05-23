@@ -31,7 +31,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
 
         var hex = game.GetHexAt(coordinates);
-        if (hex?.Planet == null)
+        if (hex.Planet == null)
         {
             await context.RespondAsync($"Invalid coordinates {coordinates}");
             return;
