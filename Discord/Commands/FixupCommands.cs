@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
+using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
@@ -188,6 +189,30 @@ public class FixupCommands
         hex.Planet.IsExhausted = exhausted;
         
         await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
+
+    [Command("SetPlayerTurn")]
+    [Description("Set which player's turn it is")]
+    public static async Task SetCurrentTurn(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
+        
+        builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)}");
+        await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
+        await context.RespondAsync(builder);
+        
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }
