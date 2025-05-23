@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,6 +6,8 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
@@ -23,9 +26,11 @@ public class FixupCommands
     /// <param name="amount">New amount of forces. Omit to keep existing number</param>
     /// <param name="player">New owner of forces. Omit to keep existing owner</param>
     [Command("setForces")]
+    [Description("Set the number and/or owner of forces on a planet")]
     public static async Task SetForces(CommandContext context,
         [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates coordinates,
-        int amount = -1,
+        [Description("New amount of forces. Omit to keep existing number")] int amount = -1,
+        [Description("New owner of forces. Omit to keep existing owner or you if there's no existing owner")]
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
@@ -63,5 +68,71 @@ public class FixupCommands
         {
             await context.RespondAsync($"Removed all forces from {coordinates}");
         }
+    }
+    
+    [Command("grantTech")]
+    [Description("Grant a tech to a player")]
+    public static async Task GrantTech(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+
+        if (gamePlayer.Techs.Any(x => x.TechId == techId))
+        {
+            await context.RespondAsync("Player already has that tech");
+            return;
+        }
+
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            await context.RespondAsync("Unknown tech");
+            return;
+        }
+        
+        gamePlayer.Techs.Add(tech.CreatePlayerTech(game, gamePlayer));
+        
+        await context.RespondAsync($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
+
+    /// <summary>
+    /// Removes a tech from a player.
+    /// </summary>
+    [Command("removeTech")]
+    public static async Task RemoveTech(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            await context.RespondAsync("Unknown tech");
+            return;
+        }
+
+        var index = gamePlayer.Techs.Items.Index().FirstOrDefault(x => x.Item.TechId == techId, (-1, null!)).Index;
+        if (index == -1)
+        {
+            await context.RespondAsync("Player does not have that tech");
+            return;
+        }
+        gamePlayer.Techs.RemoveAt(index);
+        
+        await context.RespondAsync($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }

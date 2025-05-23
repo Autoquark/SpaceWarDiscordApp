@@ -45,6 +45,12 @@ public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreMod
         return true;
     }
 
+    public void RemoveAt(int index)
+    {
+        _removed.Add(_items[index].DocumentId!);
+        _items.RemoveAt(index);
+    }
+
     public async Task PopulateAsync(Transaction transaction)
     {
         var snapshots = (await transaction.GetAllSnapshotsAsync(_documentList()))

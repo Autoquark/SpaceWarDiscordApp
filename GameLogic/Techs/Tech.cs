@@ -51,7 +51,7 @@ public abstract class Tech
     protected bool HasSimpleAction { get; init; } = false;
 
     /// <summary>
-    /// Gets a discord message string representing the state of this tech for the given game & player
+    /// Gets a discord message string representing the state of this tech for the given game and player
     /// </summary>
     public virtual string GetTechDisplayString(Game game, GamePlayer player)
     {

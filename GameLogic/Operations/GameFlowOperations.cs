@@ -67,6 +67,13 @@ public static class GameFlowOperations
             }
             
             builder.AppendContentNewline(text);
+
+            if (player.Techs.Any())
+            {
+                builder.AppendContentNewline(
+                    string.Join(",", 
+                        player.Techs.Select(x => Tech.TechsById[x.TechId].GetTechDisplayString(game, player))));
+            }
         }
         
         return builder;
