@@ -207,12 +207,58 @@ public class FixupCommands
         }
 
         var builder = new DiscordMessageBuilder().EnableV2Components();
+        var previousPlayer = game.CurrentTurnPlayer;
+        
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         
-        builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)}");
+        builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})");
         await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
         await context.RespondAsync(builder);
         
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
+
+    [Command("SetPlayerScience")]
+    [Description("Set a player's science total")]
+    public static async Task SetPlayerScience(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int science,
+        int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+        
+        var previous = gamePlayer.Science;
+        gamePlayer.Science = science;
+        
+        await context.RespondAsync($"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})");
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+    }
+    
+    [Command("SetPlayerVp")]
+    [Description("Set a player's Victory Points")]
+    public static async Task SetPlayerVictoryPoints(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int vp,
+        int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+        
+        var previous = gamePlayer.VictoryPoints;
+        gamePlayer.VictoryPoints = vp;
+        
+        await context.RespondAsync($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})");
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }
