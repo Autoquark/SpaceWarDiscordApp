@@ -6,4 +6,5 @@ public static class GameConstants
     public const int UniversalTechCount = 3;
     public const int MarketTechCount = 3;
     public const int UniversalTechCost = 2;
+    public const int MaxMarketTechCost = 4;
 }

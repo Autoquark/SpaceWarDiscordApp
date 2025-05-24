@@ -24,18 +24,25 @@ public static class ProduceOperations
 
         builder.AppendContentNewline(
             $"{name} is producing on {hex.Coordinates}. Produced {hex.Planet.Production} forces" + (producedScience ? $" and {hex.Planet.Science} science" : ""));
-        
-        if (hex.Planet.ForcesPresent > GameConstants.MaxForcesPerPlanet)
-        {
-            var loss = hex.Planet.ForcesPresent - GameConstants.MaxForcesPerPlanet;
-            hex.Planet.ForcesPresent = GameConstants.MaxForcesPerPlanet;
-            builder.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space due to exceeding the capacity limit");
-        }
+        CheckPlanetCapacity(builder, hex);
         
         if (producedScience)
         {
             builder.AppendContentNewline($"{name} now has {player.Science} science");
             await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player);
+        }
+
+        return builder;
+    }
+
+    public static TBuilder CheckPlanetCapacity<TBuilder>(TBuilder builder, BoardHex hex)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        if (hex.Planet!.ForcesPresent > GameConstants.MaxForcesPerPlanet)
+        {
+            var loss = hex.Planet.ForcesPresent - GameConstants.MaxForcesPerPlanet;
+            hex.Planet.ForcesPresent = GameConstants.MaxForcesPerPlanet;
+            builder.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space due to exceeding the capacity limit");
         }
 
         return builder;

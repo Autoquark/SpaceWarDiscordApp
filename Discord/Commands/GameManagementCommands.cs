@@ -54,8 +54,7 @@ public static class GameManagementCommands
                 {
                     DiscordUserId = context.User.Id,
                     GamePlayerId = 1,
-                    PlayerColour = PlayerColours[0],
-                    Science = 10
+                    PlayerColour = PlayerColours[0]
                 }
             ],
             GameChannelId = gameChannel.Id,

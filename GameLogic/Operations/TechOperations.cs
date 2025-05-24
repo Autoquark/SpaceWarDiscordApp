@@ -11,8 +11,10 @@ public static class TechOperations
     public static async Task<TBuilder> ShowTechPurchaseButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var availableUniversal = game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList();
-        var availableMarket = game.MarketTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList();
+        var availableUniversal = player.Science >= GameConstants.UniversalTechCost
+            ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() : [];
+        var availableMarket = game.MarketTechs.Where((x, i) => player.TryGetPlayerTechById(x) == null && player.Science >= GetMarketSlotCost(i))
+            .ToList();
 
         if (availableUniversal.Count == 0 && availableMarket.Count == 0)
         {
@@ -34,13 +36,13 @@ public static class TechOperations
             }),
             transaction);
             
-            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket.Select(x => new PurchaseTechInteraction
+            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket.Select((x, i) => new PurchaseTechInteraction
                 {
                     Game = game.DocumentId,
                     TechId = x,
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = true,
-                    Cost = 2 //TODO
+                    Cost = GetMarketSlotCost(i)
                 }),
                 transaction);
 
@@ -92,5 +94,6 @@ public static class TechOperations
         
         return builder;
     }
-    
+
+    public static int GetMarketSlotCost(int slotNumber) => GameConstants.MaxMarketTechCost - slotNumber;
 }

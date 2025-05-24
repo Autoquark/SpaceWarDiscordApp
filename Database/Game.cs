@@ -50,6 +50,9 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public List<string> UniversalTechs { get; set; } = [];
     
+    /// <summary>
+    /// Market techs, with the first being the most expensive.
+    /// </summary>
     [FirestoreProperty]
     public List<string> MarketTechs { get; set; } = [];
     
