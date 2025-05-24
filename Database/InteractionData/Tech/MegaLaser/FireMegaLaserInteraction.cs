@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.InteractionData.MegaLaser;
+namespace SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 
 [FirestoreData]
 public class FireMegaLaserInteraction : InteractionData

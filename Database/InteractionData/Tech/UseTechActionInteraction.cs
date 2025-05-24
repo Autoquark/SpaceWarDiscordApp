@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.Database.InteractionData;
+namespace SpaceWarDiscordApp.Database.InteractionData.Tech;
 
 [FirestoreData]
 public class UseTechActionInteraction : InteractionData

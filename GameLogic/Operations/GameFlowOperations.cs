@@ -3,6 +3,7 @@ using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;

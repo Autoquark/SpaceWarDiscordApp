@@ -2,6 +2,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;

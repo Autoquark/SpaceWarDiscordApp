@@ -45,27 +45,14 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
     public async Task HandleInteractionAsync(ProduceInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var hex = game.GetHexAt(interactionData.Hex);
-        if (hex?.Planet?.IsExhausted != false)
+        if (hex.Planet?.IsExhausted != false)
         {
             throw new Exception();
         }
         
         var builder = new DiscordWebhookBuilder().EnableV2Components();
-        var player = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
-        var name = await player.GetNameAsync(false);
-        
-        hex.Planet.ForcesPresent += hex.Planet.Production;
-        hex.Planet.IsExhausted = true;
-        player.Science += hex.Planet.Science;
-        var producedScience = hex.Planet.Science > 0;
 
-        builder.AppendContentNewline(
-            $"{name} is producing on {hex.Coordinates}. Produced {hex.Planet.Production} forces" + (producedScience ? $" and {hex.Planet.Science} science" : ""));
-        if (producedScience)
-        {
-            builder.AppendContentNewline($"{name} now has {player.Science} science");
-        }
-
+        await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex);
         await GameFlowOperations.MarkActionTakenForTurn(builder, game);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction =>

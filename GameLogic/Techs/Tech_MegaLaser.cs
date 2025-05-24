@@ -1,7 +1,7 @@
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData.MegaLaser;
+using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;

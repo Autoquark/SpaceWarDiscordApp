@@ -1,0 +1,3 @@
+Classes in the operations layer contain reusable game logic that may be called from commands or interaction handlers.
+
+Typically, methods are passed a discord builder and game object and return the builder. They do not interact with the database except perhaps to register interactions. It's up to the command layer to retrieve the game object at the start of the command and save it back at the end.
