@@ -54,20 +54,11 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
     }
 
     [Command("ShowTech")]
-    public async Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId, bool meOnly = true)
+    public async Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
     {
         var builder = new DiscordMessageBuilder().EnableV2Components();
-        if (!Tech.TechsById.TryGetValue(techId, out var tech))
-        {
-            await context.RespondAsync("Unknown tech");
-            return;
-        }
         
-        var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
-            .AppendLine()
-            .AppendLine(tech.Description)
-            .AppendLine(tech.FlavourText.DiscordItalic());
-        builder.AddContainerComponent(new DiscordContainerComponent([new DiscordTextDisplayComponent(text.ToString())]));
+        TechOperations.ShowTechDetails(builder, techId);
         
         await context.RespondAsync(builder);
     }

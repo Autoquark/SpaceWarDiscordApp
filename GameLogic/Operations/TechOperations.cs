@@ -1,3 +1,4 @@
+using System.Text;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
@@ -92,6 +93,26 @@ public static class TechOperations
         
         builder.AppendContentNewline($"{name} purchases {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
         
+        return builder;
+    }
+
+    public static TBuilder ShowTechDetails<TBuilder>(TBuilder builder, string techId) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            builder.AppendContentNewline("Unknown tech");
+            return builder;
+        }
+        
+        var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
+            .AppendLine()
+            .AppendLine(tech.Description);
+        builder.AddContainerComponent(new DiscordContainerComponent(
+            [
+                new DiscordTextDisplayComponent(text.ToString()),
+                new DiscordTextDisplayComponent(tech.FlavourText.DiscordItalic())
+            ]));
+
         return builder;
     }
 

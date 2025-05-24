@@ -159,11 +159,17 @@ public static class GameManagementCommands
         game.Players = game.Players.Shuffled().ToList();
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
-
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
         builder.AppendContentNewline("The game has started.");
+        foreach (var tech in game.UniversalTechs)
+        {
+            TechOperations.ShowTechDetails(builder, tech);
+        }
+        
         await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        
         await context.RespondAsync(builder);
     }
 }
