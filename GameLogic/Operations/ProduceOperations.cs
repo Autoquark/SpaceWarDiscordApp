@@ -35,6 +35,7 @@ public static class ProduceOperations
         if (producedScience)
         {
             builder.AppendContentNewline($"{name} now has {player.Science} science");
+            await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player);
         }
 
         return builder;

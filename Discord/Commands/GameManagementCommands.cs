@@ -161,9 +161,6 @@ public static class GameManagementCommands
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
 
-        await TechOperations.PurchaseTechAsync(builder, game, game.Players.First(x => !x.IsDummyPlayer),
-            game.UniversalTechs[0], 2);
-
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
         builder.AppendContentNewline("The game has started.");

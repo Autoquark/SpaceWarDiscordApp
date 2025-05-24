@@ -75,7 +75,7 @@ public static class GameFlowOperations
             if (player.Techs.Any())
             {
                 builder.AppendContentNewline(
-                    string.Join(",", 
+                    string.Join(", ", 
                         player.Techs.Select(x => Tech.TechsById[x.TechId].GetTechDisplayString(game, player))));
             }
         }
