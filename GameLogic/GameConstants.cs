@@ -3,4 +3,6 @@ namespace SpaceWarDiscordApp.GameLogic;
 public static class GameConstants
 {
     public const int MaxForcesPerPlanet = 6;
+    public const int UniversalTechCount = 3;
+    public const int MarketTechCount = 3;
 }

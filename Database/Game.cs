@@ -45,6 +45,9 @@ public class Game : FirestoreModel
     public int ScoringTokenPlayerIndex { get; set; } = 0;
 
     [FirestoreProperty]
+    public List<string> TechDeck { get; set; } = [];
+
+    [FirestoreProperty]
     public List<string> UniversalTechs { get; set; } = [];
     
     [FirestoreProperty]

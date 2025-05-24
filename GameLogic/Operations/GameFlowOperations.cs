@@ -27,6 +27,9 @@ public static class GameFlowOperations
             .AddFile("board.png", stream)
             .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
 
+        builder.AppendContentNewline("Universal Tech".DiscordHeading3());
+        builder.AppendContentNewline(string.Join(", ", game.UniversalTechs.Select(x => Tech.TechsById[x].DisplayName)));
+        
         builder.AppendContentNewline("Player Info".DiscordHeading3());
         
         List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)

@@ -7,6 +7,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
@@ -144,7 +145,16 @@ public static class GameManagementCommands
         
         MapGenerator.GenerateMap(game);
 
-        game.UniversalTechs = ["warpNodes"];
+        game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
+        game.TechDeck.Shuffle();
+
+        // Select universal techs at random
+        for (var i = 0; i < GameConstants.UniversalTechCount; i++)
+        {
+            var tech = game.TechDeck[0];
+            game.TechDeck.RemoveAt(0);
+            game.UniversalTechs.Add(tech);
+        }
         
         // Shuffle turn order
         game.Players = game.Players.Shuffled().ToList();
