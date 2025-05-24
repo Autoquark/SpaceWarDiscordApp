@@ -1,8 +1,12 @@
+using System.Text;
+using DSharpPlus.Commands;
+using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
@@ -47,5 +51,24 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
 
         builder.AppendContentNewline($"{name} declines to purchase a tech");
         await args.Interaction.EditOriginalResponseAsync(builder);
+    }
+
+    [Command("ShowTech")]
+    public async Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId, bool meOnly = true)
+    {
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            await context.RespondAsync("Unknown tech");
+            return;
+        }
+        
+        var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
+            .AppendLine()
+            .AppendLine(tech.Description)
+            .AppendLine(tech.FlavourText.DiscordItalic());
+        builder.AddContainerComponent(new DiscordContainerComponent([new DiscordTextDisplayComponent(text.ToString())]));
+        
+        await context.RespondAsync(builder);
     }
 }
