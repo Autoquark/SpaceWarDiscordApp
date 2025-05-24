@@ -21,7 +21,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
     {
         var tech = Tech.TechsById[interactionData.TechId];
         var player = game.GetGamePlayerByGameId(interactionData.UsingPlayerId);
-        var builder = new DiscordWebhookBuilder();
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         await tech.UseTechActionAsync(builder, game, player);
 

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -58,7 +59,7 @@ public abstract class Tech
         var result = DisplayName;
         if (player.GetPlayerTechById(Id).IsExhausted)
         {
-            result += " (exhausted)"; //TODO: Emoji
+            result = result.DiscordStrikeThrough(); //TODO: Emoji
         }
         
         return result;
