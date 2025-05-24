@@ -11,6 +11,7 @@ using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using SpaceWarDiscordApp.AI.Services;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Database.InteractionData;
@@ -64,7 +65,16 @@ static class Program
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
 
-        discordBuilder.ConfigureServices(x => x.AddScoped<SpaceWarCommandContextData>());
+        discordBuilder.ConfigureServices(x => 
+        {
+            x.AddScoped<SpaceWarCommandContextData>();
+            x.AddHttpClient();
+            x.AddScoped<OpenRouterService>(serviceProvider =>
+            {
+                var httpClient = serviceProvider.GetRequiredService<HttpClient>();
+                return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
+            });
+        });
         discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
         {
             var assembly = Assembly.GetExecutingAssembly();

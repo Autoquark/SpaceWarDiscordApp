@@ -1,0 +1,181 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "setForces",
+      "description": "Set the number and/or owner of forces on a planet. Used to modify military units on a specific hex coordinate.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "coordinates": {
+            "type": "string",
+            "description": "Hex coordinates in format 'q,r' (e.g., '0,1', '-1,2'). The location of the planet to modify."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "New amount of forces to set on the planet. Must be 0 or greater. Use -1 to keep existing amount."
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID of the new owner. Use -1 to keep existing owner or assign to current user if no owner."
+          }
+        },
+        "required": ["coordinates"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "grantTech",
+      "description": "Grant a technology to a player. Adds a new tech to the player's collection.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "techId": {
+            "type": "string",
+            "description": "Unique identifier of the technology to grant (e.g., 'freeze_dried_forces', 'megaLaser')"
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID to grant the tech to. Use -1 for current user."
+          }
+        },
+        "required": ["techId"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "removeTech",
+      "description": "Remove a technology from a player. Removes the tech from the player's collection.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "techId": {
+            "type": "string",
+            "description": "Unique identifier of the technology to remove"
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID to remove the tech from. Use -1 for current user."
+          }
+        },
+        "required": ["techId"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "setTechExhausted",
+      "description": "Set the exhausted state of a player's technology. Exhausted techs cannot be used until refreshed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "techId": {
+            "type": "string",
+            "description": "Unique identifier of the technology"
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID who owns the tech. Use -1 for current user."
+          },
+          "exhausted": {
+            "type": "boolean",
+            "description": "Whether the tech should be exhausted (true) or unexhausted (false)"
+          }
+        },
+        "required": ["techId"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "setPlanetExhausted",
+      "description": "Set the exhausted state of a planet. Exhausted planets cannot produce until refreshed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "coordinates": {
+            "type": "string",
+            "description": "Hex coordinates in format 'q,r' of the planet to modify"
+          },
+          "exhausted": {
+            "type": "boolean",
+            "description": "Whether the planet should be exhausted (true) or unexhausted (false)"
+          }
+        },
+        "required": ["coordinates"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "setPlayerTurn",
+      "description": "Set which player's turn it currently is. Changes the active player.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "integer",
+            "description": "Game player ID whose turn it should be. Use -1 for current user."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "setPlayerScience",
+      "description": "Set a player's science total. Science is used to purchase technologies.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "science": {
+            "type": "integer",
+            "description": "New science total for the player. Must be 0 or greater."
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID to modify. Use -1 for current user."
+          }
+        },
+        "required": ["science"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "setPlayerVictoryPoints",
+      "description": "Set a player's Victory Points total. Victory Points are used to win the game.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "vp": {
+            "type": "integer",
+            "description": "New Victory Points total for the player. Must be 0 or greater."
+          },
+          "player": {
+            "type": "integer",
+            "description": "Game player ID to modify. Use -1 for current user."
+          }
+        },
+        "required": ["vp"],
+        "additionalProperties": false
+      }
+    }
+  }
+] 

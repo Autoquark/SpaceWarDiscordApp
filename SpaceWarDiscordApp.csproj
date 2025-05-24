@@ -21,6 +21,9 @@
       <None Update="Secrets.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="AI\Tools\FixupToolDefinitions.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
       <None Update="Icons\materials-science.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
