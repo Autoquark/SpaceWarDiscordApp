@@ -1,3 +1,4 @@
+using System.Text;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.GameLogic.Techs;
@@ -20,10 +21,17 @@ public static class DiscordHelpers
     }
 
     public static string DiscordBold(this string message) => $"**{message}**";
+    public static StringBuilder DiscordBold(this StringBuilder message) => new($"**{message}**");
     public static string DiscordItalic(this string message) => $"*{message}*";
+    public static StringBuilder DiscordItalic(this StringBuilder message) => new($"*{message}*");
     public static string DiscordStrikeThrough(this string message) => $"~~{message}~~";
+    public static StringBuilder DiscordStrikeThrough(this StringBuilder message) => new($"~~{message}~~");
     public static string DiscordHeading1(this string message) => $"# {message}";
+    public static StringBuilder DiscordHeading1(this StringBuilder message) => new($"# {message}");
     public static string DiscordHeading2(this string message) => $"## {message}";
+    public static StringBuilder DiscordHeading2(this StringBuilder message) => new($"## {message}");
     public static string DiscordHeading3(this string message) => $"### {message}";
+    public static StringBuilder DiscordHeading3(this StringBuilder message) => new($"### {message}");
     public static string DiscordSubtext(this string message) => $"-# {message}";
+    public static StringBuilder DiscordSubtext(this StringBuilder message) => new($"-# {message}");
 }

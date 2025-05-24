@@ -1,3 +1,4 @@
+using System.Text;
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
@@ -59,7 +60,7 @@ public static class GameFlowOperations
                 parts.Add("[Most Stars]");
             }
 
-            var text = string.Join(" ", parts);
+            var text = new StringBuilder(string.Join(" ", parts));
 
             if (player.IsEliminated)
             {
@@ -70,14 +71,13 @@ public static class GameFlowOperations
                 text = text.DiscordBold();
             }
             
-            builder.AppendContentNewline(text);
-
             if (player.Techs.Any())
             {
-                builder.AppendContentNewline(
-                    string.Join(", ", 
-                        player.Techs.Select(x => Tech.TechsById[x.TechId].GetTechDisplayString(game, player))));
+                text.AppendLine();
+                text.AppendJoin(", ", player.Techs.Select(x => Tech.TechsById[x.TechId].GetTechDisplayString(game, player)));
             }
+            
+            builder.AppendContentNewline(text.ToString());
         }
         
         return builder;
