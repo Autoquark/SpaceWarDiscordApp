@@ -85,20 +85,24 @@ public static class AiCommands
         context.AppendLine();
 
         context.AppendLine("Board:");
-        var planetsWithForces = game.Hexes.Where(h => h.Planet?.ForcesPresent > 0).ToList();
-        if (planetsWithForces.Any())
+
+        foreach (var hex in game.Hexes)
         {
-            foreach (var hex in planetsWithForces)
+            var hexDescription = new StringBuilder($"- {hex.Coordinates}: ");
+            if (hex.Planet != null)
             {
                 var owner = game.TryGetGamePlayerByGameId(hex.Planet!.OwningPlayerId);
-                var ownerName = owner != null ? await owner.GetNameAsync(false) : "Neutral";
-                context.AppendLine($"- {hex.Coordinates}: {hex.Planet.ForcesPresent} forces owned by {ownerName}");
+                //var ownerName = owner != null ? await owner.GetNameAsync(false) : "Neutral";
+                hexDescription.Append($"Planet: Production: {hex.Planet.Production}, Science: {hex.Planet.Science}, Exhausted: {hex.Planet.IsExhausted}, Forces: {hex.Planet.ForcesPresent}, OwnerId: {hex.Planet.OwningPlayerId}");
             }
+            else
+            {
+                hexDescription.Append("No planet");
+            }
+            
+            context.AppendLine(hexDescription.ToString());
         }
-        else
-        {
-            context.AppendLine("- No forces on any planets");
-        }
+
 
         return context.ToString();
     }
