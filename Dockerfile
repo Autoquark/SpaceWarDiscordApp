@@ -1,18 +1,16 @@
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS build
+# Use the .NET 9.0 runtime image for production
+FROM mcr.microsoft.com/dotnet/runtime:9.0-preview AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Use the .NET 9.0 SDK image to build/publish the app
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /src
-COPY ["SpaceWarDiscordApp.csproj", "."]
-RUN dotnet restore "SpaceWarDiscordApp.csproj"
 COPY . .
-WORKDIR "/src"
-RUN dotnet build "SpaceWarDiscordApp.csproj" -c Release -o /app/build
+RUN dotnet restore "./SpaceWarDiscordApp.csproj"
+RUN dotnet publish "./SpaceWarDiscordApp.csproj" -c Release -o /app/publish
 
-FROM build AS publish
-RUN dotnet publish "SpaceWarDiscordApp.csproj" -c Release -o /app/publish
-
+# Prepare final image
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "SpaceWarDiscordApp.dll"]

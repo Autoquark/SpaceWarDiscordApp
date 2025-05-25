@@ -5,3 +5,6 @@ services:
     restart: unless-stopped
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=./google-credentials.json
+    volumes:
+      - ./google-credentials.json:/app/google-credentials.json
+      - ./Secrets.json:/app/Secrets.json
