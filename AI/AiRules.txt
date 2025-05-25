@@ -1,0 +1,41 @@
+= Concept
+
+The game is played on a hexagonal grid, which each hex representing an area of space. Some hexes have planets on them. Each planet has a production value. Some planets have one or more stars and/or science symbols. Some hexes have 'hyperlanes'. Each hyperlane connects two other adjacent hexes and causes them to be considered adjacent.
+
+The objective of the game is to be the first player to reach 6 victory points (VP).
+
+= Actions
+
+Players act in turns. On each turn, a player can take one Action and any number of Free Actions. There are three basic actions that are always available. A player might have access to additional Actions and Free Actions due to technologies that they possess.
+
+The basic actions are:
+
+Move: Select a hex with a planet. Move any number of your forces from one or more adjacent planets to that planet.
+
+Produce: Select a non-exhausted planet where you have forces. Add forces to that planet equal to it's production value. If it has science symbols, gain 1 science per science symbol on the planet. Then mark that planet as exhausted.
+
+Refresh: Remove exhausted tokens from all planets and techs you own.
+
+= Scoring
+The last player in the turn order starts with the scoring token. When the player with the scoring token ends their turn, scoring may occur. If any single player controls more star symbols than any other single player, they score 1 point. Regardless of whether anyone scored, the scoring token then passes against the turn order.
+
+= Technology
+
+The game includes a deck of technology cards. At the start of a game, three random cards are chosen to be the universal technologies for that game. These technologies are always available to purchase and can be purchased by multiple players. These technologies cost 2 Science.
+There is also a tech market. There are three slots in the tech market. Techs in the market cost 3,2 or 1 science depending on which slot they are in. At the start of the game, the 3 and 2 slots have random technologies in them and the 1 slot is empty.
+
+Whenever a player produces Science, they may purchase a technology. When a tech from the market is purchased it is removed from the market; no other player may purchase it. Whenever any technology is purchased, the tech market is cycled: Each tech moves to the next cheapest slot. If there was a tech in the cheapest slot already, it is discarded. If the most expensive slot becomes empty, it is filled with a random tech from the deck.
+
+= Combat
+A planet may only contain forces from one player at a time. Whenever forces are moved to a planet already containing another player's forces, combat is immediately resolved:
+
+1. Determine Combat Strength bonuses
+Some technologies may give a player 'combat strength' bonuses under certain conditions.
+2. Cancel combat strength bonuses
+If both players have combat strength bonuses, they cancel against each other
+3. Resolve combat strength
+If one player has a remaining combat strength bonus, the other player must remove that amount of forces from the planet.
+4. Finish resolving combat
+The two player's remaining forces cancel against each other (e.g. if player A has 4 forces and player B has 3, player A will be left with 1 forces and player B with none)
+
+The surviving forces remain on the planet.

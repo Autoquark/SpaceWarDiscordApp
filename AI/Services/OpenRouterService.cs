@@ -147,7 +147,7 @@ public class OpenRouterService
                 var arguments = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(toolCall.Function.Arguments);
                 if (arguments == null) continue;
 
-                var command = toolCall.Function.Name switch
+                FixupCommandCall? command = toolCall.Function.Name switch
                 {
                     "setForces" => ParseSetForcesCall(arguments),
                     "grantTech" => ParseGrantTechCall(arguments),
