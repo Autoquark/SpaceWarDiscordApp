@@ -7,7 +7,7 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Move;
 /// Fires when the player submits a quantity of forces to move from a specific planet as part of planning a move action
 /// </summary>
 [FirestoreData]
-public class SubmitSpecifyMovementAmountFromPlanetInteraction : InteractionData
+public class SetMovementAmountFromSourceInteraction<T> : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates From { get; set; }

@@ -1,7 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
@@ -40,62 +39,6 @@ public static class MovementOperations
         {
             builder.AppendContentNewline($"{source.Amount} from {source.Source}");
         }
-        return builder;
-    }
-
-    public static async Task<List<ShowSpecifyMovementAmountFromPlanetInteraction>> ShowSpecifyMovementSourceButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, BoardHex destination)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        var sources = BoardUtils.GetStandardMoveSources(game, destination, player);
-        if (sources.Count == 0)
-        {
-            throw new Exception();
-        }
-        
-        var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, choose a planet to move forces from: ");
-        builder.AddActionRowComponent();
-
-        var interactionIds = sources.ToDictionary(x => x,
-            x => new ShowSpecifyMovementAmountFromPlanetInteraction
-            {
-                Game = game.DocumentId,
-                Source = x.Coordinates,
-                ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = true
-            });
-            
-        builder.AppendButtonRows(
-            sources.Select(x => DiscordHelpers.CreateButtonForHex(game, x, interactionIds[x].InteractionId)));
-        
-        return interactionIds.Values.ToList();
-    }
-
-    public static async Task<TBuilder> ShowSpecifyMovementAmountButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, BoardHex source, BoardHex destination)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        builder.AppendContentNewline($"How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
-
-        if (source.Planet == null)
-        {
-            throw new Exception();
-        }
-
-        var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-            => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
-                    new SubmitSpecifyMovementAmountFromPlanetInteraction
-                    {
-                        Amount = x,
-                        From = source.Coordinates,
-                        Game = game.DocumentId,
-                        ForGamePlayerId = player.GamePlayerId,
-                        EditOriginalMessage = true
-                    }, transaction))
-                .ToList());
-
-        builder.AppendButtonRows(Enumerable.Range(0, source.Planet!.ForcesPresent + 1).Select(x =>
-            new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
-
         return builder;
     }
 

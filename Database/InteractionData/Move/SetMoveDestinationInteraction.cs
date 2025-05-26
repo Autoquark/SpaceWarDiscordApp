@@ -7,7 +7,7 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Move;
 /// Fires when a player clicks a button to begin planning a move to a specific destination
 /// </summary>
 [FirestoreData]
-public class BeginPlanningMoveActionInteraction : InteractionData
+public class SetMoveDestinationInteraction<T> : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Destination { get; set; }

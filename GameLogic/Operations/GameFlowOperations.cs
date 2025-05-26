@@ -6,6 +6,7 @@ using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;
 
@@ -88,7 +89,7 @@ public static class GameFlowOperations
     {
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
         
-        var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowMoveOptionsInteraction()
+        var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new BeginPlanningMoveInteraction<MoveActionCommands>()
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
