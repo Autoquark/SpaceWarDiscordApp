@@ -113,9 +113,7 @@ public static class GameFlowOperations
             EditOriginalMessage = false
         });
 
-        var techActions = game.CurrentTurnPlayer.Techs
-            .SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, game.CurrentTurnPlayer))
-            .ToList();
+        var techActions = GetPlayerTechActions(game, game.CurrentTurnPlayer).ToList();
 
         var techInteractionIds = await InteractionsHelper.SetUpInteractionsAsync(
             techActions.Select(x => new UseTechActionInteraction
@@ -133,18 +131,31 @@ public static class GameFlowOperations
 
             .AppendContentNewline("Basic Actions:")
             .AddActionRowComponent(
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action"),
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, produceInteractionId, "Produce Action"),
-                new DiscordButtonComponent(DiscordButtonStyle.Primary, refreshInteractionId, "Refresh Action")
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action", game.ActionTakenThisTurn),
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, produceInteractionId, "Produce Action", game.ActionTakenThisTurn),
+                new DiscordButtonComponent(DiscordButtonStyle.Primary, refreshInteractionId, "Refresh Action", game.ActionTakenThisTurn)
 
             );
 
-        if (techActions.Count > 0)
+        var techMainActions = techActions.Zip(techInteractionIds)
+            .Where(x => x.First.ActionType == ActionType.Main)
+            .ToList();
+        if (techMainActions.Count > 0)
         {
             builder.AppendContentNewline("Tech Actions:")
-                .AppendButtonRows(
-                    techActions.Zip(techInteractionIds)
+                .AppendButtonRows(techMainActions
                         .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second)));
+        }
+
+        var techFreeActions = techActions.Zip(techInteractionIds)
+            .Where(x => x.First.ActionType == ActionType.Free)
+            .ToList();
+
+        if (techFreeActions.Count > 0)
+        {
+            builder.AppendContentNewline("Free Tech Actions:")
+                .AppendButtonRows(techFreeActions
+                        .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second, DiscordButtonStyle.Secondary)));
         }
         
         builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn"));
@@ -156,7 +167,17 @@ public static class GameFlowOperations
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         game.ActionTakenThisTurn = true;
-        await NextTurnAsync(builder, game);
+
+        // If the player could still do something else, return to action selection
+        if (builder != null && GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x.IsAvailable && x.ActionType == ActionType.Free))
+        {
+            await ShowTurnBeginMessageAsync(builder, game);
+        }
+        else
+        {
+            await NextTurnAsync(builder, game);    
+        }
+        
         return builder;
     }
 
@@ -267,4 +288,7 @@ public static class GameFlowOperations
         var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
         builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
+    
+    public static IEnumerable<TechAction> GetPlayerTechActions(Game game, GamePlayer player)
+        => player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, player));
 }

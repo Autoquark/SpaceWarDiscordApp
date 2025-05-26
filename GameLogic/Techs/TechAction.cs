@@ -2,7 +2,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 
 public class TechAction
 {
-    public TechAction(Tech tech)
+    public TechAction(Tech tech, ActionType actionType)
     {
         Tech = tech;
     }
@@ -17,4 +17,6 @@ public class TechAction
     public string Id { get; init; } = "";
     
     public bool IsAvailable { get; init; } = true;
+    
+    public ActionType ActionType { get; init; }
 }

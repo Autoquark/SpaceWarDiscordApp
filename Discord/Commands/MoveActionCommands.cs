@@ -19,7 +19,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
 {
     public async Task HandleInteractionAsync(ShowMoveOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
-        ISet<BoardHex> destinations = new HashSet<BoardHex>();
+        var destinations = new HashSet<BoardHex>();
         foreach (var fromHex in game.Hexes.Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId))
         {
             destinations.UnionWith(BoardUtils.GetNeighbouringHexes(game, fromHex));
@@ -66,7 +66,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
                 Destination = interactionData.Destination
             };
 
-        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
+        var player = game.GetGamePlayerForInteraction(interactionData);
         var sources = BoardUtils.GetStandardMoveSources(game, destination, player);
         var playerName = await player.GetNameAsync(true);
 
@@ -80,11 +80,7 @@ public class MoveActionCommands : IInteractionHandler<ShowMoveOptionsInteraction
         
         if (sources.Count == 1)
         {
-            await Program.FirestoreDb.RunTransactionAsync(transaction =>
-            {
-                transaction.Set(game);
-                return Task.CompletedTask;
-            });
+            await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
             // Only one planet we can move from, skip straight to specifying amount
             await MovementOperations.ShowSpecifyMovementAmountButtonsAsync(messageBuilder, game, player, sources.Single(), destination);
         }

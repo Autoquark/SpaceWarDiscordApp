@@ -51,6 +51,8 @@ public abstract class Tech
     /// </summary>
     protected bool HasSimpleAction { get; init; } = false;
 
+    protected ActionType SimpleActionType { get; init; } = ActionType.Main;
+
     /// <summary>
     /// Gets a discord message string representing the state of this tech for the given game and player
     /// </summary>
@@ -69,7 +71,7 @@ public abstract class Tech
     /// Get all actions associated with this tech
     /// </summary>
     public virtual IEnumerable<TechAction> GetActions(Game game, GamePlayer player) =>
-        HasSimpleAction ? [new TechAction(this) { DisplayName = DisplayName, IsAvailable = !player.GetPlayerTechById(Id).IsExhausted }] : [];
+        HasSimpleAction ? [new TechAction(this, SimpleActionType) { DisplayName = DisplayName, ActionType = SimpleActionType, IsAvailable = !player.GetPlayerTechById(Id).IsExhausted && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free) }] : [];
 
     public virtual Task<TBuilder> UseTechActionAsync<TBuilder>(
         TBuilder builder, Game game, GamePlayer player)
