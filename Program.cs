@@ -117,6 +117,10 @@ static class Program
         {
             var instance = Activator.CreateInstance(techType) as Tech ?? throw new Exception();
             RegisterInteractionHandler(instance);
+            foreach (var handler in instance.AdditionalInteractionHandlers)
+            {
+                RegisterInteractionHandler(handler);
+            }
         }
 
         discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(HandleInteractionCreated));

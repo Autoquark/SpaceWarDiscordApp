@@ -113,15 +113,16 @@ public class MapGenerator
             system.Planet!.OwningPlayerId = game.Players[0].GamePlayerId;
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
             system.Coordinates = new HexCoordinates(-1, -2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[1]);
             system.Coordinates = new HexCoordinates(0, -2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[2]);
             system.Coordinates = new HexCoordinates(1, -3);
             map.Add(system);
             
@@ -131,15 +132,16 @@ public class MapGenerator
             system.Planet!.OwningPlayerId = game.Players[1].GamePlayerId;
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
             system.Coordinates = new HexCoordinates(2, -3);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[1]);
             system.Coordinates = new HexCoordinates(2, -2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[2]);
             system.Coordinates = new HexCoordinates(3, -2);
             map.Add(system);
             
@@ -149,15 +151,16 @@ public class MapGenerator
             system.Planet!.OwningPlayerId = game.Players[2].GamePlayerId;
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
             system.Coordinates = new HexCoordinates(-3, 2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[1]);
             system.Coordinates = new HexCoordinates(-2, 2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[2]);
             system.Coordinates = new HexCoordinates(-2, 3);
             map.Add(system);
             
@@ -167,15 +170,16 @@ public class MapGenerator
             system.Planet!.OwningPlayerId = game.Players[3].GamePlayerId;
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
             system.Coordinates = new HexCoordinates(-1, 3);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[1]);
             system.Coordinates = new HexCoordinates(0, 2);
             map.Add(system);
             
-            system = new BoardHex(OuterSystems.Random());
+            system = new BoardHex(OuterSystems[2]);
             system.Coordinates = new HexCoordinates(1, 2);
             map.Add(system);
             

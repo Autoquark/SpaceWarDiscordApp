@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
@@ -167,6 +168,7 @@ public static class GameFlowOperations
     public static async Task<TBuilder?> MarkActionTakenForTurn<TBuilder>(TBuilder? builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        Debug.Assert(!game.ActionTakenThisTurn);
         game.ActionTakenThisTurn = true;
 
         // If the player could still do something else, return to action selection

@@ -11,6 +11,8 @@ public abstract class Tech
     {
         TechsById = new ReadOnlyDictionary<string, Tech>(_techsById);
     }
+
+    public IEnumerable<object> AdditionalInteractionHandlers { get; init; } = [];
     
     public static IReadOnlyDictionary<string, Tech> TechsById;
 

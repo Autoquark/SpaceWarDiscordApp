@@ -17,8 +17,6 @@ public static class MovementOperations
         }
 
         await ResolveMoveAsync(builder, game, player, plannedMove);
-        
-        await GameFlowOperations.MarkActionTakenForTurn(game.Phase == GamePhase.Finished ? null : builder, game);
     }
 
     /// <summary>

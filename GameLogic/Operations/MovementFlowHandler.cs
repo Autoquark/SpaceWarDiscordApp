@@ -6,6 +6,7 @@ using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -21,13 +22,13 @@ public enum MoveDestinationRestriction
 /// </summary>
 /// <typeparam name="T">Type used to uniquely identify interactions to be handled by this handler.
 /// The type is not otherwise interacted with and can be any type</typeparam>
-public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlanningMoveInteraction<T>>,
+public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanningMoveInteraction<T>>,
     IInteractionHandler<SetMoveDestinationInteraction<T>>,
     IInteractionHandler<AddMoveSourceInteraction<T>>,
     IInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
     IInteractionHandler<PerformPlannedMoveInteraction<T>>
 {
-    protected PlanMovementFlowHandler(string moveName)
+    protected MovementFlowHandler(string moveName)
     {
         MoveName = moveName;
     }
@@ -37,12 +38,16 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
     /// <summary>
     /// Whether movement sources are required to be adjacent to the destination hex.
     /// </summary>
-    protected bool RequireAdjacency { get; } = true;
+    protected bool RequireAdjacency { get; init; } = true;
 
     /// <summary>
     /// Whether forces can be moved from multiple sources at the same time.
     /// </summary>
-    protected bool AllowManyToOne { get; } = true;
+    protected bool AllowManyToOne { get; init; } = true;
+    
+    protected bool MarkActionTaken { get; init; } = true;
+    
+    protected string ExhaustTechId { get; init; }
 
     /// <summary>
     /// Restriction on destination ownership
@@ -55,7 +60,15 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
     public async Task HandleInteractionAsync(BeginPlanningMoveInteraction<T> interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
+        var builder = new DiscordWebhookBuilder().EnableV2Components();
+        await BeginPlanningMoveAsync(builder, game, player);
         
+        await args.Interaction.EditOriginalResponseAsync(builder);
+    }
+
+    public async Task<TBuilder> BeginPlanningMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
         IEnumerable<BoardHex> destinations;
         if (RequireAdjacency)
         {
@@ -80,7 +93,7 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
             case MoveDestinationRestriction.Unrestricted:
                 break;
             case MoveDestinationRestriction.CannotAttack:
-                destinations = destinations.Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId || x.Planet?.IsNeutral == true);
+                destinations = destinations.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId || x.Planet?.IsNeutral == true);
                 break;
             case MoveDestinationRestriction.MustAlreadyControl:
                 destinations = destinations.WhereOwnedBy(player);
@@ -90,9 +103,7 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
         }
         
         var playerName = await player.GetNameAsync(true);
-        var builder = new DiscordWebhookBuilder()
-            .EnableV2Components()
-            .AppendContentNewline($"{MoveName}: {playerName}, you may move to the following hexes: ");
+        builder.AppendContentNewline($"{MoveName}: {playerName}, you may move to the following hexes: ");
 
         destinations = destinations.ToList();
 
@@ -105,9 +116,7 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
                 EditOriginalMessage = true
             }));
         
-        builder.AppendHexButtons(game, destinations, interactionIds);
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return builder.AppendHexButtons(game, destinations, interactionIds);
     }
 
     /// <summary>
@@ -225,8 +234,7 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
         var sources = GetAllowedMoveSources(game, player, destinationHex);
         if ((sources.Count == 1 || !AllowManyToOne) && entry != null)
         {
-            Debug.Assert(entry.Source == sources.First().Coordinates);
-            await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
+            await PerformMoveAsync(builder, game, player);
         }
         else
         {
@@ -255,7 +263,8 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
     public async Task HandleInteractionAsync(PerformPlannedMoveInteraction<T> interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
-        await MovementOperations.PerformPlannedMoveAsync(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
+        await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData));
+        
         await args.Interaction.DeleteOriginalResponseAsync();
         await args.Interaction.CreateFollowupMessageAsync(builder);
     }
@@ -294,6 +303,7 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var sources = RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
+        sources.Remove(destination);
         if (sources.Count == 0)
         {
             throw new Exception();
@@ -316,6 +326,24 @@ public abstract class PlanMovementFlowHandler<T> : IInteractionHandler<BeginPlan
         builder.AppendHexButtons(game, sources, interactions.Select(x => x.InteractionId));
         
         return interactions;
+    }
+
+    protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
+
+        if (!string.IsNullOrEmpty(ExhaustTechId))
+        {
+            player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
+        }
+        
+        if (MarkActionTaken)
+        {
+            await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        }
+        
+        return builder;
     }
     
     private List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
