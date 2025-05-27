@@ -52,7 +52,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Restriction on destination ownership
     /// </summary>
-    protected MoveDestinationRestriction DestinationRestriction { get; } = MoveDestinationRestriction.Unrestricted;
+    protected MoveDestinationRestriction DestinationRestriction { get; init; } = MoveDestinationRestriction.Unrestricted;
     
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination

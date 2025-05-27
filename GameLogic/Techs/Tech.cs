@@ -14,7 +14,7 @@ public abstract class Tech
 
     public IEnumerable<object> AdditionalInteractionHandlers { get; init; } = [];
     
-    public static IReadOnlyDictionary<string, Tech> TechsById;
+    public static readonly IReadOnlyDictionary<string, Tech> TechsById;
 
     private static readonly Dictionary<string, Tech> _techsById = new();
     
@@ -73,7 +73,13 @@ public abstract class Tech
     /// Get all actions associated with this tech
     /// </summary>
     public virtual IEnumerable<TechAction> GetActions(Game game, GamePlayer player) =>
-        HasSimpleAction ? [new TechAction(this, SimpleActionType) { DisplayName = DisplayName, ActionType = SimpleActionType, IsAvailable = !player.GetPlayerTechById(Id).IsExhausted && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free) }] : [];
+        HasSimpleAction ? [new TechAction(this, SimpleActionType)
+            {
+                DisplayName = DisplayName,
+                ActionType = SimpleActionType,
+                IsAvailable = IsSimpleActionAvailable(game, player)
+            }]
+            : [];
 
     public virtual Task<TBuilder> UseTechActionAsync<TBuilder>(
         TBuilder builder, Game game, GamePlayer player)
@@ -86,4 +92,6 @@ public abstract class Tech
         {
             TechId = Id
         };
+    
+    protected virtual bool IsSimpleActionAvailable(Game game, GamePlayer player) => !player.GetPlayerTechById(Id).IsExhausted && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free);
 }

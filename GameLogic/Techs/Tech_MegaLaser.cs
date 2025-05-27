@@ -18,9 +18,16 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         HasSimpleAction = true;
     }
 
+    protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) =>
+        base.IsSimpleActionAvailable(game, player) && game.Hexes
+            .WhereOwnedBy(player)
+            .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
+            .DistinctBy(x => x.Coordinates)
+            .Any(x => x.Planet?.ForcesPresent > 0);
+
     public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
     {
-        var planets = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId)
+        var planets = game.Hexes.WhereOwnedBy(player)
             .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
             .DistinctBy(x => x.Coordinates)
             .Where(x => x.Planet?.ForcesPresent > 0)
