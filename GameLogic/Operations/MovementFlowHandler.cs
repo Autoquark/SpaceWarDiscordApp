@@ -45,9 +45,15 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// </summary>
     protected bool AllowManyToOne { get; init; } = true;
     
+    /// <summary>
+    /// Whether base implementation of PerformMoveAsync should mark action taken for the turn.
+    /// </summary>
     protected bool MarkActionTaken { get; init; } = true;
-    
-    protected string ExhaustTechId { get; init; }
+
+    /// <summary>
+    /// Id of a tech that base implementation of PerformMoveAsync should exhaust.
+    /// </summary>
+    protected string ExhaustTechId { get; init; } = "";
 
     /// <summary>
     /// Restriction on destination ownership
