@@ -166,7 +166,7 @@ public static class GameManagementCommands
             TechOperations.ShowTechDetails(builder, tech);
         }
         
-        await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         

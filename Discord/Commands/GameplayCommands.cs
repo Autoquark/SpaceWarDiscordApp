@@ -37,7 +37,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
-        await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
 
         await context.RespondAsync(builder);
     }

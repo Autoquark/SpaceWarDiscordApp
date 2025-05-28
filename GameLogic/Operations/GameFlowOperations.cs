@@ -85,9 +85,16 @@ public static class GameFlowOperations
         return builder;
     }
 
-    public static async Task<TBuilder> ShowTurnBeginMessageAsync<TBuilder>(TBuilder builder, Game game) 
+    public static async Task<TBuilder> ShowSelectActionMessageAsync<TBuilder>(TBuilder builder, Game game) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        if (game.HavePrintedSelectActionThisInteraction)
+        {
+            return builder;
+        }
+        
+        game.HavePrintedSelectActionThisInteraction = true;
+        
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
         
         var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new BeginPlanningMoveInteraction<MoveActionCommands>()
@@ -128,9 +135,10 @@ public static class GameFlowOperations
             }));
         
         await ShowBoardStateMessageAsync(builder, game);
-        builder.AppendContentNewline("Your Turn".DiscordHeading3())
-            .AppendContentNewline($"{name}, it is your turn. Choose an action:")
-
+        builder.AppendContentNewline("Your Turn".DiscordHeading2())
+            .AppendContentNewline(game.ActionTakenThisTurn ?
+                "You have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
+                : $"{name}, it is your turn. Choose an action:")
             .AppendContentNewline("Basic Actions:")
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action", game.ActionTakenThisTurn),
@@ -165,16 +173,22 @@ public static class GameFlowOperations
         return builder;
     }
     
-    public static async Task<TBuilder?> MarkActionTakenForTurn<TBuilder>(TBuilder? builder, Game game)
+    public static async Task<TBuilder?> OnActionCompleted<TBuilder>(TBuilder? builder, Game game, ActionType actionType)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        Debug.Assert(!game.ActionTakenThisTurn);
-        game.ActionTakenThisTurn = true;
+        if (actionType == ActionType.Main)
+        {
+            Debug.Assert(!game.ActionTakenThisTurn);
+            game.ActionTakenThisTurn = true;
+        }
 
         // If the player could still do something else, return to action selection
-        if (builder != null && GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x.IsAvailable && x.ActionType == ActionType.Free))
+        if (!game.ActionTakenThisTurn || GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x is { IsAvailable: true, ActionType: ActionType.Free }))
         {
-            await ShowTurnBeginMessageAsync(builder, game);
+            if (builder != null)
+            {
+                await ShowSelectActionMessageAsync(builder, game);
+            }
         }
         else
         {
@@ -231,7 +245,7 @@ public static class GameFlowOperations
             return;
         }
         
-        await ShowTurnBeginMessageAsync(builder, game);
+        await ShowSelectActionMessageAsync(builder, game);
     }
 
     /// <summary>

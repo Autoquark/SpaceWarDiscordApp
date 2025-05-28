@@ -212,7 +212,7 @@ public class FixupCommands
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})");
-        await GameFlowOperations.ShowTurnBeginMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
         await context.RespondAsync(builder);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));

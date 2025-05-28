@@ -53,7 +53,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
         var builder = new DiscordWebhookBuilder().EnableV2Components();
 
         await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex);
-        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {

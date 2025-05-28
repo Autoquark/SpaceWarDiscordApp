@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -19,4 +20,14 @@ public class Tech_Teleportation : Tech
 
     public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
         => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player);
+}
+
+public class Teleportation_MovementFlowHandler : MovementFlowHandler<Tech_Teleportation>
+{
+    public Teleportation_MovementFlowHandler() : base("Teleportation")
+    {
+        AllowManyToOne = false;
+        RequireAdjacency = false;
+        ExhaustTechId = Tech_Teleportation.StaticId;
+    }
 }

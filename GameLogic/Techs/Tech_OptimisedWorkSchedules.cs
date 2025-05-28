@@ -51,7 +51,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
         await args.Interaction.EditOriginalResponseAsync(builder);

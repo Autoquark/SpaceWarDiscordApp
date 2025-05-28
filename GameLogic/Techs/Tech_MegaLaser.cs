@@ -61,7 +61,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
 
         builder.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         
-        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         await args.Interaction.EditOriginalResponseAsync(builder);

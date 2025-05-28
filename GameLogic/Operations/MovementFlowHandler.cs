@@ -48,7 +48,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Whether base implementation of PerformMoveAsync should mark action taken for the turn.
     /// </summary>
-    protected bool MarkActionTaken { get; init; } = true;
+    protected ActionType ActionType { get; init; } = ActionType.Main;
 
     /// <summary>
     /// Id of a tech that base implementation of PerformMoveAsync should exhaust.
@@ -344,10 +344,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
         }
         
-        if (MarkActionTaken)
-        {
-            await GameFlowOperations.MarkActionTakenForTurn(builder, game);
-        }
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType);
+        
+        // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
+        // printed the turn message for the new player, this will bail out on printing it again
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
         
         return builder;
     }

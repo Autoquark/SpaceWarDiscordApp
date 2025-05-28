@@ -17,7 +17,7 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
         
         await RefreshOperations.Refresh(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
 
-        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
 
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 

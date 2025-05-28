@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -20,4 +21,14 @@ public class Tech_HyperspaceRailway : Tech
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => 
         base.IsSimpleActionAvailable(game, player) && game.Hexes.WhereOwnedBy(player).Count() > 1;
+}
+
+public class HyperspaceRailway_MovementFlowHandler : MovementFlowHandler<Tech_HyperspaceRailway>
+{
+    public HyperspaceRailway_MovementFlowHandler() : base("Hyperspace Railway")
+    {
+        AllowManyToOne = false;
+        RequireAdjacency = false;
+        DestinationRestriction = MoveDestinationRestriction.MustAlreadyControl;
+    }
 }

@@ -54,7 +54,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         

@@ -125,7 +125,7 @@ public class Tech_WarpNodes : Tech,
         }
         else
         {
-            await GameFlowOperations.MarkActionTakenForTurn(builder, game);
+            await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
         }
         
         await args.Interaction.EditOriginalResponseAsync(builder);
