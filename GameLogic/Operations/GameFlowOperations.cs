@@ -30,8 +30,11 @@ public static class GameFlowOperations
             .AddFile("board.png", stream)
             .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
 
-        builder.AppendContentNewline("Universal Tech".DiscordHeading2());
+        builder.AppendContentNewline($"Universal Tech ({GameConstants.UniversalTechCost})".DiscordHeading2());
         builder.AppendContentNewline(string.Join(", ", game.UniversalTechs.Select(x => Tech.TechsById[x].DisplayName)));
+        
+        builder.AppendContentNewline("Tech Market".DiscordHeading2());
+        builder.AppendContentNewline(string.Join(", ", game.TechMarket.Select((x, i) => (x == null ? "[empty]" : Tech.TechsById[x].DisplayName) + $" ({TechOperations.GetMarketSlotCost(i)})")));
         
         builder.AppendContentNewline("Player Info".DiscordHeading2());
         
@@ -256,7 +259,7 @@ public static class GameFlowOperations
     {
         foreach (var player in game.Players.Where(x => !x.IsEliminated))
         {
-            if (game.Hexes.Any(x => x.Planet?.OwningPlayerId == player.GamePlayerId && x.Planet.ForcesPresent > 0))
+            if (game.Hexes.Any(x => x.Planet?.OwningPlayerId == player.GamePlayerId && x.ForcesPresent > 0))
             {
                 continue;
             }

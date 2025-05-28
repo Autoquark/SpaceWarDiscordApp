@@ -54,7 +54,7 @@ public class Game : FirestoreModel
     /// Market techs, with the first being the most expensive.
     /// </summary>
     [FirestoreProperty]
-    public List<string> MarketTechs { get; set; } = [];
+    public List<string?> TechMarket { get; set; } = [];
     
     [FirestoreProperty]
     public bool ActionTakenThisTurn { get; set; }
@@ -75,4 +75,11 @@ public class Game : FirestoreModel
     
     public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
     public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);
+
+    public string DrawTechFromDeck()
+    {
+        var tech = TechDeck[0];
+        TechDeck.RemoveAt(0);
+        return tech;
+    }
 }

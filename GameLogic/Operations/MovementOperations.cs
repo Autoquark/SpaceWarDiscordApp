@@ -57,7 +57,7 @@ public static class MovementOperations
         {
             var sourceHex = game.GetHexAt(source.Source);
             if (sourceHex.Planet == null
-                || sourceHex.Planet.ForcesPresent < source.Amount
+                || sourceHex.ForcesPresent < source.Amount
                 || sourceHex.Planet.OwningPlayerId != player.GamePlayerId)
             {
                 throw new Exception();
@@ -75,15 +75,15 @@ public static class MovementOperations
 
         // Stage 2: Resolve combat or merging with allied forces
         var totalPreCapacityLimit = totalMoving;
-        if (destinationHex.Planet.OwningPlayerId == player.GamePlayerId || destinationHex.Planet.IsNeutral)
+        if (destinationHex.Planet.OwningPlayerId == player.GamePlayerId || destinationHex.IsNeutral)
         {
-            totalPreCapacityLimit += destinationHex.Planet.ForcesPresent;
+            totalPreCapacityLimit += destinationHex.ForcesPresent;
         }
         else
         {
             var defenderName =
                 await game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId).GetNameAsync(true);
-            var combatLoss = Math.Min(totalMoving, destinationHex.Planet.ForcesPresent);
+            var combatLoss = Math.Min(totalMoving, destinationHex.ForcesPresent);
             totalPreCapacityLimit -= combatLoss;
             destinationHex.Planet.SubtractForces(combatLoss);
 

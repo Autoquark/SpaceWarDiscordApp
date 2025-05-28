@@ -14,7 +14,7 @@ public static class TechOperations
     {
         var availableUniversal = player.Science >= GameConstants.UniversalTechCost
             ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() : [];
-        var availableMarket = game.MarketTechs.Where((x, i) => player.TryGetPlayerTechById(x) == null && player.Science >= GetMarketSlotCost(i))
+        var availableMarket = game.TechMarket.Where((x, i) => x != null && player.TryGetPlayerTechById(x) == null && player.Science >= GetMarketSlotCost(i))
             .ToList();
 
         if (availableUniversal.Count == 0 && availableMarket.Count == 0)
@@ -37,13 +37,15 @@ public static class TechOperations
             }),
             transaction);
             
-            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket.Select((x, i) => new PurchaseTechInteraction
+            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket.Select((techId, i) => (techId, GetMarketSlotCost(i)))
+                    .Where(x => x.techId != null)
+                    .Select(x => new PurchaseTechInteraction
                 {
                     Game = game.DocumentId,
-                    TechId = x,
+                    TechId = x.techId!,
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = true,
-                    Cost = GetMarketSlotCost(i)
+                    Cost = x.Item2
                 }),
                 transaction);
 
@@ -67,7 +69,9 @@ public static class TechOperations
         if (availableMarket.Count > 0)
         {
             builder.AppendContentNewline("Market Techs:".DiscordHeading3());
-            builder.AppendButtonRows(availableMarket.Zip(marketIds).Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, Tech.TechsById[x.First].DisplayName)));
+            builder.AppendButtonRows(availableMarket.Where(x => x != null)
+                .Zip(marketIds)
+                .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, Tech.TechsById[x.First!].DisplayName)));
         }
         
         builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
@@ -91,7 +95,15 @@ public static class TechOperations
         player.Science -= cost;
         player.Techs.Add(tech.CreatePlayerTech(game, player));
         
-        builder.AppendContentNewline($"{name} purchases {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
+        var index = game.TechMarket.IndexOf(techId);
+        if (index != -1)
+        {
+            game.TechMarket[index] = null;
+        }
+
+        builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
+        
+        CycleTechMarket(builder, game);
         
         return builder;
     }
@@ -113,6 +125,27 @@ public static class TechOperations
                 new DiscordTextDisplayComponent(tech.FlavourText.DiscordItalic())
             ]));
 
+        return builder;
+    }
+
+    public static TBuilder CycleTechMarket<TBuilder>(TBuilder builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var addedId = game.DrawTechFromDeck();
+        game.TechMarket.Insert(0, addedId);
+        var added = Tech.TechsById[addedId];
+
+        builder.AppendContentNewline("A new tech has been added to the tech market:");
+        ShowTechDetails(builder, addedId);
+        
+        var removed = game.TechMarket.Last();
+        game.TechMarket.RemoveAt(game.TechMarket.Count - 1);
+        if (removed != null)
+        {
+            var tech = Tech.TechsById[removed];
+            builder.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
+        }
+        
         return builder;
     }
 

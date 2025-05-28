@@ -23,14 +23,14 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
             .WhereOwnedBy(player)
             .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
             .DistinctBy(x => x.Coordinates)
-            .Any(x => x.Planet?.ForcesPresent > 0);
+            .Any(x => x.ForcesPresent > 0);
 
     public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
     {
         var planets = game.Hexes.WhereOwnedBy(player)
             .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
             .DistinctBy(x => x.Coordinates)
-            .Where(x => x.Planet?.ForcesPresent > 0)
+            .Where(x => x.ForcesPresent > 0)
             .ToList();
 
         if (planets.Count == 0)

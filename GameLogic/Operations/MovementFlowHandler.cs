@@ -99,7 +99,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             case MoveDestinationRestriction.Unrestricted:
                 break;
             case MoveDestinationRestriction.CannotAttack:
-                destinations = destinations.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId || x.Planet?.IsNeutral == true);
+                destinations = destinations.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId || x.IsNeutral);
                 break;
             case MoveDestinationRestriction.MustAlreadyControl:
                 destinations = destinations.WhereOwnedBy(player);
@@ -287,7 +287,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-            => Enumerable.Range(0, source.Planet.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
+            => Enumerable.Range(0, source.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
                     new SetMovementAmountFromSourceInteraction<T>
                     {
                         Amount = x,
@@ -298,7 +298,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                     }, transaction))
                 .ToList());
 
-        builder.AppendButtonRows(Enumerable.Range(0, source.Planet!.ForcesPresent + 1).Select(x =>
+        builder.AppendButtonRows(Enumerable.Range(0, source.ForcesPresent + 1).Select(x =>
             new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
 
         return builder;

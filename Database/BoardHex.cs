@@ -38,12 +38,17 @@ public class BoardHex
     [FirestoreProperty]
     public bool HasAsteroids { get; set; } = false;
 
+    public bool IsNeutral => Planet == null || Planet.IsNeutral;
+    
+    public bool AnyForcesPresent => ForcesPresent > 0;
+    public int ForcesPresent => Planet?.ForcesPresent ?? 0;
+    
     /// <summary>
     /// Gets the die emoji that represents the amount and player affiliation of any forces present, or null if no forces
     /// are present.
     /// </summary>
-    public DiscordEmoji? GetDieEmoji(Game game) => Planet?.ForcesPresent > 0
-        ? game.GetGamePlayerByGameId(Planet!.OwningPlayerId).PlayerColourInfo.GetDieEmoji(Planet.ForcesPresent)
+    public DiscordEmoji? GetDieEmoji(Game game) => ForcesPresent > 0
+        ? game.GetGamePlayerByGameId(Planet!.OwningPlayerId).PlayerColourInfo.GetDieEmoji(ForcesPresent)
         : null;
     
     /// <summary>

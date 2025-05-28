@@ -93,7 +93,7 @@ public static class AiCommands
             {
                 var owner = game.TryGetGamePlayerByGameId(hex.Planet!.OwningPlayerId);
                 //var ownerName = owner != null ? await owner.GetNameAsync(false) : "Neutral";
-                hexDescription.Append($"Planet: Production: {hex.Planet.Production}, Science: {hex.Planet.Science}, Exhausted: {hex.Planet.IsExhausted}, Forces: {hex.Planet.ForcesPresent}, OwnerId: {hex.Planet.OwningPlayerId}");
+                hexDescription.Append($"Planet: Production: {hex.Planet.Production}, Science: {hex.Planet.Science}, Exhausted: {hex.Planet.IsExhausted}, Forces: {hex.ForcesPresent}, OwnerId: {hex.Planet.OwningPlayerId}");
             }
             else
             {

@@ -43,7 +43,7 @@ public class FixupCommands
             return;
         }
         
-        var newAmount = amount > -1 ? amount : hex.Planet.ForcesPresent;
+        var newAmount = amount > -1 ? amount : hex.ForcesPresent;
         GamePlayer? newOwner = null;
         
         if (newAmount > 0)
@@ -63,7 +63,7 @@ public class FixupCommands
         
         if (newOwner != null)
         {
-            await context.RespondAsync($"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.Planet.ForcesPresent)}");
+            await context.RespondAsync($"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)}");
         }
         else
         {

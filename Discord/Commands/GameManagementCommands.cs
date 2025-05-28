@@ -150,10 +150,15 @@ public static class GameManagementCommands
         // Select universal techs at random
         for (var i = 0; i < GameConstants.UniversalTechCount; i++)
         {
-            var tech = game.TechDeck[0];
-            game.TechDeck.RemoveAt(0);
-            game.UniversalTechs.Add(tech);
+            game.UniversalTechs.Add(game.DrawTechFromDeck());
         }
+
+        for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
+        {
+            game.TechMarket.Add(game.DrawTechFromDeck());
+        }
+        
+        game.TechMarket.Add(null);
         
         // Shuffle turn order
         game.Players = game.Players.Shuffled().ToList();
@@ -161,9 +166,16 @@ public static class GameManagementCommands
         game.Phase = GamePhase.Play;
         
         builder.AppendContentNewline("The game has started.");
+        builder.AppendContentNewline("Universal Techs:".DiscordHeading2());
         foreach (var tech in game.UniversalTechs)
         {
             TechOperations.ShowTechDetails(builder, tech);
+        }
+        
+        builder.AppendContentNewline("Tech Market:".DiscordHeading2());
+        foreach (var tech in game.TechMarket.Where(x => x != null))
+        {
+            TechOperations.ShowTechDetails(builder, tech!);
         }
         
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);

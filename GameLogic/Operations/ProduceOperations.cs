@@ -38,10 +38,10 @@ public static class ProduceOperations
     public static TBuilder CheckPlanetCapacity<TBuilder>(TBuilder builder, BoardHex hex)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        if (hex.Planet!.ForcesPresent > GameConstants.MaxForcesPerPlanet)
+        if (hex.ForcesPresent > GameConstants.MaxForcesPerPlanet)
         {
-            var loss = hex.Planet.ForcesPresent - GameConstants.MaxForcesPerPlanet;
-            hex.Planet.ForcesPresent = GameConstants.MaxForcesPerPlanet;
+            var loss = hex.ForcesPresent - GameConstants.MaxForcesPerPlanet;
+            hex.Planet!.ForcesPresent = GameConstants.MaxForcesPerPlanet;
             builder.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space due to exceeding the capacity limit");
         }
 
