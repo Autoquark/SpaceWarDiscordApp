@@ -100,7 +100,6 @@ static class Program
         {
             // The default value is true, however it's shown here for clarity
             RegisterDefaultCommandProcessors = true,
-            DebugGuildId = secrets.TestGuildId,
             CommandExecutor = new SpaceWarCommandExecutor()
         });
         
