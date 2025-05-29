@@ -185,6 +185,17 @@ public static class GameFlowOperations
             game.ActionTakenThisTurn = true;
         }
 
+        return await AdvanceTurnOrPromptNextActionAsync(builder, game);
+    }
+
+    public static async Task<TBuilder?> AdvanceTurnOrPromptNextActionAsync<TBuilder>(TBuilder? builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        if (game.IsWaitingForTechPurchaseDecision)
+        {
+            return builder;
+        }
+        
         // If the player could still do something else, return to action selection
         if (!game.ActionTakenThisTurn || GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x is { IsAvailable: true, ActionType: ActionType.Free }))
         {

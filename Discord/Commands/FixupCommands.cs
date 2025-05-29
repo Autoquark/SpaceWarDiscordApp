@@ -221,9 +221,8 @@ public class FixupCommands
     [Command("SetPlayerScience")]
     [Description("Set a player's science total")]
     public static async Task SetPlayerScience(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
         int science,
-        int player = -1)
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);

@@ -50,6 +50,12 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         var name = await player.GetNameAsync(false);
 
         builder.AppendContentNewline($"{name} declines to purchase a tech");
+
+        game.IsWaitingForTechPurchaseDecision = false;
+        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        
         await args.Interaction.EditOriginalResponseAsync(builder);
     }
 

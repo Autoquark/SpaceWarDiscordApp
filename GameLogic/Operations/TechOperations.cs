@@ -76,6 +76,8 @@ public static class TechOperations
         
         builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
 
+        game.IsWaitingForTechPurchaseDecision = true;
+
         return builder;
     }
     
@@ -104,6 +106,10 @@ public static class TechOperations
         builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
         
         CycleTechMarket(builder, game);
+
+        game.IsWaitingForTechPurchaseDecision = false;
+        
+        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game);
         
         return builder;
     }

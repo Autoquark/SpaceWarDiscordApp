@@ -59,6 +59,9 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public bool ActionTakenThisTurn { get; set; }
     
+    [FirestoreProperty]
+    public bool IsWaitingForTechPurchaseDecision { get; set; }
+    
     // Intentionally not saved to Firestore
     public bool HavePrintedSelectActionThisInteraction { get; set; } = false;
     
