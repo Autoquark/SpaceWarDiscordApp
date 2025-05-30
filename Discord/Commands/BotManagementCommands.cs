@@ -18,8 +18,6 @@ public class BotManagementCommands
     [RequireApplicationOwner]
     public static async Task UpdateEmoji(CommandContext context)
     {
-        await context.DeferResponseAsync();
-        
         foreach (var emoji in await context.Client.GetApplicationEmojisAsync())
         {
             await context.Client.DeleteApplicationEmojiAsync(emoji.Id);
@@ -48,8 +46,6 @@ public class BotManagementCommands
     [RequireApplicationOwner]
     public static async Task RegenerateDiceEmoji(CommandContext context)
     {
-        await context.DeferResponseAsync();
-        
         Directory.CreateDirectory(DieEmojiDirectoryPath);
         foreach (var file in Directory.EnumerateFiles(DieEmojiDirectoryPath, "*.png"))
         {
