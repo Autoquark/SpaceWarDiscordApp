@@ -47,12 +47,17 @@ public static class BoardImageGenerator
         Image.Load("Icons/dice-six-faces-five.png"),
         Image.Load("Icons/dice-six-faces-six.png")
     ];
-    
-    private static readonly Font ProductionNumberFont = SystemFonts.CreateFont("Arial", 22);
-    private static readonly Font CoordinatesFont = SystemFonts.CreateFont("Arial", 36);
+
+    private static readonly FontCollection FontCollection = new();
+    private static readonly Font ProductionNumberFont; // = SystemFonts.CreateFont("Arial", 22);
+    private static readonly Font CoordinatesFont; // = SystemFonts.CreateFont("Arial", 36);
 
     static BoardImageGenerator()
     {
+        var family = FontCollection.Add("./Fonts/Arial/Arial.ttf");
+        ProductionNumberFont = family.CreateFont(22);
+        CoordinatesFont = family.CreateFont(36);
+        
         ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
         StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
         

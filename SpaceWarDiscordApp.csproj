@@ -48,9 +48,13 @@
       <None Update="Icons\dice-six-faces-two.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="Fonts\Arial\ARIAL.TTF">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Fonts\Arial\" />
       <Folder Include="Icons\Emoji\" />
     </ItemGroup>
 
