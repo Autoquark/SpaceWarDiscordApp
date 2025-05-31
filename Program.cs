@@ -45,6 +45,11 @@ static class Program
         TaskScheduler.UnobservedTaskException += (sender, args) =>
         {
             Console.WriteLine(args);
+            foreach (var innerException in args.Exception.InnerExceptions)
+            {
+                Console.WriteLine(innerException);
+            }
+            
             Debugger.Break();
         };
         

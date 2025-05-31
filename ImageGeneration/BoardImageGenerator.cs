@@ -37,16 +37,9 @@ public static class BoardImageGenerator
     private const float AsteroidTriangleSideLength = 40;
     
     // Icons
-    private static readonly Image ScienceIcon = Image.Load("Icons/materials-science.png");
-    private static readonly Image StarIcon = Image.Load("Icons/staryu.png");
-    public static readonly IReadOnlyList<Image> ColourlessDieIcons = [
-        Image.Load("Icons/dice-six-faces-one.png"),
-        Image.Load("Icons/dice-six-faces-two.png"),
-        Image.Load("Icons/dice-six-faces-three.png"),
-        Image.Load("Icons/dice-six-faces-four.png"),
-        Image.Load("Icons/dice-six-faces-five.png"),
-        Image.Load("Icons/dice-six-faces-six.png")
-    ];
+    private static readonly Image ScienceIcon;
+    private static readonly Image StarIcon;
+    public static readonly IReadOnlyList<Image> ColourlessDieIcons;
 
     private static readonly FontCollection FontCollection = new();
     private static readonly Font ProductionNumberFont; // = SystemFonts.CreateFont("Arial", 22);
@@ -54,16 +47,36 @@ public static class BoardImageGenerator
 
     static BoardImageGenerator()
     {
-        var family = FontCollection.Add("./Fonts/Arial/Arial.ttf");
-        ProductionNumberFont = family.CreateFont(22);
-        CoordinatesFont = family.CreateFont(36);
-        
-        ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
-        StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
-        
-        foreach (var dieIcon in ColourlessDieIcons)
+        try
         {
-            dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
+            ScienceIcon = Image.Load("Icons/materials-science.png");
+            StarIcon = Image.Load("Icons/staryu.png");
+            
+            ColourlessDieIcons = [
+                Image.Load("Icons/dice-six-faces-one.png"),
+                Image.Load("Icons/dice-six-faces-two.png"),
+                Image.Load("Icons/dice-six-faces-three.png"),
+                Image.Load("Icons/dice-six-faces-four.png"),
+                Image.Load("Icons/dice-six-faces-five.png"),
+                Image.Load("Icons/dice-six-faces-six.png")
+            ];
+            
+            var family = FontCollection.Add("./Fonts/Arial/Arial.ttf");
+            ProductionNumberFont = family.CreateFont(22);
+            CoordinatesFont = family.CreateFont(36);
+        
+            ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
+            StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
+        
+            foreach (var dieIcon in ColourlessDieIcons)
+            {
+                dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
     }
     
