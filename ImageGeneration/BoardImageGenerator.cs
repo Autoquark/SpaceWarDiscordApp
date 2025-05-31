@@ -61,7 +61,7 @@ public static class BoardImageGenerator
                 Image.Load("Icons/dice-six-faces-six.png")
             ];
             
-            var family = FontCollection.Add("./Fonts/Arial/Arial.ttf");
+            var family = FontCollection.Add("Fonts/Arial/Arial.ttf");
             ProductionNumberFont = family.CreateFont(22);
             CoordinatesFont = family.CreateFont(36);
         
