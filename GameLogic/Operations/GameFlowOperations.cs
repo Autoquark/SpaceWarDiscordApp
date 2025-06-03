@@ -65,7 +65,7 @@ public static class GameFlowOperations
                 parts.Add("[Most Stars]");
             }
 
-            var text = new StringBuilder(string.Join(" ", parts));
+            var text = new StringBuilder(string.Join(" | ", parts));
 
             if (player.IsEliminated)
             {
@@ -232,12 +232,7 @@ public static class GameFlowOperations
                 var name = await scoringPlayer.GetNameAsync(true);
                 builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**");
 
-                if (scoringPlayer.VictoryPoints >= 6)
-                {
-                    builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1());
-                    builder?.AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
-                    game.Phase = GamePhase.Finished;
-                }
+                await CheckForVictoryAsync(builder, game);
             }
 
             // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
@@ -260,6 +255,20 @@ public static class GameFlowOperations
         }
         
         await ShowSelectActionMessageAsync(builder, game);
+    }
+
+    public static async Task<TBuilder?> CheckForVictoryAsync<TBuilder>(TBuilder? builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var winner = game.Players.FirstOrDefault(x => x.VictoryPoints == GameConstants.VpToWin);
+        if (winner != null)
+        {
+            var name = await winner.GetNameAsync(true);
+            builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1());
+            builder?.AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
+            game.Phase = GamePhase.Finished;
+        }
+
+        return builder;
     }
 
     /// <summary>

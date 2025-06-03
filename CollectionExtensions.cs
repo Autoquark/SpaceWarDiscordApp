@@ -34,5 +34,7 @@ namespace SpaceWarDiscordApp
         public static IEnumerable<int> Indices(this ICollection collection) => Enumerable.Range(0, collection.Count);
 
         public static IEnumerable<(T item, int index)> ZipWithIndices<T>(this IEnumerable<T> collection) => collection.Select((x, i) => (x, i));
+        
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> enumerable, T item) => enumerable.Where(x => !EqualityComparer<T>.Default.Equals(x, item)); 
     }
 }

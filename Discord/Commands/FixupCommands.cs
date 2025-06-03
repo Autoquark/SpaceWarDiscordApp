@@ -210,6 +210,7 @@ public class FixupCommands
         var previousPlayer = game.CurrentTurnPlayer;
         
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
+        game.ActionTakenThisTurn = false;
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})");
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);

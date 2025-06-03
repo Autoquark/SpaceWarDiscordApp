@@ -25,6 +25,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         
         await tech.UseTechActionAsync(builder, game, player);
 
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         await args.Interaction.EditOriginalResponseAsync(builder);
     }
 

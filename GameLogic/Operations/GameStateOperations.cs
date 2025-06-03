@@ -4,7 +4,9 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public static class GameStateOperations
 {
+    public static int GetPlayerScienceIconsControlled(Game game, GamePlayer player)
+        => game.Hexes.WhereOwnedBy(player).Sum(x => x.Planet!.Science);
+    
     public static int GetPlayerStars(Game game, GamePlayer player)
-        => game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId)
-            .Sum(x => x.Planet!.Stars);
+        => game.Hexes.WhereOwnedBy(player).Sum(x => x.Planet!.Stars);
 }
