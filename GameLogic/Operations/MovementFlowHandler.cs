@@ -109,7 +109,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var playerName = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{MoveName}: {playerName}, you may move to the following hexes: ");
+        builder.AppendContentNewline($"{MoveName}: {playerName}, choose a {"destination".DiscordBold()} for your move: ");
 
         destinations = destinations.ToList();
 
