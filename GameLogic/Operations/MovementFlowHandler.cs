@@ -109,7 +109,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var playerName = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{MoveName}: {playerName}, choose a {"destination".DiscordBold()} for your move: ");
+        builder.AppendContentNewline($"{MoveName}: {playerName}, choose a {"destination".DiscordBold()} for your move: ")
+            .AllowMentions(player);
 
         destinations = destinations.ToList();
 
@@ -145,7 +146,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
         var player = game.GetGamePlayerForInteraction(interactionData);
         var sources = GetAllowedMoveSources(game, player, destination);
-        var playerName = await player.GetNameAsync(true);
 
         if (sources.Count == 0)
         {
@@ -316,7 +316,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{MoveName}: {name}, choose a planet to move forces from: ");
+        builder.AppendContentNewline($"{MoveName}: {name}, choose a planet to move forces from: ")
+            .AllowMentions(player);
         builder.AddActionRowComponent();
 
         var interactions = sources.Select(x => 

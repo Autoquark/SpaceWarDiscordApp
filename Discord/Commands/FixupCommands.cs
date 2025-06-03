@@ -99,7 +99,11 @@ public class FixupCommands
         
         gamePlayer.Techs.Add(tech.CreatePlayerTech(game, gamePlayer));
         
-        await context.RespondAsync($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
+            .AllowMentions(gamePlayer);
+        
+        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 
@@ -133,7 +137,11 @@ public class FixupCommands
         }
         gamePlayer.Techs.RemoveAt(index);
         
-        await context.RespondAsync($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
+            .AllowMentions(gamePlayer);
+        
+        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 
@@ -168,7 +176,11 @@ public class FixupCommands
         }
         playerTech.IsExhausted = exhausted;
         
-        await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
+            .AllowMentions(gamePlayer);
+        
+        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 
@@ -212,7 +224,8 @@ public class FixupCommands
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         game.ActionTakenThisTurn = false;
         
-        builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})");
+        builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
+            .AllowMentions(gamePlayer, previousPlayer);
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
         await context.RespondAsync(builder);
         
@@ -236,7 +249,12 @@ public class FixupCommands
         var previous = gamePlayer.Science;
         gamePlayer.Science = science;
         
-        await context.RespondAsync($"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline(
+                $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
+            .AllowMentions(gamePlayer);
+        
+        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
     
@@ -258,7 +276,11 @@ public class FixupCommands
         var previous = gamePlayer.VictoryPoints;
         gamePlayer.VictoryPoints = vp;
         
-        await context.RespondAsync($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
+            .AllowMentions(gamePlayer);
+        
+        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
     }
 }

@@ -142,6 +142,7 @@ public static class GameFlowOperations
             .AppendContentNewline(game.ActionTakenThisTurn ?
                 "You have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
                 : $"{name}, it is your turn. Choose an action:")
+            .AllowMentions(game.CurrentTurnPlayer)
             .AppendContentNewline("Basic Actions:")
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action", game.ActionTakenThisTurn),
@@ -230,7 +231,8 @@ public static class GameFlowOperations
                 var scoringPlayer = playerScores[0].player;
                 scoringPlayer.VictoryPoints++;
                 var name = await scoringPlayer.GetNameAsync(true);
-                builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**");
+                builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
+                    .AllowMentions(scoringPlayer);
 
                 await CheckForVictoryAsync(builder, game);
             }
@@ -263,8 +265,9 @@ public static class GameFlowOperations
         if (winner != null)
         {
             var name = await winner.GetNameAsync(true);
-            builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1());
-            builder?.AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
+            builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1())
+                .AllowMentions(winner)
+                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
             game.Phase = GamePhase.Finished;
         }
 
@@ -287,7 +290,8 @@ public static class GameFlowOperations
             player.IsEliminated = true;
             
             var name = await player.GetNameAsync(true);
-            builder.AppendContentNewline($"{name} has been eliminated!".DiscordBold());
+            builder.AppendContentNewline($"{name} has been eliminated!".DiscordBold())
+                .AllowMentions(player);
 
             if (game.ScoringTokenPlayer == player)
             {
@@ -298,13 +302,15 @@ public static class GameFlowOperations
         var remainingPlayers = game.Players.Count(x => !x.IsEliminated); 
         if (remainingPlayers == 1)
         {
-            var name = await game.Players.First(x => !x.IsEliminated).GetNameAsync(true);
-            builder.AppendContentNewline($"{name} wins the game through glorious violence by being the last one standing!".DiscordBold());
+            var winner = game.Players.First(x => !x.IsEliminated);
+            builder.AppendContentNewline($"{await winner.GetNameAsync(true)} wins the game through glorious violence by being the last one standing!".DiscordBold())
+                .AllowMentions(winner);
             game.Phase = GamePhase.Finished;
         }
         else if (remainingPlayers == 0)
         {
-            builder.AppendContentNewline("It would appear that you have all wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold());
+            builder.AppendContentNewline("It would appear that @everyone has wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold())
+                .AddMention(EveryoneMention.All);
             game.Phase = GamePhase.Finished;
         }
     }

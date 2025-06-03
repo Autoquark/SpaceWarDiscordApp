@@ -23,7 +23,8 @@ public static class TechOperations
         }
         
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, you may purchase a tech:");
+        builder.AppendContentNewline($"{name}, you may purchase a tech:")
+            .AllowMentions(player);
 
         var (universalIds, marketIds, declineId) = await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {

@@ -81,13 +81,14 @@ public static class MovementOperations
         }
         else
         {
-            var defenderName =
-                await game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId).GetNameAsync(true);
+            var defender = game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId);
+            var defenderName = await defender.GetNameAsync(true);
             var combatLoss = Math.Min(totalMoving, destinationHex.ForcesPresent);
             totalPreCapacityLimit -= combatLoss;
             destinationHex.Planet.SubtractForces(combatLoss);
 
-            builder.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat");
+            builder.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat")
+                .AllowMentions(player, defender);
         }
 
         // Stage 3: Apply planet capacity limit

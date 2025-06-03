@@ -49,4 +49,23 @@ public static class MessageBuilderExtensions
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
         => builder.AppendButtonRows(hexes.Zip(interactionIds)
             .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
+
+    /// <summary>
+    /// Allows mentioning the given player(s) in this message (does nothing for dummy players)
+    /// </summary>
+    public static TBuilder AllowMentions<TBuilder>(this TBuilder builder, GamePlayer first, params IEnumerable<GamePlayer> players)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        players = players.Append(first);
+        foreach (var player in players.Where(x => !x.IsDummyPlayer))
+        {
+            if (builder.Mentions.OfType<UserMention>().Any(x => x.Id == player.DiscordUserId))
+            {
+                continue;
+            }
+            builder.AddMention(new UserMention(player.DiscordUserId));
+        }
+
+        return builder;
+    }
 }

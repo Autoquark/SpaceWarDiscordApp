@@ -35,7 +35,8 @@ public class Tech_WarpNodes : Tech,
         playerTech.MovedTo = [];
         
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, choose a hex to move from:");
+        builder.AppendContentNewline($"{name}, choose a hex to move from:")
+            .AllowMentions(player);
         
         var sources = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId && x.Planet.ForcesPresent > 0)
             .ToList();
@@ -91,6 +92,7 @@ public class Tech_WarpNodes : Tech,
         
         var builder = new DiscordWebhookBuilder()
             .AppendContentNewline($"{name}, choose amount of forces to move:")
+            .AllowMentions(player)
             .AppendButtonRows(interactionIds.ZipWithIndices().Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.item, x.index.ToString())));
         
         await args.Interaction.EditOriginalResponseAsync(builder);
@@ -154,6 +156,7 @@ public class Tech_WarpNodes : Tech,
             }));
 
         return builder.AppendContentNewline($"{name}, choose a planet to move to:")
+            .AllowMentions(player)
             .AppendHexButtons(game, destinations, interactionIds)
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Success, 
