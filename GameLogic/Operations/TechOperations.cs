@@ -33,7 +33,7 @@ public static class TechOperations
                 Game = game.DocumentId,
                 TechId = x,
                 ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = true,
+                EditOriginalMessage = false,
                 Cost = GameConstants.UniversalTechCost
             }),
             transaction);
@@ -45,7 +45,7 @@ public static class TechOperations
                     Game = game.DocumentId,
                     TechId = x.techId!,
                     ForGamePlayerId = player.GamePlayerId,
-                    EditOriginalMessage = true,
+                    EditOriginalMessage = false,
                     Cost = x.Item2
                 }),
                 transaction);
@@ -54,7 +54,7 @@ public static class TechOperations
             {
                 Game = game.DocumentId,
                 ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = true
+                EditOriginalMessage = false
             },
             transaction);
             
