@@ -8,6 +8,10 @@ namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 public class TechIdChoiceProvider : IAutoCompleteProvider
 {
     public ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
-        => ValueTask.FromResult(Tech.TechsById.Select(x =>
-            new DiscordAutoCompleteChoice(x.Value.DisplayName, x.Key.ToString())));
+    {
+        var prefix = context.UserInput ?? "";
+        return ValueTask.FromResult(Tech.TechsById.OrderBy(x => x.Value.DisplayName)
+            .Where(x => x.Value.DisplayName.StartsWith(prefix))
+            .Select(x => new DiscordAutoCompleteChoice(x.Value.DisplayName, x.Key.ToString())));
+    }
 }

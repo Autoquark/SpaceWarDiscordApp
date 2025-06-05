@@ -16,6 +16,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         "A primitive civilisation like theirs will probably appreciate these thousand ton containers of miscellaneous industrial refuse!")
     {
         HasSimpleAction = true;
+        SimpleActionType = ActionType.Free;
     }
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();

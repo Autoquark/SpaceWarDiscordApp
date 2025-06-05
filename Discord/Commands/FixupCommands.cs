@@ -261,8 +261,8 @@ public class FixupCommands
     [Command("SetPlayerVp")]
     [Description("Set a player's Victory Points")]
     public static async Task SetPlayerVictoryPoints(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
         int vp,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;

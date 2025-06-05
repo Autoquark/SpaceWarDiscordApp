@@ -15,8 +15,15 @@ public class GamePlayerIdChoiceProvider : IAutoCompleteProvider
         {
             return [];
         }
+
+        var prefix = context.UserInput ?? "";
+
+        var playersWithNames = await Task.WhenAll(
+            game.Players.Select(async player => (player, name: await player.GetNameAsync(false, false)))
+        );
         
-        return await Task.WhenAll(game.Players.Select(async x =>
-            new DiscordAutoCompleteChoice(await x.GetNameAsync(false, false), x.GamePlayerId)));
+        return playersWithNames.OrderBy(x => x.name)
+            .Where(x => x.name.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
+            .Select(x => new DiscordAutoCompleteChoice(x.name, x.player.GamePlayerId.ToString()));
     }
 }
