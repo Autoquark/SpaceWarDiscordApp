@@ -23,7 +23,7 @@ public static class GamePlayerExtensions
         }
 
         return includeDieEmoji ? 
-            $"{name} {player.PlayerColourInfo.GetDieEmoji(6)}"
+            $"{name} {player.PlayerColourInfo.BlankDieEmoji}"
             : name;
     }
 }

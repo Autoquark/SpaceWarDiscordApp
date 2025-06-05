@@ -54,13 +54,17 @@ public class BotManagementCommands
         
         foreach (var playerColour in Enum.GetValues<PlayerColour>().Select(PlayerColourInfo.Get))
         {
+            var recolorBrush = new RecolorBrush(Color.White, playerColour.ImageSharpColor, 0.5f);
             foreach (var (image, i) in BoardImageGenerator.ColourlessDieIcons.ZipWithIndices())
             {
-                var recolorBrush = new RecolorBrush(Color.White, playerColour.ImageSharpColor, 0.5f);
                 using var dieImage = image.Clone(x => x.Fill(recolorBrush));
                 await using var fileStream = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_{i + 1}.png"), FileMode.Create);
                 await dieImage.SaveAsPngAsync(fileStream);
             }
+            
+            using var blankImage = BoardImageGenerator.BlankDieIcon.Clone(x => x.Fill(recolorBrush));
+            await using var fileStream2 = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_blank.png"), FileMode.Create);
+            await blankImage.SaveAsPngAsync(fileStream2);
         }
         
         await context.RespondAsync("Emojis regenerated!");

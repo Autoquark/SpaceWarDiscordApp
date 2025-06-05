@@ -51,6 +51,9 @@
       <None Update="Fonts\Arial\ARIAL.TTF">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="Icons\dice-six-faces-blank.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>

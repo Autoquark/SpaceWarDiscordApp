@@ -40,6 +40,7 @@ public static class BoardImageGenerator
     private static readonly Image ScienceIcon;
     private static readonly Image StarIcon;
     public static readonly IReadOnlyList<Image> ColourlessDieIcons;
+    public static readonly Image BlankDieIcon;
 
     private static readonly FontCollection FontCollection = new();
     private static readonly Font ProductionNumberFont; // = SystemFonts.CreateFont("Arial", 22);
@@ -60,6 +61,8 @@ public static class BoardImageGenerator
                 Image.Load("Icons/dice-six-faces-five.png"),
                 Image.Load("Icons/dice-six-faces-six.png")
             ];
+            
+            BlankDieIcon = Image.Load("Icons/dice-six-faces-blank.png");
             
             var family = FontCollection.Add("Fonts/Arial/ARIAL.TTF");
             ProductionNumberFont = family.CreateFont(22);

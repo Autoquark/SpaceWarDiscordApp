@@ -89,5 +89,7 @@ public class PlayerColourInfo
     public required string Name { get; init; }
     public required PlayerColour PlayerColour { get; init; }
     public required Color ImageSharpColor { get; init; }
+    
+    public DiscordEmoji BlankDieEmoji => Program.AppEmojisByName[$"{Name}_blank"];
     public DiscordEmoji GetDieEmoji(int number) => Program.AppEmojisByName[$"{Name}_{number}"];
 }
