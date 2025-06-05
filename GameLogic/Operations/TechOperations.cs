@@ -115,7 +115,7 @@ public static class TechOperations
 
         builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
         
-        CycleTechMarket(builder, game);
+        await CycleTechMarket(builder, game);
 
         game.IsWaitingForTechPurchaseDecision = false;
         
@@ -144,7 +144,7 @@ public static class TechOperations
         return builder;
     }
 
-    public static TBuilder CycleTechMarket<TBuilder>(TBuilder builder, Game game)
+    public static async Task<TBuilder> CycleTechMarket<TBuilder>(TBuilder builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var addedId = game.DrawTechFromDeck();
@@ -161,8 +161,35 @@ public static class TechOperations
             var tech = Tech.TechsById[removed];
             builder.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
         }
+
+        await UpdatePinnedTechMessage(game);
         
         return builder;
+    }
+
+    public static async Task UpdatePinnedTechMessage(Game game)
+    {
+        var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
+        var message = game.PinnedTechMessageId == 0
+            ? await gameChannel.SendMessageAsync(x => x.EnableV2Components().AppendContentNewline("Watch this space!"))
+            : await gameChannel.GetMessageAsync(game.PinnedTechMessageId);
+
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline("This pinned message will always be updated with descriptions of all the techs currently relevant to this game");
+        var allTechs = game.UniversalTechs
+            .Concat(game.TechMarket.Where(x => x != null))
+            .Concat(game.Players.SelectMany(x => x.Techs.Select(y => y.TechId)))
+            .Distinct()!
+            .ToList<string>();
+
+        foreach (var tech in allTechs)
+        {
+            ShowTechDetails(builder, tech);
+        }
+        
+        await message.ModifyAsync(builder);
+        await message.PinAsync();
+        game.PinnedTechMessageId = message.Id;
     }
 
     public static int GetMarketSlotCost(int slotNumber) => GameConstants.MaxMarketTechCost - slotNumber;

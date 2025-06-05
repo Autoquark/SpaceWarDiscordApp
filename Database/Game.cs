@@ -31,6 +31,9 @@ public class Game : FirestoreModel
 
     [FirestoreProperty]
     public ulong GameChannelId { get; set; } = 0;
+
+    [FirestoreProperty]
+    public ulong PinnedTechMessageId { get; set; } = 0;
     
     [FirestoreProperty]
     public List<BoardHex> Hexes { get; set; } = [];
