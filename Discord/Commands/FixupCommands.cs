@@ -223,6 +223,7 @@ public class FixupCommands
         
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         game.ActionTakenThisTurn = false;
+        game.IsWaitingForTechPurchaseDecision = false;
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .AllowMentions(gamePlayer, previousPlayer);
