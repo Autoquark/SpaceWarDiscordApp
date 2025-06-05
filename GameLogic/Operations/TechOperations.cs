@@ -14,8 +14,11 @@ public static class TechOperations
     {
         var availableUniversal = player.Science >= GameConstants.UniversalTechCost
             ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() : [];
-        var availableMarket = game.TechMarket.Where((x, i) => x != null && player.TryGetPlayerTechById(x) == null && player.Science >= GetMarketSlotCost(i))
-            .ToList();
+        
+        var availableMarket = game.TechMarket.Select(x => (techId: x, cost: GetMarketSlotCost(game.TechMarket.IndexOf(x))))
+            .Where(x => x.techId != null && player.TryGetPlayerTechById(x.techId) == null && player.Science >= x.cost)!
+            // Assert that techId is not null, because it's checked above
+            .ToList<(string techId, int cost)>();
 
         if (availableUniversal.Count == 0 && availableMarket.Count == 0)
         {
@@ -38,15 +41,14 @@ public static class TechOperations
             }),
             transaction);
             
-            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket.Select((techId, i) => (techId, GetMarketSlotCost(i)))
-                    .Where(x => x.techId != null)
+            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket
                     .Select(x => new PurchaseTechInteraction
                 {
                     Game = game.DocumentId,
-                    TechId = x.techId!,
+                    TechId = x.techId,
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = false,
-                    Cost = x.Item2
+                    Cost = x.cost
                 }),
                 transaction);
 
@@ -64,15 +66,22 @@ public static class TechOperations
         if (availableUniversal.Count > 0)
         {
             builder.AppendContentNewline("Universal Techs:".DiscordHeading3());
-            builder.AppendButtonRows(availableUniversal.Zip(universalIds).Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, Tech.TechsById[x.First].DisplayName)));
+            builder.AppendButtonRows(availableUniversal.Zip(universalIds)
+                .Select(x => new DiscordButtonComponent(
+                    DiscordButtonStyle.Primary,
+                    x.Second,
+                    $"{Tech.TechsById[x.First].DisplayName} ({GameConstants.UniversalTechCost})")));
         }
 
         if (availableMarket.Count > 0)
         {
             builder.AppendContentNewline("Market Techs:".DiscordHeading3());
-            builder.AppendButtonRows(availableMarket.Where(x => x != null)
-                .Zip(marketIds)
-                .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, Tech.TechsById[x.First!].DisplayName)));
+            builder.AppendButtonRows(availableMarket
+                .Zip(marketIds, (x, y) => (x.techId, x.cost, interactionId: y))
+                .Select(x => new DiscordButtonComponent(
+                    DiscordButtonStyle.Primary,
+                    x.interactionId,
+                    $"{Tech.TechsById[x.techId].DisplayName} ({x.cost})")));
         }
         
         builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
@@ -91,7 +100,7 @@ public static class TechOperations
 
         if (player.Science < cost)
         {
-            throw new Exception();
+            return builder.AppendContentNewline($"{name} does not have enough science to purchase {tech.DisplayName}!");
         }
 
         var originalScience = player.Science;
