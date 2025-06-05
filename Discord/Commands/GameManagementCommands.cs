@@ -184,4 +184,18 @@ public static class GameManagementCommands
         
         await context.RespondAsync(builder);
     }
+
+    [Command("Credits")]
+    [Description("Who is to blame for this?")]
+    public static async Task CreditsCommand(CommandContext context)
+    {
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline("Bot & game design by @Autoquark.");
+        builder.AppendContentNewline("Image Credits".DiscordHeading3());
+        builder.AppendContentNewline("Die icons by [Delapouite](https://delapouite.com/)");
+        builder.AppendContentNewline("Science & star icons by [Lorc](https://lorcblog.blogspot.com/)");
+        builder.AppendContentNewline("Other".DiscordHeading3());
+        builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, to everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
+        await context.RespondAsync(builder);
+    }
 }
