@@ -271,6 +271,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
         await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData));
         
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        
         await args.Interaction.DeleteOriginalResponseAsync();
         await args.Interaction.CreateFollowupMessageAsync(builder);
     }
