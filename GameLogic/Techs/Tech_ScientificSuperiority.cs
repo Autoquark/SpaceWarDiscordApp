@@ -24,7 +24,7 @@ public class Tech_ScientificSuperiority : Tech
         player.VictoryPoints++;
         player.GetPlayerTechById(Id).IsExhausted = true;
         await GameFlowOperations.CheckForVictoryAsync(builder, game);
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
 
         return builder;
     }

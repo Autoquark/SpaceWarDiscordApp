@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
@@ -177,7 +178,7 @@ public static class GameFlowOperations
         return builder;
     }
     
-    public static async Task<TBuilder?> OnActionCompleted<TBuilder>(TBuilder? builder, Game game, ActionType actionType)
+    public static async Task<TBuilder?> OnActionCompletedAsync<TBuilder>(TBuilder? builder, Game game, ActionType actionType)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (actionType == ActionType.Main)

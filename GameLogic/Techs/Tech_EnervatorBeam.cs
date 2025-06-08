@@ -51,7 +51,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         

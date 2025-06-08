@@ -347,7 +347,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
         }
         
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType);
         
         // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
         // printed the turn message for the new player, this will bail out on printing it again

@@ -29,7 +29,7 @@ public class Tech_MassRecruitment : Tech
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
 
         return builder;
     }

@@ -42,7 +42,7 @@ public static class ProduceOperations
         {
             var loss = hex.ForcesPresent - GameConstants.MaxForcesPerPlanet;
             hex.Planet!.ForcesPresent = GameConstants.MaxForcesPerPlanet;
-            builder.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space due to exceeding the capacity limit");
+            builder.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space from {hex.Coordinates} due to exceeding the capacity limit");
         }
 
         return builder;

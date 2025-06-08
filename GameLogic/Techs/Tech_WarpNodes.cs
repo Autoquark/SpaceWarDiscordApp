@@ -127,7 +127,7 @@ public class Tech_WarpNodes : Tech,
         }
         else
         {
-            await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Main);
+            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
         }
         
         await args.Interaction.EditOriginalResponseAsync(builder);

@@ -66,7 +66,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         var builder = new DiscordWebhookBuilder().EnableV2Components();
         builder.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 

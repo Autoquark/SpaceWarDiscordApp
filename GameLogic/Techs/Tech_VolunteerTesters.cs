@@ -82,7 +82,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
 
         await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player);
         
-        await GameFlowOperations.OnActionCompleted(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
