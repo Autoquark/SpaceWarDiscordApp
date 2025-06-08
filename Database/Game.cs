@@ -49,6 +49,9 @@ public class Game : FirestoreModel
 
     [FirestoreProperty]
     public List<string> TechDeck { get; set; } = [];
+    
+    [FirestoreProperty]
+    public List<string> TechDiscards { get; set; } = [];
 
     [FirestoreProperty]
     public List<string> UniversalTechs { get; set; } = [];
@@ -81,11 +84,4 @@ public class Game : FirestoreModel
     
     public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
     public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);
-
-    public string DrawTechFromDeck()
-    {
-        var tech = TechDeck[0];
-        TechDeck.RemoveAt(0);
-        return tech;
-    }
 }

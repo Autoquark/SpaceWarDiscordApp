@@ -151,12 +151,12 @@ public static class GameManagementCommands
         // Select universal techs at random
         for (var i = 0; i < GameConstants.UniversalTechCount; i++)
         {
-            game.UniversalTechs.Add(game.DrawTechFromDeck());
+            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game).Id);
         }
 
         for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
         {
-            game.TechMarket.Add(game.DrawTechFromDeck());
+            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game).Id);
         }
         
         game.TechMarket.Add(null);

@@ -281,7 +281,74 @@ public class FixupCommands
         builder.AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
             .AllowMentions(gamePlayer);
         
-        await context.RespondAsync(builder);
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        await context.RespondAsync(builder);
+    }
+
+    [Command("ShuffleTechDeck")]
+    [Description("Shuffle the tech deck. Useful if you've just had to inspect or edit it")]
+    public static async Task ShuffleTechDeck(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        game.TechDeck.Shuffle();
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        await context.RespondAsync("Shuffled the tech deck");
+    }
+
+    [Command("AddTechToDeck")]
+    [Description("Add a tech to the tech deck")]
+    public static async Task AddTechToDeck(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
+        bool allowDuplicate = false)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var techName = Tech.TechsById[techId].DisplayName;
+        
+        if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
+        {
+            await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
+            return;
+        }
+        
+        game.TechDeck.Insert(0, techId);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        await context.RespondAsync($"Put {techName} on top of the tech deck. You may now want to shuffle the deck (/shuffle_tech_deck)");
+    }
+
+    [Command("AddTechToDiscards")]
+    [Description("Add a tech to the tech discards")]
+    public static async Task AddTechToDiscards(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        string techId,
+        bool allowDuplicate = false)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var techName = Tech.TechsById[techId].DisplayName;
+        
+        if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
+        {
+            await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
+            return;
+        }
+        
+        game.TechDiscards.Insert(0, techId);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        await context.RespondAsync($"Put {techName} into the tech discards");
+    }
+
+    [Command("CycleTechMarket")]
+    [Description("Cycle the tech market as if a tech had been purchased")]
+    public static async Task CycleTechMarket(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        await TechOperations.CycleTechMarketAsync(builder, game);
+        
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        await context.RespondAsync(builder);
     }
 }

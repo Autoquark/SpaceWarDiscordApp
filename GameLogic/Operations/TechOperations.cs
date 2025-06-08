@@ -115,7 +115,7 @@ public static class TechOperations
 
         builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
         
-        await CycleTechMarket(builder, game);
+        await CycleTechMarketAsync(builder, game);
 
         game.IsWaitingForTechPurchaseDecision = false;
         
@@ -144,20 +144,21 @@ public static class TechOperations
         return builder;
     }
 
-    public static async Task<TBuilder> CycleTechMarket<TBuilder>(TBuilder builder, Game game)
+    public static async Task<TBuilder> CycleTechMarketAsync<TBuilder>(TBuilder builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var addedId = game.DrawTechFromDeck();
-        game.TechMarket.Insert(0, addedId);
-        var added = Tech.TechsById[addedId];
+        var added = DrawTechFromDeck(builder, game);
+        game.TechMarket.Insert(0, added.Id);
 
+        builder.AppendContentNewline("The tech market has been cycled.");
         builder.AppendContentNewline("A new tech has been added to the tech market:");
-        ShowTechDetails(builder, addedId);
+        ShowTechDetails(builder, added.Id);
         
         var removed = game.TechMarket.Last();
         game.TechMarket.RemoveAt(game.TechMarket.Count - 1);
         if (removed != null)
         {
+            game.TechDiscards.Add(removed);
             var tech = Tech.TechsById[removed];
             builder.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
         }
@@ -190,6 +191,22 @@ public static class TechOperations
         await message.ModifyAsync(builder);
         await message.PinAsync();
         game.PinnedTechMessageId = message.Id;
+    }
+
+    public static Tech DrawTechFromDeckSilent(Game game) => DrawTechFromDeck<DiscordMessageBuilder>(null, game);
+
+    public static Tech DrawTechFromDeck<TBuilder>(TBuilder? builder, Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        if (game.TechDeck.Count == 0)
+        {
+            game.TechDeck.AddRange(game.TechDiscards.Shuffled());
+            game.TechDiscards.Clear();
+            builder?.AppendContentNewline("The tech discards have been shuffled to form a new tech deck");
+        }
+        var tech = game.TechDeck[0];
+        game.TechDeck.RemoveAt(0);
+        return Tech.TechsById[tech];
     }
 
     public static int GetMarketSlotCost(int slotNumber) => GameConstants.MaxMarketTechCost - slotNumber;

@@ -1,12 +1,15 @@
+using System.ComponentModel;
 using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
+using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
@@ -66,6 +69,79 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         var builder = new DiscordMessageBuilder().EnableV2Components();
         
         TechOperations.ShowTechDetails(builder, techId);
+        
+        await context.RespondAsync(builder);
+    }
+
+    [Command("ShowTechDeck")]
+    [Description("List the techs in the tech deck (in alphabetical order)")]
+    [RequireGameChannel]
+    public async Task ShowTechDeck(CommandContext context, bool fullInfo = false)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+
+        var deckTechs = game.TechDeck.Select(x => Tech.TechsById[x])
+            .OrderBy(x => x.DisplayName)
+            .ToList();
+
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        
+        if (deckTechs.Count == 0)
+        {
+            builder.AppendContentNewline("The tech deck is empty");
+        }
+        else
+        {
+            builder.AppendContentNewline("Techs in the tech deck (in alphabetical order):");
+        
+            if (fullInfo)
+            {
+                foreach (var deckTech in deckTechs)
+                {
+                    TechOperations.ShowTechDetails(builder, deckTech.Id);
+                }
+            }
+            else
+            {
+                builder.AppendContentNewline(string.Join(", ", deckTechs.Select(x => x.DisplayName)));
+            }
+        }
+        
+        await context.RespondAsync(builder);
+    }
+    
+    [Command("ShowTechDiscards")]
+    [Description("Show the contents of the tech discard pile")]
+    [RequireGameChannel]
+    public async Task ShowTechDiscards(CommandContext context, bool fullInfo = false)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+
+        var deckTechs = game.TechDiscards.Select(x => Tech.TechsById[x])
+            .ToList();
+
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        
+        if (deckTechs.Count == 0)
+        {
+            builder.AppendContentNewline("The tech discards is empty");
+        }
+        else
+        {
+            builder.AppendContentNewline("Techs in the tech discards:");
+        
+            if (fullInfo)
+            {
+                foreach (var deckTech in deckTechs)
+                {
+                    TechOperations.ShowTechDetails(builder, deckTech.Id);
+                }
+            }
+            else
+            {
+                builder.AppendContentNewline(string.Join(", ", deckTechs.Select(x => x.DisplayName)));
+            }
+        }
         
         await context.RespondAsync(builder);
     }
