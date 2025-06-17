@@ -178,10 +178,10 @@ public static class TechOperations
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline("This pinned message will always be updated with descriptions of all the techs currently relevant to this game");
         var allTechs = game.UniversalTechs
-            .Concat(game.TechMarket.Where(x => x != null))
+            .Concat(game.TechMarket.WhereNonNull())
             .Concat(game.Players.SelectMany(x => x.Techs.Select(y => y.TechId)))
-            .Distinct()!
-            .ToList<string>();
+            .Distinct()
+            .ToList();
 
         foreach (var tech in allTechs)
         {

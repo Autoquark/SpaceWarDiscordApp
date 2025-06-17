@@ -54,7 +54,7 @@ public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreMod
     public async Task PopulateAsync(Transaction transaction)
     {
         var snapshots = (await transaction.GetAllSnapshotsAsync(_documentList()))
-            .Where(x => x != null);
+            .WhereNonNull();
 
         _items.Clear();
         _items.AddRange(typeof(T).IsAssignableTo(typeof(PolymorphicFirestoreModel))

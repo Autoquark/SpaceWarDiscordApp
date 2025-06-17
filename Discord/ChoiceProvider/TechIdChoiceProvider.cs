@@ -11,7 +11,7 @@ public class TechIdChoiceProvider : IAutoCompleteProvider
     {
         var prefix = context.UserInput ?? "";
         return ValueTask.FromResult(Tech.TechsById.OrderBy(x => x.Value.DisplayName)
-            .Where(x => x.Value.DisplayName.StartsWith(prefix))
+            .Where(x => x.Value.DisplayName.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
             .Select(x => new DiscordAutoCompleteChoice(x.Value.DisplayName, x.Key.ToString())));
     }
 }

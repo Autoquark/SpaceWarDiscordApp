@@ -92,7 +92,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
 
         // Can only move to hexes with a planet
-        destinations = destinations.Where(x => x.Planet != null);
+        destinations = destinations.WhereNonNull(x => x.Planet);
 
         switch (DestinationRestriction)
         {

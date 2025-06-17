@@ -165,9 +165,9 @@ public static class GameManagementCommands
         }
         
         builder.AppendContentNewline("Tech Market:".DiscordHeading2());
-        foreach (var tech in game.TechMarket.Where(x => x != null))
+        foreach (var tech in game.TechMarket.WhereNonNull())
         {
-            TechOperations.ShowTechDetails(builder, tech!);
+            TechOperations.ShowTechDetails(builder, tech);
         }
 
         await TechOperations.UpdatePinnedTechMessage(game);

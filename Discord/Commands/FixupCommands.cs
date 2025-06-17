@@ -148,6 +148,39 @@ public class FixupCommands
         outcome.ReplyBuilder = builder;
     }
 
+    [Command("discardMarketTech")]
+    [Description("Discards a tech from the tech market, leaving an empty slot")]
+    public static async Task DiscardMarketTech(CommandContext context,
+        [SlashAutoCompleteProvider<MarketTechIdChoiceProvider>]
+        string techId,
+        [Description("Whether to put the card into tech discards or entirely remove it from the game")]
+        bool putInDiscard = true)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var index = game.TechMarket.IndexOf(techId);
+        if (index == -1)
+        {
+            outcome.RequiresSave = false;
+            await context.RespondAsync("That tech is not in the market");
+            return;
+        }
+        
+        var tech = Tech.TechsById[techId];
+        game.TechMarket[index] = null;
+
+        if (putInDiscard)
+        {
+            game.TechDiscards.Add(techId);
+        }
+        
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline(putInDiscard 
+                ? $"Put {tech.DisplayName} from the tech market into the discard pile"
+                : $"Removed {tech.DisplayName} from the tech market (without putting it in the discard pile)");
+    }
+    
     [Command("setTechExhausted")]
     [Description("Exhausts or unexhausts a player's tech")]
     public static async Task SetTechExhausted(CommandContext context,
