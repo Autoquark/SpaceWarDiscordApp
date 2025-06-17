@@ -51,7 +51,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         return builder.AppendHexButtons(game, planets, interactions);
     }
 
-    public async Task HandleInteractionAsync(FireMegaLaserInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(FireMegaLaserInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
@@ -63,7 +63,6 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

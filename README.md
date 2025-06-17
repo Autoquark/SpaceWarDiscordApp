@@ -1,6 +1,3 @@
 # SpaceWarDiscordApp
 
-TODO: Credit icons
-https://game-icons.net/1x1/delapouite/dice-six-faces-one.html etc.
-https://game-icons.net/1x1/lorc/materials-science.html
-https://game-icons.net/1x1/lorc/staryu.html
+permissions=311385140240&integration_type=0&scope=bot

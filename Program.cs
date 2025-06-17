@@ -9,6 +9,7 @@ using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
+using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SpaceWarDiscordApp.AI.Services;
@@ -73,6 +74,7 @@ static class Program
         discordBuilder.ConfigureServices(x => 
         {
             x.AddScoped<SpaceWarCommandContextData>();
+            x.AddScoped<SpaceWarCommandOutcome>();
             x.AddHttpClient();
             x.AddScoped<OpenRouterService>(serviceProvider =>
             {
@@ -190,8 +192,53 @@ static class Program
             throw new Exception("Handler not found");
         }
 
-        typeof(IInteractionHandler<>).MakeGenericType(interactionType)
-            .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!.Invoke(handler, [interactionData, game, args]);
+        var outcome = await (Task<SpaceWarInteractionOutcome>) typeof(IInteractionHandler<>).MakeGenericType(interactionType)
+            .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!.Invoke(handler, [interactionData, game, args])!;
+
+        if (outcome.RequiresSave)
+        {
+            try
+            {
+                await FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+            }
+            catch (RpcException)
+            {
+                outcome.SetSimpleReply("ERROR: Failed to save game state. Please report this to the developer.");
+                throw;
+            }
+        }
+
+        if (outcome.DeleteOriginalMessage)
+        {
+            await args.Interaction.DeleteOriginalResponseAsync();
+        }
+
+        if (outcome.ReplyBuilder != null)
+        {
+            if (outcome.DeleteOriginalMessage)
+            {
+                if (outcome.ReplyBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                {
+                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                }
+                else if(outcome.ReplyBuilder is not null)
+                {
+                    await args.Interaction.CreateFollowupMessageAsync(
+                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Tried to both delete and edit original message. Please report this to the developer"));
+                }
+            }
+
+            if (outcome.ReplyBuilder is DiscordWebhookBuilder webhookBuilder)
+            {
+                await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+            }
+            else if(outcome.ReplyBuilder is not null)
+            {
+                await args.Interaction.CreateFollowupMessageAsync(
+                    new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Invalid reply builder type. Please report this to the developer"));
+            }
+            
+        }
     }
 
     private static void RegisterInteractionHandler(object interactionHandler)

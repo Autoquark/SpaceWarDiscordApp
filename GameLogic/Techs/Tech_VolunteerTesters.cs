@@ -38,7 +38,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return builder.AppendHexButtons(game, targets, interactions);
     }
 
-    public async Task HandleInteractionAsync(SetVolunteerTestersTargetInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(SetVolunteerTestersTargetInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -59,10 +59,10 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
                 .Zip(interactions)
                 .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.ToString())));
 
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task HandleInteractionAsync(UseVolunteerTestersInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseVolunteerTestersInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var hex = game.GetHexAt(interactionData.Target);
@@ -84,8 +84,6 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

@@ -2,17 +2,15 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-[RequireGameChannel]
 public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
 {
-    public async Task HandleInteractionAsync(ShowProduceOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(ShowProduceOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -39,10 +37,10 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
                 group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1])));
         }
 
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task HandleInteractionAsync(ProduceInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(ProduceInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var hex = game.GetHexAt(interactionData.Hex);
         if (hex.Planet?.IsExhausted != false)
@@ -55,12 +53,6 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
         await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex);
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction =>
-        {
-            transaction.Set(game);
-            return Task.CompletedTask;
-        });
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

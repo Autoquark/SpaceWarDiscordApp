@@ -52,7 +52,7 @@ public class Tech_WarpNodes : Tech,
         return builder.AppendHexButtons(game, sources, interactionIds);
     }
 
-    public async Task HandleInteractionAsync(WarpNodes_ChooseSourceInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseSourceInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -63,12 +63,10 @@ public class Tech_WarpNodes : Tech,
 
         await ShowChooseDestinationAsync(builder, game, player, game.GetHexAt(interactionData.Source));
 
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task HandleInteractionAsync(WarpNodes_ChooseDestinationInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseDestinationInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -78,7 +76,7 @@ public class Tech_WarpNodes : Tech,
         // Null value indicates done making moves
         if (!interactionData.Destination.HasValue)
         {
-            return;
+            return new SpaceWarInteractionOutcome(false, null);
         }
 
         var maxAmount = game.GetHexAt(playerTech.Source).Planet!.ForcesPresent;
@@ -95,10 +93,10 @@ public class Tech_WarpNodes : Tech,
             .AllowMentions(player)
             .AppendButtonRows(interactionIds.ZipWithIndices().Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.item, x.index.ToString())));
         
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task HandleInteractionAsync(WarpNodes_ChooseAmountInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseAmountInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -130,8 +128,7 @@ public class Tech_WarpNodes : Tech,
             await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
         }
         
-        await args.Interaction.EditOriginalResponseAsync(builder);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
     private async Task<TBuilder> ShowChooseDestinationAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,

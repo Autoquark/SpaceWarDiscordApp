@@ -32,7 +32,8 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
-                Target = x.Coordinates
+                Target = x.Coordinates,
+                EditOriginalMessage = true
             }));
 
         builder.AppendContentNewline("Enervator Beam: Choose a planet to exhaust:");
@@ -40,7 +41,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task HandleInteractionAsync(UseEnervatorBeamInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseEnervatorBeamInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         game.GetHexAt(interactionData.Target).Planet!.IsExhausted = true;
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -53,8 +54,6 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

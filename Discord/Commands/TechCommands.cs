@@ -20,19 +20,18 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
     IInteractionHandler<PurchaseTechInteraction>,
     IInteractionHandler<DeclineTechPurchaseInteraction>
 {
-    public async Task HandleInteractionAsync(UseTechActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseTechActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var tech = Tech.TechsById[interactionData.TechId];
         var player = game.GetGamePlayerByGameId(interactionData.UsingPlayerId);
         var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         await tech.UseTechActionAsync(builder, game, player);
-
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task HandleInteractionAsync(PurchaseTechInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(PurchaseTechInteraction interactionData, Game game, InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
         
@@ -42,11 +41,10 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
             interactionData.TechId,
             interactionData.Cost);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task HandleInteractionAsync(DeclineTechPurchaseInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DeclineTechPurchaseInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
@@ -58,27 +56,28 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         game.IsWaitingForTechPurchaseDecision = false;
         await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
     [Command("ShowTech")]
+    [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
     public async Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
     {
+        var outcome = context.Outcome();
         var builder = new DiscordMessageBuilder().EnableV2Components();
         
         TechOperations.ShowTechDetails(builder, techId);
         
-        await context.RespondAsync(builder);
+        outcome.ReplyBuilder = builder;
     }
 
     [Command("ShowTechDeck")]
     [Description("List the techs in the tech deck (in alphabetical order)")]
-    [RequireGameChannel]
+    [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
     public async Task ShowTechDeck(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
 
         var deckTechs = game.TechDeck.Select(x => Tech.TechsById[x])
             .OrderBy(x => x.DisplayName)
@@ -107,15 +106,16 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
             }
         }
         
-        await context.RespondAsync(builder);
+        outcome.ReplyBuilder = builder;
     }
     
     [Command("ShowTechDiscards")]
     [Description("Show the contents of the tech discard pile")]
-    [RequireGameChannel]
+    [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
     public async Task ShowTechDiscards(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
 
         var deckTechs = game.TechDiscards.Select(x => Tech.TechsById[x])
             .ToList();
@@ -143,6 +143,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
             }
         }
         
-        await context.RespondAsync(builder);
+        outcome.ReplyBuilder = builder;
     }
 }

@@ -42,7 +42,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
     
-    public async Task HandleInteractionAsync(TargetOptimisedWorkSchedulesInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(TargetOptimisedWorkSchedulesInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
@@ -52,8 +52,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         player.GetPlayerTechById(Id).IsExhausted = true;
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
         
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

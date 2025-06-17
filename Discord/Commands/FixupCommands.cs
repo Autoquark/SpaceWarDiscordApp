@@ -16,7 +16,7 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 /// Commands which can be used to manually edit the game state
 /// </summary>
 [Command("fixup")]
-[RequireGameChannel]
+[RequireGameChannel(RequireGameChannelMode.RequiresSave)]
 public class FixupCommands
 {
     /// <summary>
@@ -35,11 +35,13 @@ public class FixupCommands
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
 
         var hex = game.GetHexAt(coordinates);
         if (hex.Planet == null)
         {
             await context.RespondAsync($"Invalid coordinates {coordinates}");
+            outcome.RequiresSave = false;
             return;
         }
         
@@ -52,6 +54,7 @@ public class FixupCommands
             if (newOwner == null)
             {
                 await context.RespondAsync($"Must specify a player");
+                outcome.RequiresSave = false;
                 return;
             }
         }
@@ -59,16 +62,9 @@ public class FixupCommands
         hex.Planet.ForcesPresent = newAmount;
         hex.Planet.OwningPlayerId = newOwner?.GamePlayerId ?? 0;
 
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        if (newOwner != null)
-        {
-            await context.RespondAsync($"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)}");
-        }
-        else
-        {
-            await context.RespondAsync($"Removed all forces from {coordinates}");
-        }
+        outcome.SetSimpleReply(newOwner != null
+            ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)}"
+            : $"Removed all forces from {coordinates}");
     }
     
     [Command("grantTech")]
@@ -78,21 +74,25 @@ public class FixupCommands
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
 
         if (gamePlayer.Techs.Any(x => x.TechId == techId))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Player already has that tech");
             return;
         }
 
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown tech");
             return;
         }
@@ -103,8 +103,7 @@ public class FixupCommands
         builder.AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
             .AllowMentions(gamePlayer);
         
-        await context.RespondAsync(builder);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        outcome.ReplyBuilder = builder;
     }
 
     /// <summary>
@@ -116,15 +115,19 @@ public class FixupCommands
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
 
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown tech");
             return;
         }
@@ -132,6 +135,7 @@ public class FixupCommands
         var index = gamePlayer.Techs.Items.Index().FirstOrDefault(x => x.Item.TechId == techId, (-1, null!)).Index;
         if (index == -1)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Player does not have that tech");
             return;
         }
@@ -141,8 +145,7 @@ public class FixupCommands
         builder.AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
             .AllowMentions(gamePlayer);
         
-        await context.RespondAsync(builder);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        outcome.ReplyBuilder = builder;
     }
 
     [Command("setTechExhausted")]
@@ -155,15 +158,19 @@ public class FixupCommands
         bool exhausted = true)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
 
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown tech");
             return;
         }
@@ -171,17 +178,15 @@ public class FixupCommands
         var playerTech = gamePlayer.TryGetPlayerTechById(techId);
         if (playerTech == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Player does not have that tech");
             return;
         }
         playerTech.IsExhausted = exhausted;
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
-            .AllowMentions(gamePlayer);
-        
-        await context.RespondAsync(builder);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
+            .AllowMentions(gamePlayer);;
     }
 
     [Command("setPlanetExhausted")]
@@ -191,17 +196,19 @@ public class FixupCommands
         bool exhausted = true)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var hex = game.GetHexAt(coordinates);
         if (hex.Planet == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync($"Invalid coordinates {coordinates}");
             return;
         }
         
         hex.Planet.IsExhausted = exhausted;
         
-        await context.RespondAsync($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        outcome.SetSimpleReply($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
     }
 
     [Command("SetPlayerTurn")]
@@ -211,9 +218,12 @@ public class FixupCommands
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
@@ -228,9 +238,8 @@ public class FixupCommands
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .AllowMentions(gamePlayer, previousPlayer);
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
-        await context.RespondAsync(builder);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+        outcome.ReplyBuilder = builder;
     }
 
     [Command("SetPlayerScience")]
@@ -240,9 +249,12 @@ public class FixupCommands
         [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
@@ -250,13 +262,10 @@ public class FixupCommands
         var previous = gamePlayer.Science;
         gamePlayer.Science = science;
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline(
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline(
                 $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
-            .AllowMentions(gamePlayer);
-        
-        await context.RespondAsync(builder);
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+            .AllowMentions(gamePlayer);;
     }
     
     [Command("SetPlayerVp")]
@@ -267,9 +276,12 @@ public class FixupCommands
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
         var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync("Unknown player");
             return;
         }
@@ -277,12 +289,9 @@ public class FixupCommands
         var previous = gamePlayer.VictoryPoints;
         gamePlayer.VictoryPoints = vp;
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
             .AllowMentions(gamePlayer);
-        
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await context.RespondAsync(builder);
     }
 
     [Command("ShuffleTechDeck")]
@@ -290,10 +299,10 @@ public class FixupCommands
     public static async Task ShuffleTechDeck(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         game.TechDeck.Shuffle();
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await context.RespondAsync("Shuffled the tech deck");
+        outcome.SetSimpleReply("Shuffled the tech deck");
     }
 
     [Command("AddTechToDeck")]
@@ -303,18 +312,19 @@ public class FixupCommands
         bool allowDuplicate = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         var techName = Tech.TechsById[techId].DisplayName;
         
         if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
             return;
         }
         
         game.TechDeck.Insert(0, techId);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await context.RespondAsync($"Put {techName} on top of the tech deck. You may now want to shuffle the deck (/shuffle_tech_deck)");
+        outcome.SetSimpleReply($"Put {techName} on top of the tech deck. You may now want to shuffle the deck (/shuffle_tech_deck)");
     }
 
     [Command("AddTechToDiscards")]
@@ -325,18 +335,19 @@ public class FixupCommands
         bool allowDuplicate = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         var techName = Tech.TechsById[techId].DisplayName;
         
         if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
         {
+            outcome.RequiresSave = false;
             await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
             return;
         }
         
         game.TechDiscards.Insert(0, techId);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await context.RespondAsync($"Put {techName} into the tech discards");
+        outcome.SetSimpleReply($"Put {techName} into the tech discards");
     }
 
     [Command("CycleTechMarket")]
@@ -344,11 +355,11 @@ public class FixupCommands
     public static async Task CycleTechMarket(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         await TechOperations.CycleTechMarketAsync(builder, game);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        await context.RespondAsync(builder);
+        outcome.ReplyBuilder = builder;
     }
 }

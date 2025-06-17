@@ -40,7 +40,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task HandleInteractionAsync(UseFreezeDriedForcesInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseFreezeDriedForcesInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var builder = new DiscordWebhookBuilder().EnableV2Components();
@@ -56,8 +56,6 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

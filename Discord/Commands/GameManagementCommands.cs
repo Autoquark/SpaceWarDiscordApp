@@ -11,6 +11,7 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
+[RequireGameChannel(RequireGameChannelMode.RequiresSave)]
 public static class GameManagementCommands
 {
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish",
@@ -35,6 +36,7 @@ public static class GameManagementCommands
     
     [Command("CreateGame")]
     [RequireGuild]
+    [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
     public static async Task CreateGameCommand(CommandContext context, int dummyPlayers = 0)
     {
         var name = $"The {NameAdjectives[Program.Random.Next(0, NameAdjectives.Count)]} {NameNouns[Program.Random.Next(0, NameNouns.Count)]}";
@@ -78,21 +80,15 @@ public static class GameManagementCommands
     }
 
     [Command("AddPlayer")]
-    [RequireGameChannel]
     public static async Task AddPlayerToGameCommand(CommandContext context, DiscordMember user)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        game.Players.Add(new GamePlayer
         {
-            game.Players.Add(new GamePlayer
-            {
-                DiscordUserId = user.Id,
-                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
-            });
-            
-            transaction.Set(game);
+            DiscordUserId = user.Id,
+            GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
+            PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
         });
         
         await context.RespondAsync($"{user.Mention} added to the game");
@@ -100,36 +96,31 @@ public static class GameManagementCommands
 
     [Command("AddDummyPlayer")]
     [Description("Adds a dummy player to the game. Dummy players can be controlled by anyone in the game.")]
-    [RequireGameChannel]
     public static async Task AddDummyPlayerToGameCommand(CommandContext context, string name = "")
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        if (string.IsNullOrWhiteSpace(name))
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                name = DummyPlayerNames[game.Players.Count % DummyPlayerNames.Count];
-            }
-            
-            game.Players.Add(new GamePlayer
-            {
-                GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-                PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count],
-                DummyPlayerName = name
-            });
-            
-            transaction.Set(game);
+            name = DummyPlayerNames[game.Players.Count % DummyPlayerNames.Count];
+        }
+        
+        game.Players.Add(new GamePlayer
+        {
+            GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
+            PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count],
+            DummyPlayerName = name
         });
         
-        await context.RespondAsync($"Dummy player {name} added to the game");
+        outcome.SetSimpleReply($"Dummy player {name} added to the game");
     }
 
     [Command("StartGame")]
-    [RequireGameChannel]
     public static async Task StartGameCommand(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
         
         if (game.Players.Count <= 1)
         {
@@ -183,13 +174,12 @@ public static class GameManagementCommands
         
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
-        
-        await context.RespondAsync(builder);
+        outcome.ReplyBuilder = builder;
     }
 
     [Command("Credits")]
     [Description("Who is to blame for this?")]
+    [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
     public static async Task CreditsCommand(CommandContext context)
     {
         var builder = new DiscordMessageBuilder().EnableV2Components();

@@ -6,5 +6,5 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 public interface IInteractionHandler<T> where T : InteractionData
 {
-    public Task HandleInteractionAsync(T interactionData, Game game, InteractionCreatedEventArgs args);
+    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(T interactionData, Game game, InteractionCreatedEventArgs args);
 }

@@ -14,7 +14,7 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 /// <summary>
 /// Commands for AI-powered game state modifications
 /// </summary>
-[RequireGameChannel]
+[RequireGameChannel(RequireGameChannelMode.RequiresSave)]
 public static class AiCommands
 {
     [Command("ai")]

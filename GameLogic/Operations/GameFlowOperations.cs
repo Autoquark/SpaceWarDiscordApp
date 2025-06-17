@@ -268,7 +268,7 @@ public static class GameFlowOperations
             var name = await winner.GetNameAsync(true);
             builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1())
                 .AllowMentions(winner)
-                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turnmessage to continue playing");
+                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turn_message to continue playing");
             game.Phase = GamePhase.Finished;
         }
 

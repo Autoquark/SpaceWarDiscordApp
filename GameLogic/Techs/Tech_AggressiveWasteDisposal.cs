@@ -47,7 +47,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         .WhereForcesPresent()
         .DistinctBy(x => x.Coordinates);
 
-    public async Task HandleInteractionAsync(UseAggressiveWasteDisposalInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseAggressiveWasteDisposalInteraction interactionData, Game game,
         InteractionCreatedEventArgs args)
     {
         var hex = game.GetHexAt(interactionData.Target);
@@ -67,9 +67,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         builder.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
-        
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 
-        await args.Interaction.EditOriginalResponseAsync(builder);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }
