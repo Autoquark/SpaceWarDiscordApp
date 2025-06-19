@@ -87,7 +87,7 @@ public static class BoardImageGenerator
                 dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
             }
 
-            var refreshIcon = Image.Load("Icons/anticlockwise-rotation.png");
+            using var refreshIcon = Image.Load("Icons/anticlockwise-rotation.png");
             refreshIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
             foreach (var colour in Enum.GetValues<PlayerColour>())
             {
@@ -283,7 +283,7 @@ public static class BoardImageGenerator
                             var hexCentre = HexToPixel(refresh.Coordinates) - offset;
                             var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, RefreshedRecapIconAngle);
                             
-                            image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));;
+                            image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));
                         break;
                 }
             }
@@ -317,5 +317,5 @@ public static class BoardImageGenerator
     /// Converts a 2d vector in hexes into pixels
     /// </summary>
     private static PointF HexToPixel(in HexCoordinates hexCoordinates) =>
-        new((float)(hexCoordinates.Q * (3.0/4.0) * HexOuterDiameter), (float)(HexOuterDiameter/2 * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
+        new((float)(hexCoordinates.Q * (3.0/4.0) * HexOuterDiameter), (float)(HexOuterDiameter/2.0f * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
 }
