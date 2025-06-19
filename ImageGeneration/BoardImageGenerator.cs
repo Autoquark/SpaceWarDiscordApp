@@ -53,8 +53,10 @@ public static class BoardImageGenerator
     private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
     private static readonly float PreviousMoveArrowControlPointOffset = HexInnerDiameter * 0.1f; 
     private static readonly float RefreshedRecapIconAngle = 30; 
+    private static readonly float ProduceRecapIconAngle = 45; 
     private static readonly float RecapAlpha = 0.8f; 
     private static readonly Dictionary<PlayerColour, Image> RefreshRecapIcons = new();
+    private static readonly Dictionary<PlayerColour, Image> ProduceRecapIcons = new();
     private const int PlanetRecapIconSize = 48;
 
     static BoardImageGenerator()
@@ -89,10 +91,15 @@ public static class BoardImageGenerator
 
             using var refreshIcon = Image.Load("Icons/anticlockwise-rotation.png");
             refreshIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
+            
+            using var produceIcon = Image.Load("Icons/trample.png");
+            produceIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
+            
             foreach (var colour in Enum.GetValues<PlayerColour>())
             {
                 var recolorBrush = new RecolorBrush(Color.White, PlayerColourInfo.Get(colour).ImageSharpColor, 0.5f);
                 RefreshRecapIcons.Add(colour, refreshIcon.Clone(x => x.Fill(recolorBrush)));
+                ProduceRecapIcons.Add(colour, produceIcon.Clone(x => x.Fill(recolorBrush)));
             }
         }
         catch (Exception e)
@@ -278,12 +285,23 @@ public static class BoardImageGenerator
                                 .Fill(colour, arrowhead));
                         }
                         break;
+
+                    case RefreshPlanetEventRecord refresh:
+                    {
+                        var hexCentre = HexToPixel(refresh.Coordinates) - offset;
+                        var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, RefreshedRecapIconAngle);
+
+                        image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));
+                    }
+                        break;
+
+                    case ProduceEventRecord produce:
+                    {
+                        var hexCentre = HexToPixel(produce.Coordinates) - offset;
+                        var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, ProduceRecapIconAngle);
                         
-                        case RefreshPlanetEventRecord refresh:
-                            var hexCentre = HexToPixel(refresh.Coordinates) - offset;
-                            var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, RefreshedRecapIconAngle);
-                            
-                            image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));
+                        image.Mutate(x => x.DrawImageCentred(ProduceRecapIcons[player.PlayerColour], iconLocation));
+                    }
                         break;
                 }
             }

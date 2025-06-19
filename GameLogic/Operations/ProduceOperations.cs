@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
@@ -21,6 +22,14 @@ public static class ProduceOperations
         hex.Planet.IsExhausted = true;
         player.Science += hex.Planet.Science;
         var producedScience = hex.Planet.Science > 0;
+
+        if (game.CurrentTurnPlayer == player)
+        {
+            player.CurrentTurnEvents.Add(new ProduceEventRecord
+            {
+                Coordinates = hex.Coordinates
+            });
+        }
 
         builder.AppendContentNewline(
             $"{name} is producing on {hex.Coordinates}. Produced {hex.Planet.Production} forces" + (producedScience ? $" and {hex.Planet.Science} science" : ""));
