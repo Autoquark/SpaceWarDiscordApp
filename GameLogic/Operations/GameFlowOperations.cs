@@ -220,6 +220,12 @@ public static class GameFlowOperations
     public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        var endingTurnPlayer = game.CurrentTurnPlayer;
+        endingTurnPlayer.LastTurnActions.Clear();
+        var currentTurnActions = endingTurnPlayer.CurrentTurnActions.ToList();
+        endingTurnPlayer.CurrentTurnActions.Clear();
+        endingTurnPlayer.LastTurnActions.AddRange(currentTurnActions);
+        
         if (game.IsScoringTurn)
         {
             List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)

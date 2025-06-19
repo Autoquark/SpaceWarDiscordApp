@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.Database.ActionRecords;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.GameLogic;
 
@@ -10,6 +11,8 @@ public class GamePlayer
     public GamePlayer()
     {
         Techs = new LinkedDocumentCollection<PlayerTech>(Program.FirestoreDb.PlayerTechs(), () => TechsDocuments);
+        LastTurnActions = new LinkedDocumentCollection<ActionRecord>(Program.FirestoreDb.ActionRecords(), () => LastTurnActionsDocuments);
+        CurrentTurnActions = new LinkedDocumentCollection<ActionRecord>(Program.FirestoreDb.ActionRecords(), () => CurrentTurnActionsDocuments);
     }
     
     [FirestoreProperty]
@@ -44,6 +47,15 @@ public class GamePlayer
     /// </summary>
     /// <remarks>NOT a FirestoreProperty, we manually populate this from the subcollection when querying a game</remarks>
     public LinkedDocumentCollection<PlayerTech> Techs { get; }
+    
+    [FirestoreProperty]
+    private IList<DocumentReference> LastTurnActionsDocuments { get; set; } = [];
+    
+    public LinkedDocumentCollection<ActionRecord> LastTurnActions { get; }
+    
+    [FirestoreProperty]
+    private IList<DocumentReference> CurrentTurnActionsDocuments { get; set; } = [];
+    public LinkedDocumentCollection<ActionRecord> CurrentTurnActions { get; }
 
     public bool IsDummyPlayer => DiscordUserId == 0;
     

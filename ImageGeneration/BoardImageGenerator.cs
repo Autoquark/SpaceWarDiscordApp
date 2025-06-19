@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.ActionRecords;
 using SpaceWarDiscordApp.GameLogic;
 using Path = SixLabors.ImageSharp.Drawing.Path;
 
@@ -34,6 +35,7 @@ public static class BoardImageGenerator
     
     private const int DieIconSize = 80;
     private const float HyperlaneThickness = 20;
+    private const float PreviousMoveThickness = 10;
     private const float AsteroidTriangleSideLength = 40;
     
     // Icons
@@ -45,6 +47,10 @@ public static class BoardImageGenerator
     private static readonly FontCollection FontCollection = new();
     private static readonly Font ProductionNumberFont; // = SystemFonts.CreateFont("Arial", 22);
     private static readonly Font CoordinatesFont; // = SystemFonts.CreateFont("Arial", 36);
+    
+    // Previous action indicators
+    private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
+    private static readonly float PreviousMoveArrowControlPointOffset = HexInnerDiameter * 0.1f; 
 
     static BoardImageGenerator()
     {
@@ -213,6 +219,56 @@ public static class BoardImageGenerator
                 Color.Black));
         }
         
+        // Draw previous turn actions for each player
+        foreach (var player in game.Players)
+        {
+            foreach (var action in player.LastTurnActions)
+            {
+                switch (action)
+                {
+                    case MovementActionRecord movement:
+                        
+                        var destinationHexCentre = HexToPixel(movement.Destination) - offset;
+                        foreach (var sourceAndAmount in movement.Sources)
+                        {
+                            var sourceHexCentre = HexToPixel(sourceAndAmount.Source) - offset;
+                            var controlPoint = (sourceHexCentre + destinationHexCentre) / 2.0f;
+
+                            // Movement with no horizontal component, move the control point to the right so
+                            // we still get a curve
+                            if (sourceAndAmount.Source.Q == movement.Destination.Q)
+                            {
+                                controlPoint.X += PreviousMoveArrowControlPointOffset;
+                            }
+                            else
+                            {
+                                controlPoint.Y -= PreviousMoveArrowControlPointOffset;
+                            }
+                            
+                            
+                            var start = sourceHexCentre.LerpTowardsDistance(destinationHexCentre,
+                                PreviousMoveArrowOffset);
+                            var end = destinationHexCentre.LerpTowardsDistance(sourceHexCentre,
+                                PreviousMoveArrowOffset);
+                            
+                            var bezier = new Path(new CubicBezierLineSegment(start, controlPoint, controlPoint, end))
+                                .GenerateOutline(PreviousMoveThickness);
+
+                            var arrowhead = new Path(new LinearLineSegment(end + (end - controlPoint).Normalised().Rotate(135) * 30.0f,
+                                    end,
+                                    end + (end - controlPoint).Normalised().Rotate(-135) * 30.0f))
+                                .GenerateOutline(PreviousMoveThickness);
+
+                            var colour = player.PlayerColourInfo.ImageSharpColor.WithAlpha(0.8f);
+                            image.Mutate(x => x.Fill(colour, bezier)
+                                .Fill(colour, arrowhead));
+                        }
+                        
+                        break;
+                }
+            }
+        }
+        
         return image;
     }
 
@@ -237,6 +293,9 @@ public static class BoardImageGenerator
     
     private static PointF GetPointPolar(float distance, float angleDegrees) => new PointF(0, -distance).Rotate(angleDegrees);
 
+    /// <summary>
+    /// Converts a 2d vector in hexes into pixels
+    /// </summary>
     private static PointF HexToPixel(in HexCoordinates hexCoordinates) =>
         new((float)(hexCoordinates.Q * (3.0/4.0) * HexOuterDiameter), (float)(HexOuterDiameter/2 * ((Root3 / 2.0) * hexCoordinates.Q + Root3 * hexCoordinates.R)));
 }

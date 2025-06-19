@@ -1,21 +1,24 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
+using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
+[RequireApplicationOwner]
 public class BotManagementCommands
 {
     private const string DieEmojiDirectoryPath = "./Icons/Emoji/Dice";
 
     [Command("UpdateEmoji")]
     [Description("Deletes and reuploads all the bot's emojis")]
-    [RequireApplicationOwner]
     public static async Task UpdateEmoji(CommandContext context)
     {
         foreach (var emoji in await context.Client.GetApplicationEmojisAsync())
@@ -43,7 +46,6 @@ public class BotManagementCommands
 
     [Command("RegenerateDiceEmoji")]
     [Description("Regenerates the dice emoji images")]
-    [RequireApplicationOwner]
     public static async Task RegenerateDiceEmoji(CommandContext context)
     {
         Directory.CreateDirectory(DieEmojiDirectoryPath);
@@ -69,4 +71,16 @@ public class BotManagementCommands
         
         await context.RespondAsync("Emojis regenerated!");
     }
+
+    [Command("ShowGameId")]
+    [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
+    public static async Task ShowGameId(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline($"Game document ID: {game.DocumentId}");
+    }
+    
 }

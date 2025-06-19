@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.ActionRecords;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 
@@ -105,6 +106,15 @@ public static class MovementOperations
         {
             destinationHex.Planet.ForcesPresent = totalPostCapacityLimit;
             destinationHex.Planet.OwningPlayerId = player.GamePlayerId;
+        }
+
+        if (player == game.CurrentTurnPlayer)
+        {
+            player.CurrentTurnActions.Add(new MovementActionRecord
+            {
+                Destination = move.Destination,
+                Sources = move.Sources.ToList()
+            });
         }
 
         player.PlannedMove = null;

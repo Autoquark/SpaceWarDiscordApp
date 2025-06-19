@@ -227,17 +227,18 @@ static class Program
                         new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Tried to both delete and edit original message. Please report this to the developer"));
                 }
             }
-
-            if (outcome.ReplyBuilder is DiscordWebhookBuilder webhookBuilder)
+            else
             {
-                await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+                if (outcome.ReplyBuilder is DiscordWebhookBuilder webhookBuilder)
+                {
+                    await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+                }
+                else if(outcome.ReplyBuilder is not null)
+                {
+                    await args.Interaction.CreateFollowupMessageAsync(
+                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Invalid reply builder type. Please report this to the developer"));
+                }
             }
-            else if(outcome.ReplyBuilder is not null)
-            {
-                await args.Interaction.CreateFollowupMessageAsync(
-                    new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Invalid reply builder type. Please report this to the developer"));
-            }
-            
         }
     }
 

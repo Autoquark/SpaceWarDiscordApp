@@ -34,6 +34,14 @@ public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreMod
         _items.Add(item);
     }
 
+    public void AddRange(IEnumerable<T> items)
+    {
+        foreach (var item in items)
+        {
+            Add(item);
+        }
+    }
+
     public bool Remove(T item)
     {
         if (!_items.Remove(item) || item.DocumentId == null)
@@ -49,6 +57,12 @@ public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreMod
     {
         _removed.Add(_items[index].DocumentId!);
         _items.RemoveAt(index);
+    }
+    
+    public void Clear()
+    {
+        _removed.AddRange(_items.Select(x => x.DocumentId!));
+        _items.Clear();
     }
 
     public async Task PopulateAsync(Transaction transaction)
