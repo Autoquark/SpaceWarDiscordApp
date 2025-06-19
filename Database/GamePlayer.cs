@@ -11,8 +11,8 @@ public class GamePlayer
     public GamePlayer()
     {
         Techs = new LinkedDocumentCollection<PlayerTech>(Program.FirestoreDb.PlayerTechs(), () => TechsDocuments);
-        LastTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.ActionRecords(), () => LastTurnEventsDocuments);
-        CurrentTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.ActionRecords(), () => CurrentTurnEventsDocuments);
+        LastTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.EventRecords(), () => LastTurnEventsDocuments);
+        CurrentTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.EventRecords(), () => CurrentTurnEventsDocuments);
     }
     
     [FirestoreProperty]
