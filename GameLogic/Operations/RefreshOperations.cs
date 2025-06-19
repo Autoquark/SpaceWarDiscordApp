@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -31,6 +32,14 @@ public static class RefreshOperations
                 playerTech.IsExhausted = false;
                 refreshedTechs.Add(playerTech);
             }
+        }
+
+        if (game.CurrentTurnPlayer == player)
+        {
+            player.CurrentTurnEvents.AddRange(refreshedHexes.Select(x => new RefreshPlanetEventRecord
+            {
+                Coordinates = x.Coordinates
+            }));
         }
 
         if (refreshedHexes.Count > 0)

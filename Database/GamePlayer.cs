@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database.ActionRecords;
 using SpaceWarDiscordApp.Database.Converters;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database;
@@ -11,8 +11,8 @@ public class GamePlayer
     public GamePlayer()
     {
         Techs = new LinkedDocumentCollection<PlayerTech>(Program.FirestoreDb.PlayerTechs(), () => TechsDocuments);
-        LastTurnActions = new LinkedDocumentCollection<ActionRecord>(Program.FirestoreDb.ActionRecords(), () => LastTurnActionsDocuments);
-        CurrentTurnActions = new LinkedDocumentCollection<ActionRecord>(Program.FirestoreDb.ActionRecords(), () => CurrentTurnActionsDocuments);
+        LastTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.ActionRecords(), () => LastTurnEventsDocuments);
+        CurrentTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.ActionRecords(), () => CurrentTurnEventsDocuments);
     }
     
     [FirestoreProperty]
@@ -49,13 +49,20 @@ public class GamePlayer
     public LinkedDocumentCollection<PlayerTech> Techs { get; }
     
     [FirestoreProperty]
-    private IList<DocumentReference> LastTurnActionsDocuments { get; set; } = [];
+    private IList<DocumentReference> LastTurnEventsDocuments { get; set; } = [];
     
-    public LinkedDocumentCollection<ActionRecord> LastTurnActions { get; }
+    /// <summary>
+    /// Events associated with this player from their last turn. Used to draw recap icons on the map
+    /// </summary>
+    public LinkedDocumentCollection<EventRecord> LastTurnEvents { get; }
     
     [FirestoreProperty]
-    private IList<DocumentReference> CurrentTurnActionsDocuments { get; set; } = [];
-    public LinkedDocumentCollection<ActionRecord> CurrentTurnActions { get; }
+    private IList<DocumentReference> CurrentTurnEventsDocuments { get; set; } = [];
+    
+    /// <summary>
+    /// Events associated with this player from their current turn. Will become LastTurnEvents when the turn ends
+    /// </summary>
+    public LinkedDocumentCollection<EventRecord> CurrentTurnEvents { get; }
 
     public bool IsDummyPlayer => DiscordUserId == 0;
     

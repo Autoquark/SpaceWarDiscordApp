@@ -1,6 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.ActionRecords;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 
@@ -110,7 +110,7 @@ public static class MovementOperations
 
         if (player == game.CurrentTurnPlayer)
         {
-            player.CurrentTurnActions.Add(new MovementActionRecord
+            player.CurrentTurnEvents.Add(new MovementEventRecord
             {
                 Destination = move.Destination,
                 Sources = move.Sources.ToList()

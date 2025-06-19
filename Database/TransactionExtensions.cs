@@ -20,8 +20,8 @@ public static class TransactionExtensions
         foreach (var gamePlayer in game.Players)
         {
             await gamePlayer.Techs.PopulateAsync(transaction); //TODO: Fetch in parallel?
-            await gamePlayer.LastTurnActions.PopulateAsync(transaction);
-            await gamePlayer.CurrentTurnActions.PopulateAsync(transaction);
+            await gamePlayer.LastTurnEvents.PopulateAsync(transaction);
+            await gamePlayer.CurrentTurnEvents.PopulateAsync(transaction);
         }
         
         return game;
@@ -34,8 +34,8 @@ public static class TransactionExtensions
             foreach (var gamePlayer in game.Players)
             {
                 gamePlayer.Techs.OnSavingParentDoc(transaction);
-                gamePlayer.LastTurnActions.OnSavingParentDoc(transaction);
-                gamePlayer.CurrentTurnActions.OnSavingParentDoc(transaction);
+                gamePlayer.LastTurnEvents.OnSavingParentDoc(transaction);
+                gamePlayer.CurrentTurnEvents.OnSavingParentDoc(transaction);
             }
         }
         

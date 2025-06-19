@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.ActionRecords;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.GameLogic;
 using Path = SixLabors.ImageSharp.Drawing.Path;
 
@@ -31,12 +31,13 @@ public static class BoardImageGenerator
     private const float HomePlanetInnerCircleRadius = 80;
     private const float ProductionCircleRadius = 25;
     private const float PlanetIconSpacingDegrees = 16;
-    private const int PlanetIconSize = 60;
+    private const int PlanetIconSize = 64;
     
     private const int DieIconSize = 80;
     private const float HyperlaneThickness = 20;
     private const float PreviousMoveThickness = 10;
     private const float AsteroidTriangleSideLength = 40;
+    private static readonly float PlanetIconDistance = PlanetCircleRadius + 36;
     
     // Icons
     private static readonly Image ScienceIcon;
@@ -48,9 +49,13 @@ public static class BoardImageGenerator
     private static readonly Font ProductionNumberFont; // = SystemFonts.CreateFont("Arial", 22);
     private static readonly Font CoordinatesFont; // = SystemFonts.CreateFont("Arial", 36);
     
-    // Previous action indicators
+    // Recap graphics
     private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
     private static readonly float PreviousMoveArrowControlPointOffset = HexInnerDiameter * 0.1f; 
+    private static readonly float RefreshedRecapIconAngle = 30; 
+    private static readonly float RecapAlpha = 0.8f; 
+    private static readonly Dictionary<PlayerColour, Image> RefreshRecapIcons = new();
+    private const int PlanetRecapIconSize = 48;
 
     static BoardImageGenerator()
     {
@@ -81,6 +86,14 @@ public static class BoardImageGenerator
             {
                 dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
             }
+
+            var refreshIcon = Image.Load("Icons/anticlockwise-rotation.png");
+            refreshIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
+            foreach (var colour in Enum.GetValues<PlayerColour>())
+            {
+                var recolorBrush = new RecolorBrush(Color.White, PlayerColourInfo.Get(colour).ImageSharpColor, 0.5f);
+                RefreshRecapIcons.Add(colour, refreshIcon.Clone(x => x.Fill(recolorBrush)));
+            }
         }
         catch (Exception e)
         {
@@ -106,7 +119,7 @@ public static class BoardImageGenerator
             var hexOffset = HexToPixel(hex.Coordinates);
             var hexCentre = hexOffset - offset;
             var hexPolygon = new RegularPolygon(hexCentre, 6,
-                HexOuterDiameter / 2, GeometryUtilities.DegreeToRadian(30)).GenerateOutline(2.0f);
+                HexOuterDiameter / 2.0f, GeometryUtilities.DegreeToRadian(30)).GenerateOutline(2.0f);
             
             image.Mutate(x => x.Fill(Color.Black, hexPolygon));
 
@@ -141,7 +154,7 @@ public static class BoardImageGenerator
                 var angle = 30 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Science - 1));
                 for (var i = 0; i < hex.Planet.Science; i++)
                 {
-                    var point = GetPointPolar((PlanetCircleRadius + 30), -angle);
+                    var point = GetPointPolar(PlanetIconDistance, -angle);
                     image.Mutate(x => x.DrawImageCentred(ScienceIcon, (Point)(hexCentre + point)));
                     angle += PlanetIconSpacingDegrees;
                 }
@@ -150,7 +163,7 @@ public static class BoardImageGenerator
                 angle = 90 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Stars - 1));
                 for (var i = 0; i < hex.Planet.Stars; i++)
                 {
-                    var point = GetPointPolar((PlanetCircleRadius + 30), -angle);
+                    var point = GetPointPolar(PlanetIconDistance, -angle);
                     image.Mutate(x => x.DrawImageCentred(StarIcon, (Point)(hexCentre + point)));
                     angle += PlanetIconSpacingDegrees;
                 }
@@ -222,11 +235,12 @@ public static class BoardImageGenerator
         // Draw previous turn actions for each player
         foreach (var player in game.Players)
         {
-            foreach (var action in player.LastTurnActions)
+            foreach (var action in player.LastTurnEvents)
             {
+                var colour = player.PlayerColourInfo.ImageSharpColor.WithAlpha(RecapAlpha);
                 switch (action)
                 {
-                    case MovementActionRecord movement:
+                    case MovementEventRecord movement:
                         
                         var destinationHexCentre = HexToPixel(movement.Destination) - offset;
                         foreach (var sourceAndAmount in movement.Sources)
@@ -259,11 +273,17 @@ public static class BoardImageGenerator
                                     end + (end - controlPoint).Normalised().Rotate(-135) * 30.0f))
                                 .GenerateOutline(PreviousMoveThickness);
 
-                            var colour = player.PlayerColourInfo.ImageSharpColor.WithAlpha(0.8f);
+                            
                             image.Mutate(x => x.Fill(colour, bezier)
                                 .Fill(colour, arrowhead));
                         }
+                        break;
                         
+                        case RefreshPlanetEventRecord refresh:
+                            var hexCentre = HexToPixel(refresh.Coordinates) - offset;
+                            var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, RefreshedRecapIconAngle);
+                            
+                            image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));;
                         break;
                 }
             }

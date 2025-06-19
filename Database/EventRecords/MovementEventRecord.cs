@@ -1,10 +1,10 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.ActionRecords;
+namespace SpaceWarDiscordApp.Database.EventRecords;
 
 [FirestoreData]
-public class MovementActionRecord : ActionRecord
+public class MovementEventRecord : EventRecord
 {
     [FirestoreProperty]
     public IList<SourceAndAmount> Sources { get; set; }

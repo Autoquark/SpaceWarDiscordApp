@@ -221,10 +221,10 @@ public static class GameFlowOperations
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var endingTurnPlayer = game.CurrentTurnPlayer;
-        endingTurnPlayer.LastTurnActions.Clear();
-        var currentTurnActions = endingTurnPlayer.CurrentTurnActions.ToList();
-        endingTurnPlayer.CurrentTurnActions.Clear();
-        endingTurnPlayer.LastTurnActions.AddRange(currentTurnActions);
+        endingTurnPlayer.LastTurnEvents.Clear();
+        var currentTurnActions = endingTurnPlayer.CurrentTurnEvents.ToList();
+        endingTurnPlayer.CurrentTurnEvents.Clear();
+        endingTurnPlayer.LastTurnEvents.AddRange(currentTurnActions);
         
         if (game.IsScoringTurn)
         {
