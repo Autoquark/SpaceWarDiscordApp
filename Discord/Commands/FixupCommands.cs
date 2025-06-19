@@ -275,6 +275,34 @@ public class FixupCommands
         outcome.ReplyBuilder = builder;
     }
 
+    [Command("SetScoringTokenPlayer")]
+    [Description("Set which player holds the scoring token")]
+    public static async Task SetScoringTokenPlayer(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
+        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            outcome.RequiresSave = false;
+            await context.RespondAsync("Unknown player");
+            return;
+        }
+        
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var previousPlayer = game.ScoringTokenPlayer;
+        
+        game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
+        
+        builder.AppendContentNewline($"Moved scoring token to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
+            .AllowMentions(gamePlayer, previousPlayer);
+        
+        outcome.ReplyBuilder = builder;
+    }
+    
     [Command("SetPlayerScience")]
     [Description("Set a player's science total")]
     public static async Task SetPlayerScience(CommandContext context,
@@ -299,6 +327,8 @@ public class FixupCommands
             .AppendContentNewline(
                 $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
             .AllowMentions(gamePlayer);;
+        
+        game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
     }
     
     [Command("SetPlayerVp")]
