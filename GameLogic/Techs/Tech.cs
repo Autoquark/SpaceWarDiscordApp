@@ -53,7 +53,9 @@ public abstract class Tech
     /// </summary>
     protected bool HasSimpleAction { get; init; } = false;
 
-    protected ActionType SimpleActionType { get; init; } = ActionType.Main;
+    public ActionType SimpleActionType { get; protected init; } = ActionType.Main;
+    
+    protected bool SimpleActionIsOncePerTurn { get; init; } = false;
 
     /// <summary>
     /// Gets a discord message string representing the state of this tech for the given game and player
@@ -61,7 +63,7 @@ public abstract class Tech
     public virtual string GetTechDisplayString(Game game, GamePlayer player)
     {
         var result = DisplayName;
-        if (player.GetPlayerTechById(Id).IsExhausted)
+        if (player.GetPlayerTechById(Id).IsExhausted || (HasSimpleAction && !IsSimpleActionAvailable(game, player)))
         {
             result = result.DiscordStrikeThrough(); //TODO: Emoji
         }
@@ -93,5 +95,11 @@ public abstract class Tech
             TechId = Id
         };
     
-    protected virtual bool IsSimpleActionAvailable(Game game, GamePlayer player) => !player.GetPlayerTechById(Id).IsExhausted && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free);
+    protected virtual bool IsSimpleActionAvailable(Game game, GamePlayer player)
+    {
+        var tech = player.GetPlayerTechById(Id);
+        return !tech.IsExhausted
+               && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free)
+               && !(SimpleActionIsOncePerTurn && tech.UsedThisTurn);
+    }
 }

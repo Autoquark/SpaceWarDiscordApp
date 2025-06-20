@@ -54,11 +54,21 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// Id of a tech that base implementation of PerformMoveAsync should exhaust.
     /// </summary>
     protected string ExhaustTechId { get; init; } = "";
+    
+    /// <summary>
+    /// Id of a tech that base implementation of PerformMoveAsync should mark as used this turn.
+    /// </summary>
+    protected string MarkUsedTechId { get; init; } = "";
 
     /// <summary>
     /// Restriction on destination ownership
     /// </summary>
     protected MoveDestinationRestriction DestinationRestriction { get; init; } = MoveDestinationRestriction.Unrestricted;
+    
+    /// <summary>
+    /// Maximum amount of forces that may be moved from each source
+    /// </summary>
+    protected int MaxAmountPerSource { get; init; } = 99;
     
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination
@@ -280,9 +290,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             throw new Exception();
         }
+        
+        var max = Math.Min(source.Planet.ForcesPresent, MaxAmountPerSource);
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-            => Enumerable.Range(0, source.ForcesPresent + 1).Select(x => InteractionsHelper.SetUpInteraction(
+            => Enumerable.Range(0, max + 1).Select(x => InteractionsHelper.SetUpInteraction(
                     new SetMovementAmountFromSourceInteraction<T>
                     {
                         Amount = x,
@@ -293,7 +305,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                     }, transaction))
                 .ToList());
 
-        builder.AppendButtonRows(Enumerable.Range(0, source.ForcesPresent + 1).Select(x =>
+        builder.AppendButtonRows(Enumerable.Range(0, max + 1).Select(x =>
             new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
 
         return builder;
@@ -338,6 +350,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         if (!string.IsNullOrEmpty(ExhaustTechId))
         {
             player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
+        }
+
+        if (!string.IsNullOrEmpty(MarkUsedTechId))
+        {
+            player.GetPlayerTechById(MarkUsedTechId).UsedThisTurn = true;
         }
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType);

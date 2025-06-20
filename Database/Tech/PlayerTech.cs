@@ -14,4 +14,7 @@ public class PlayerTech : PolymorphicFirestoreModel
     
     [FirestoreProperty]
     public bool IsExhausted { get; set; } = false;
+    
+    [FirestoreProperty]
+    public bool UsedThisTurn { get; set; } = false;
 }

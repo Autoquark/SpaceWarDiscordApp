@@ -199,7 +199,7 @@ public static class GameFlowOperations
         }
         
         // If the player could still do something else, return to action selection
-        if (!game.ActionTakenThisTurn || GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x is { IsAvailable: true, ActionType: ActionType.Free }))
+        if (!game.ActionTakenThisTurn || GetPlayerTechActions(game, game.CurrentTurnPlayer).Any(x => x.IsAvailable))
         {
             if (builder != null)
             {
@@ -225,6 +225,11 @@ public static class GameFlowOperations
         var currentTurnActions = endingTurnPlayer.CurrentTurnEvents.ToList();
         endingTurnPlayer.CurrentTurnEvents.Clear();
         endingTurnPlayer.LastTurnEvents.AddRange(currentTurnActions);
+
+        foreach (var playerTech in endingTurnPlayer.Techs)
+        {
+            playerTech.UsedThisTurn = false;
+        }
         
         if (game.IsScoringTurn)
         {
