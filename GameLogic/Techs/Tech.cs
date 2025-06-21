@@ -63,7 +63,8 @@ public abstract class Tech
     public virtual string GetTechDisplayString(Game game, GamePlayer player)
     {
         var result = DisplayName;
-        if (player.GetPlayerTechById(Id).IsExhausted || (HasSimpleAction && !IsSimpleActionAvailable(game, player)))
+        var tech = player.GetPlayerTechById(Id);
+        if (tech.IsExhausted || (HasSimpleAction && SimpleActionIsOncePerTurn && tech.UsedThisTurn))
         {
             result = result.DiscordStrikeThrough(); //TODO: Emoji
         }
