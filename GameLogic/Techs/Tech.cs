@@ -103,4 +103,7 @@ public abstract class Tech
                && (!game.ActionTakenThisTurn || SimpleActionType == ActionType.Free)
                && !(SimpleActionIsOncePerTurn && tech.UsedThisTurn);
     }
+    
+    protected PlayerTech GetThisTech(GamePlayer player) => player.GetPlayerTechById<PlayerTech>(Id);
+    protected T GetThisTech<T>(GamePlayer player) where T : PlayerTech => player.GetPlayerTechById<T>(Id);
 }

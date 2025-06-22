@@ -324,6 +324,134 @@ public class MapGenerator
             };
             map.Add(system);
         }
+        else if (game.Players.Count == 2)
+        {
+            // Bottom left
+            var system = new BoardHex(HomeSystems.Random());
+            system.Coordinates = new HexCoordinates(-3, 3);
+            system.Planet!.OwningPlayerId = game.Players[0].GamePlayerId;
+            map.Add(system);
+            
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
+            system.Coordinates = new HexCoordinates(-3, 2);
+            map.Add(system);
+            
+            system = new BoardHex(OuterSystems[1]);
+            system.Coordinates = new HexCoordinates(-2, 2);
+            map.Add(system);
+            
+            system = new BoardHex(OuterSystems[2]);
+            system.Coordinates = new HexCoordinates(-2, 3);
+            map.Add(system);
+            
+            // Top right
+            system = new BoardHex(HomeSystems.Random());
+            system.Coordinates = new HexCoordinates(3, -3);
+            system.Planet!.OwningPlayerId = game.Players[1].GamePlayerId;
+            map.Add(system);
+            
+            OuterSystems.Shuffle();
+            system = new BoardHex(OuterSystems[0]);
+            system.Coordinates = new HexCoordinates(2, -3);
+            map.Add(system);
+            
+            system = new BoardHex(OuterSystems[1]);
+            system.Coordinates = new HexCoordinates(2, -2);
+            map.Add(system);
+            
+            system = new BoardHex(OuterSystems[2]);
+            system.Coordinates = new HexCoordinates(3, -2);
+            map.Add(system);
+            
+            // Top left
+            system = new BoardHex(OuterSystems.Random());
+            system.Coordinates = new HexCoordinates(-1, -1);
+            map.Add(system);
+            
+            // Bottom right
+            system = new BoardHex(OuterSystems.Random());
+            system.Coordinates = new HexCoordinates(1, 1);
+            map.Add(system);
+            
+            // Centre
+            system = new BoardHex(CenterSystems.Random());
+            system.Coordinates = new HexCoordinates(0, 0);
+            map.Add(system);
+            
+            system = new BoardHex(InnerSystems.Random());
+            system.Coordinates = new HexCoordinates(0, -1);
+            map.Add(system);
+            
+            system = new BoardHex(InnerSystems.Random());
+            system.Coordinates = new HexCoordinates(+1, -1);
+            map.Add(system);
+            
+            system = new BoardHex(InnerSystems.Random());
+            system.Coordinates = new HexCoordinates(0, +1);
+            map.Add(system);
+            
+            system = new BoardHex(InnerSystems.Random());
+            system.Coordinates = new HexCoordinates(-1, +1);
+            map.Add(system);
+            
+            // Hyperlanes
+            // Top left
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(-3, 1),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.South, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(-2, 0),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            
+            // Top right
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(1, -3),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthEast, HexDirection.SouthWest)]
+            };
+            map.Add(system);
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(0, -2),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            
+            // Bottom left
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(-1, 3),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(0, 2),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            
+            // Bottom right
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(2, 0),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
+            };
+            map.Add(system);
+            system = new BoardHex()
+            {
+                Coordinates = new HexCoordinates(3, -1),
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.North)]
+            };
+            map.Add(system);
+        }
         
         var distinct = map.Select(x => x.Coordinates).Distinct();
         var duplicate = map.Select(x => x.Coordinates).Except(distinct).ToList();
