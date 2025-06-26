@@ -142,6 +142,7 @@ public static class GameFlowOperations
         builder.AppendContentNewline("Your Turn".DiscordHeading2())
             .AppendContentNewline(game.ActionTakenThisTurn ?
                 "You have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
+                $"{name}, you have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
                 : $"{name}, it is your turn. Choose an action:")
             .AllowMentions(game.CurrentTurnPlayer)
             .AppendContentNewline("Basic Actions:")
