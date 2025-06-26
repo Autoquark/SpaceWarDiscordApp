@@ -4,11 +4,13 @@ using System.Text;
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;
 
@@ -326,6 +328,14 @@ public static class GameFlowOperations
             game.Phase = GamePhase.Finished;
         }
     }
+
+    public static void ResolveGameEvent(Game game, GameEvent gameEvent)
+    {
+        
+    }
+
+    public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) =>
+        player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetTriggeredEffects(game, gameEvent, player));
 
     /// <summary>
     /// Passes the scoring token to the previous valid player in turn order

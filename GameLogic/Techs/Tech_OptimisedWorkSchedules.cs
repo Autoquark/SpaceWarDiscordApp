@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.OptimisedWorkSchedules;
 using SpaceWarDiscordApp.Discord;
@@ -42,10 +41,10 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(TargetOptimisedWorkSchedulesInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        TargetOptimisedWorkSchedulesInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         await ProduceOperations.ProduceOnPlanetAsync(builder, game, game.GetHexAt(interactionData.Target));
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);

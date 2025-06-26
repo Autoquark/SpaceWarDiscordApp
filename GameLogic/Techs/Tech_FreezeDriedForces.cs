@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.FreezeDriedForces;
 using SpaceWarDiscordApp.Discord;
@@ -40,10 +39,10 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseFreezeDriedForcesInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        UseFreezeDriedForcesInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         var hex = game.GetHexAt(interactionData.Target);
         hex.Planet!.ForcesPresent += 3;
         

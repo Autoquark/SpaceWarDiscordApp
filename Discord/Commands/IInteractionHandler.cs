@@ -1,4 +1,4 @@
-using DSharpPlus.EventArgs;
+using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 
@@ -6,5 +6,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 public interface IInteractionHandler<T> where T : InteractionData
 {
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(T interactionData, Game game, InteractionCreatedEventArgs args);
+    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        T interactionData,
+        Game game)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>;
 }

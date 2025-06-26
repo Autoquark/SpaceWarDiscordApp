@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.WarpNodes;
 using SpaceWarDiscordApp.Database.Tech;
@@ -52,22 +51,22 @@ public class Tech_WarpNodes : Tech,
         return builder.AppendHexButtons(game, sources, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseSourceInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        WarpNodes_ChooseSourceInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         playerTech.Source = interactionData.Source;
-
-        var builder = new DiscordWebhookBuilder();
 
         await ShowChooseDestinationAsync(builder, game, player, game.GetHexAt(interactionData.Source));
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseDestinationInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        WarpNodes_ChooseDestinationInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
@@ -88,22 +87,20 @@ public class Tech_WarpNodes : Tech,
             Destination = interactionData.Destination.Value
         }));
         
-        var builder = new DiscordWebhookBuilder()
-            .AppendContentNewline($"{name}, choose amount of forces to move:")
+        builder.AppendContentNewline($"{name}, choose amount of forces to move:")
             .AllowMentions(player)
             .AppendButtonRows(interactionIds.ZipWithIndices().Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.item, x.index.ToString())));
         
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(WarpNodes_ChooseAmountInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        WarpNodes_ChooseAmountInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         var source = game.GetHexAt(playerTech.Source);
-
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         if (interactionData.Amount > 0)
         {

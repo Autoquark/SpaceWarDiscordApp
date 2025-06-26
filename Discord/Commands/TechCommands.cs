@@ -3,7 +3,6 @@ using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
@@ -20,21 +19,22 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
     IInteractionHandler<PurchaseTechInteraction>,
     IInteractionHandler<DeclineTechPurchaseInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseTechActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        UseTechActionInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var tech = Tech.TechsById[interactionData.TechId];
         var player = game.GetGamePlayerByGameId(interactionData.UsingPlayerId);
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         await tech.UseTechActionAsync(builder, game, player);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(PurchaseTechInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        PurchaseTechInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
-        
         await TechOperations.PurchaseTechAsync(builder,
             game,
             game.GetGamePlayerForInteraction(interactionData),
@@ -44,10 +44,10 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DeclineTechPurchaseInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        DeclineTechPurchaseInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         var player = game.GetGamePlayerForInteraction(interactionData);
         var name = await player.GetNameAsync(false);
 

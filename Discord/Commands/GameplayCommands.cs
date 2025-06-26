@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
@@ -45,9 +44,8 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
         outcome.ReplyBuilder = builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(EndTurnInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, EndTurnInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         await GameFlowOperations.NextTurnAsync(builder, game);
 
         return new SpaceWarInteractionOutcome(true, builder);

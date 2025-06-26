@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.VolunteerTesters;
@@ -38,8 +37,9 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return builder.AppendHexButtons(game, targets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(SetVolunteerTestersTargetInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        SetVolunteerTestersTargetInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
         var hex = game.GetHexAt(interactionData.Target);
@@ -53,8 +53,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
             }));
 
         var name = await player.GetNameAsync(true);
-        var builder = new DiscordWebhookBuilder().EnableV2Components()
-            .AppendContentNewline($"{name}, choose how many forces will 'volunteer'")
+        builder.AppendContentNewline($"{name}, choose how many forces will 'volunteer'")
             .AppendButtonRows(Enumerable.Range(1, hex.Planet.ForcesPresent)
                 .Zip(interactions)
                 .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.ToString())));
@@ -62,8 +61,9 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseVolunteerTestersInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        UseVolunteerTestersInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Target);
 
@@ -73,8 +73,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         
         var name = await player.GetNameAsync(false);
 
-        var builder = new DiscordWebhookBuilder().EnableV2Components()
-            .AppendContentNewline($"{interactionData.Amount} of {name}'s forces on {interactionData.Target} have been converted into pure Science")
+        builder.AppendContentNewline($"{interactionData.Amount} of {name}'s forces on {interactionData.Target} have been converted into pure Science")
             .AppendContentNewline($"{name} now has {player.Science} science (was {player.Science - interactionData.Amount})");
         
         var tech = player.GetPlayerTechById(Id);

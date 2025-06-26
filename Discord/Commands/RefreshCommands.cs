@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
@@ -10,10 +9,10 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(RefreshActionInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        RefreshActionInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
-        
         await RefreshOperations.Refresh(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
 
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);

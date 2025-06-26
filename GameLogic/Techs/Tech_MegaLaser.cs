@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
@@ -51,13 +50,13 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         return builder.AppendHexButtons(game, planets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(FireMegaLaserInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        FireMegaLaserInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
         game.GetHexAt(interactionData.Target).Planet!.ForcesPresent = 0;
-        
-        var builder = new DiscordWebhookBuilder();
 
         builder.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         

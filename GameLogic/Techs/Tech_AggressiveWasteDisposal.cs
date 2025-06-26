@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
@@ -47,8 +46,9 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         .WhereForcesPresent()
         .DistinctBy(x => x.Coordinates);
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseAggressiveWasteDisposalInteraction interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        UseAggressiveWasteDisposalInteraction interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Target);
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -63,7 +63,6 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         tech.IsExhausted = true;
         
         var name = await player.GetNameAsync(false);
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         builder.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);

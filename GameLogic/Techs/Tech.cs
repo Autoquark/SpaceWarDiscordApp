@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.GameEvents;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -71,6 +73,12 @@ public abstract class Tech
         
         return result;
     }
+
+    /// <summary>
+    /// Get triggered effects from this tech in response to the given GameEvent
+    /// </summary>
+    /// <returns></returns>
+    public virtual IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) => [];
 
     /// <summary>
     /// Get all actions associated with this tech

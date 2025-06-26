@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.GameLogic;
@@ -10,9 +9,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(ShowProduceOptionsInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, ShowProduceOptionsInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var candidates = game.Hexes
             .Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId && !x.Planet.IsExhausted)
@@ -40,15 +38,13 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(ProduceInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, ProduceInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Hex);
         if (hex.Planet?.IsExhausted != false)
         {
             throw new Exception();
         }
-        
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
 
         await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex);
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);

@@ -1,5 +1,4 @@
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.EnervatorBeam;
 using SpaceWarDiscordApp.Discord;
@@ -41,13 +40,12 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(UseEnervatorBeamInteraction interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, UseEnervatorBeamInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         game.GetHexAt(interactionData.Target).Planet!.IsExhausted = true;
         var player = game.GetGamePlayerForInteraction(interactionData);
         var name = await player.GetNameAsync(false);
-
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
+        
         builder.AppendContentNewline($"{name} has exhausted {interactionData.Target} using Enervator Beam");
         
         player.GetPlayerTechById(Id).IsExhausted = true;

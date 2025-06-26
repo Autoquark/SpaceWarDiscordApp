@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -73,10 +71,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(BeginPlanningMoveInteraction<T> interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        BeginPlanningMoveInteraction<T> interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         await BeginPlanningMoveAsync(builder, game, player);
         
         return new SpaceWarInteractionOutcome(false, builder);
@@ -139,8 +138,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Called when a move destination is selected. Displays buttons to add a source, or skips straight to amount if there is only one possible source
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(SetMoveDestinationInteraction<T> interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        SetMoveDestinationInteraction<T> interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var destination = game.GetHexAt(interactionData.Destination);
         if (destination == null)
@@ -186,7 +186,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Called when a movement source is selected to add. Shows buttons to select amount of forces to move
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(AddMoveSourceInteraction<T> interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        AddMoveSourceInteraction<T> interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
@@ -194,8 +196,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             throw new Exception();
         }
-        
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
 
         await ShowSpecifyMovementAmountButtonsAsync(
             builder,
@@ -210,8 +210,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Called when a movement amount from a source is selected.
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(SetMovementAmountFromSourceInteraction<T> interactionData, Game game,
-        InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        SetMovementAmountFromSourceInteraction<T> interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
@@ -236,8 +237,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
         var destinationHex = game.GetHexAt(player.PlannedMove.Destination);
         Debug.Assert(destinationHex != null);
-        
-        var builder = new DiscordWebhookBuilder().EnableV2Components();
         
         var interactions = new List<InteractionData>();
         // If this was the only place we could move from, and a nonzero amount was specified, perform the move now
@@ -270,9 +269,10 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(PerformPlannedMoveInteraction<T> interactionData, Game game, InteractionCreatedEventArgs args)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        PerformPlannedMoveInteraction<T> interactionData,
+        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var builder = new DiscordFollowupMessageBuilder().EnableV2Components();
         await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData));
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
