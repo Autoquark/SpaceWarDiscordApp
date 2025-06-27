@@ -274,10 +274,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData));
-        
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 
-        return new SpaceWarInteractionOutcome(true, builder, true);
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 
     protected async Task<TBuilder> ShowSpecifyMovementAmountButtonsAsync<TBuilder>(TBuilder builder, Game game,
