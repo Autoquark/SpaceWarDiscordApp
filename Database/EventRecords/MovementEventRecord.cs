@@ -7,7 +7,7 @@ namespace SpaceWarDiscordApp.Database.EventRecords;
 public class MovementEventRecord : EventRecord
 {
     [FirestoreProperty]
-    public IList<SourceAndAmount> Sources { get; set; }
+    public IList<SourceAndAmount> Sources { get; set; } = [];
     
     [FirestoreProperty]
     public HexCoordinates Destination { get; set; }

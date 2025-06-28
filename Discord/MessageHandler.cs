@@ -53,7 +53,8 @@ public static partial class MessageHandler
 
                     if (!interactionData.PlayerAllowedToTrigger(game, player))
                     {
-                        builder.WithAllowedMentions([new RepliedUserMention()]);
+                        // Seems like there is a bug with reply mentions in DSharpPlus so I have to do this to get the mention to work
+                        builder.WithAllowedMentions(Mentions.All);
                         await args.Message.RespondAsync(builder.AppendContentNewline($"{args.Author.Mention}, looks like you tried to trigger an interaction that is for another player"));
                         return;
                     }
@@ -61,7 +62,6 @@ public static partial class MessageHandler
                     var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
                     serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData =
                         await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
-
                     
                     var outcome =
                         await InteractionDispatcher.HandleInteractionAsync(builder, interactionData, game,
@@ -92,7 +92,7 @@ public static partial class MessageHandler
                 {
                     // Let the bot know the interaction failed
                     var builder = new DiscordMessageBuilder().EnableV2Components()
-                        .WithAllowedMentions([new RepliedUserMention()]);
+                        .WithAllowedMentions(Mentions.All);
                     await args.Message.RespondAsync(builder.AppendContentNewline($"{args.Author.Mention}, looks like you tried to trigger an interaction, but the ID was invalid"));
                 }
             }
