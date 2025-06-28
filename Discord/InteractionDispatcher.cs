@@ -32,7 +32,7 @@ public static class InteractionDispatcher
     /// <summary>
     /// Allows game logic to trigger resolution of an interaction directly
     /// </summary>
-    public static async Task HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public static async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         InteractionData interactionData,
         Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
@@ -42,7 +42,7 @@ public static class InteractionDispatcher
             throw new ArgumentException("InteractionData does not belong to the given game");
         }
         
-        await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
+        return await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
     }
 
     /// <summary>
@@ -57,16 +57,18 @@ public static class InteractionDispatcher
         
         var builder = new DiscordWebhookBuilder().EnableV2Components();
 
-        var snapshot = (await new Query<InteractionData>(Program.FirestoreDb.InteractionData()).WhereEqualTo(x => x.InteractionId, args.Interaction.Data.CustomId)
-            .Limit(1)
-            .GetSnapshotAsync()).FirstOrDefault();
+        if (!Guid.TryParse(args.Interaction.Data.CustomId, out var interactionId))
+        {
+            return;
+        }
 
-        if (snapshot == null)
+        var interactionData =
+            await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetInteractionDataAsync(interactionId));
+
+        if (interactionData == null)
         {
             throw new Exception("InteractionData not found");
         }
-
-        var interactionData = snapshot.ConvertToPolymorphic<InteractionData>();
 
         if (interactionData.EditOriginalMessage)
         {
@@ -163,7 +165,7 @@ public static class InteractionDispatcher
 
         return await (Task<SpaceWarInteractionOutcome>) typeof(IInteractionHandler<>).MakeGenericType(interactionType)
             .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!
-            .MakeGenericMethod(typeof(DiscordWebhookBuilder))
+            .MakeGenericMethod(typeof(TBuilder))
             .Invoke(handler, [builder, interactionData, game, serviceProvider])!;
     }
 }

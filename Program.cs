@@ -7,6 +7,7 @@ using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -28,6 +29,8 @@ static class Program
     private static readonly ThreadLocal<Random> _random = new(() => new Random());
     
     public static IReadOnlyDictionary<string, DiscordEmoji> AppEmojisByName { get; private set; }
+
+    public static CommonEmoji CommonEmoji;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     
     public static Random Random => _random.Value!;
@@ -122,17 +125,20 @@ static class Program
             }
         }
 
-        discordBuilder.ConfigureEventHandlers(builder => builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated));
+        discordBuilder.ConfigureEventHandlers(builder =>
+        {
+            builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
+            builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
+        });
         
         DiscordClient = discordBuilder.Build();
+        
+        CommonEmoji = new CommonEmoji(DiscordClient);
+        
         await DiscordClient.ConnectAsync();
         
         AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
         
         await Task.Delay(-1);
     }
-    
-    
-
-    
 }

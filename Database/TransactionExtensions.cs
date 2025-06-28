@@ -27,6 +27,15 @@ public static class TransactionExtensions
         return game;
     }
 
+    public static async Task<InteractionData.InteractionData?> GetInteractionDataAsync(this Transaction transaction,
+        Guid interactionId) =>
+        (await transaction.GetSnapshotAsync(
+                new Query<InteractionData.InteractionData>(transaction.Database.InteractionData())
+                    .WhereEqualTo(x => x.InteractionId, interactionId.ToString())
+            .Limit(1)))
+        .FirstOrDefault()
+        ?.ConvertToPolymorphic<InteractionData.InteractionData>();
+
     public static void Set(this Transaction transaction, FirestoreModel model)
     {
         if (model is Game game)
