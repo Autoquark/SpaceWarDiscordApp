@@ -18,7 +18,8 @@ public class Tech_SabotageSupplyLines : Tech
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = GetTargets(game, player).ToList();
         var tech = GetThisTech(player);

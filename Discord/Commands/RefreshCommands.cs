@@ -11,11 +11,11 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
 {
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         RefreshActionInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         await RefreshOperations.Refresh(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
 
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }

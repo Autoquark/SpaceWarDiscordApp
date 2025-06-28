@@ -1,7 +1,9 @@
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using Google.Cloud.Firestore;
 using Grpc.Core;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -30,14 +32,17 @@ public static class InteractionDispatcher
     /// <summary>
     /// Allows game logic to trigger resolution of an interaction directly
     /// </summary>
-    public static async Task HandleInteractionAsync<TBuilder>(TBuilder builder, InteractionData interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task HandleInteractionAsync<TBuilder>(TBuilder builder,
+        InteractionData interactionData,
+        Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (!game.DocumentId!.Equals(interactionData.Game))
         {
             throw new ArgumentException("InteractionData does not belong to the given game");
         }
         
-        await HandleInteractionInternalAsync(builder, interactionData, game);
+        await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
     }
 
     /// <summary>
@@ -91,8 +96,12 @@ public static class InteractionDispatcher
             await args.Interaction.CreateFollowupMessageAsync(new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!"));
             return;
         }
+
+        var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
+        serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData =
+            await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
         
-        var outcome = await HandleInteractionInternalAsync(builder, interactionData, game);
+        var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
 
         if (outcome.RequiresSave)
         {
@@ -120,10 +129,10 @@ public static class InteractionDispatcher
                 {
                     await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
                 }
-                else if(outcome.ReplyBuilder is not null)
+                else
                 {
                     await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Tried to both delete and edit original message. Please report this to the developer"));
+                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline($"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
                 }
             }
             else
@@ -135,13 +144,16 @@ public static class InteractionDispatcher
                 else if(outcome.ReplyBuilder is not null)
                 {
                     await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline("ERROR: Invalid reply builder type. Please report this to the developer"));
+                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline($"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
                 }
             }
         }
     }
     
-    private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync<TBuilder>(TBuilder builder, InteractionData interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync<TBuilder>(TBuilder builder,
+        InteractionData interactionData,
+        Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var interactionType = interactionData.GetType();
         if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
@@ -152,6 +164,6 @@ public static class InteractionDispatcher
         return await (Task<SpaceWarInteractionOutcome>) typeof(IInteractionHandler<>).MakeGenericType(interactionType)
             .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!
             .MakeGenericMethod(typeof(DiscordWebhookBuilder))
-            .Invoke(handler, [builder, interactionData, game])!;
+            .Invoke(handler, [builder, interactionData, game, serviceProvider])!;
     }
 }

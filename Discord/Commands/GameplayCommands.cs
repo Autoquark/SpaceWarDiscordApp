@@ -39,14 +39,15 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
         var outcome = context.Outcome();
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, EndTurnInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        await GameFlowOperations.NextTurnAsync(builder, game);
+        await GameFlowOperations.NextTurnAsync(builder, game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }

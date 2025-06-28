@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
@@ -91,7 +92,7 @@ public static class GameFlowOperations
         return builder;
     }
 
-    public static async Task<TBuilder> ShowSelectActionMessageAsync<TBuilder>(TBuilder builder, Game game) 
+    public static async Task<TBuilder> ShowSelectActionMessageAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (game.HavePrintedSelectActionThisInteraction)
@@ -102,31 +103,34 @@ public static class GameFlowOperations
         game.HavePrintedSelectActionThisInteraction = true;
         
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
+
+        var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
+            .InteractionGroupId;
         
         var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new BeginPlanningMoveInteraction<MoveActionCommands>()
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        });
+        }, interactionGroupId);
 
         var produceInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowProduceOptionsInteraction
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        });
+        }, interactionGroupId);
 
         var refreshInteractionId = await InteractionsHelper.SetUpInteractionAsync(new RefreshActionInteraction
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        });
+        }, interactionGroupId);;
 
         var endTurnInteractionId = await InteractionsHelper.SetUpInteractionAsync(new EndTurnInteraction
         {
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
             Game = game.DocumentId,
             EditOriginalMessage = false
-        });
+        }, interactionGroupId);;
 
         var techActions = GetPlayerTechActions(game, game.CurrentTurnPlayer).ToList();
 
@@ -138,7 +142,7 @@ public static class GameFlowOperations
                 TechId = x.Tech.Id,
                 ActionId = x.Id,
                 UsingPlayerId = game.CurrentTurnPlayer.GamePlayerId
-            }));
+            }), interactionGroupId);
         
         await ShowBoardStateMessageAsync(builder, game);
         builder.AppendContentNewline("Your Turn".DiscordHeading2())
@@ -180,7 +184,7 @@ public static class GameFlowOperations
         return builder;
     }
     
-    public static async Task<TBuilder?> OnActionCompletedAsync<TBuilder>(TBuilder? builder, Game game, ActionType actionType)
+    public static async Task<TBuilder?> OnActionCompletedAsync<TBuilder>(TBuilder? builder, Game game, ActionType actionType, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (actionType == ActionType.Main)
@@ -189,10 +193,10 @@ public static class GameFlowOperations
             game.ActionTakenThisTurn = true;
         }
 
-        return await AdvanceTurnOrPromptNextActionAsync(builder, game);
+        return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
     }
 
-    public static async Task<TBuilder?> AdvanceTurnOrPromptNextActionAsync<TBuilder>(TBuilder? builder, Game game)
+    public static async Task<TBuilder?> AdvanceTurnOrPromptNextActionAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (game.IsWaitingForTechPurchaseDecision)
@@ -205,12 +209,12 @@ public static class GameFlowOperations
         {
             if (builder != null)
             {
-                await ShowSelectActionMessageAsync(builder, game);
+                await ShowSelectActionMessageAsync(builder, game, serviceProvider);
             }
         }
         else
         {
-            await NextTurnAsync(builder, game);    
+            await NextTurnAsync(builder, game, serviceProvider);    
         }
         
         return builder;
@@ -219,7 +223,7 @@ public static class GameFlowOperations
     /// <summary>
     /// Advances the game to the next turn
     /// </summary>
-    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game)
+    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var endingTurnPlayer = game.CurrentTurnPlayer;
@@ -270,7 +274,7 @@ public static class GameFlowOperations
             return;
         }
         
-        await ShowSelectActionMessageAsync(builder, game);
+        await ShowSelectActionMessageAsync(builder, game, serviceProvider);
     }
 
     public static async Task<TBuilder?> CheckForVictoryAsync<TBuilder>(TBuilder? builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>

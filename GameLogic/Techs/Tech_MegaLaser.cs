@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
@@ -24,7 +25,8 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
             .DistinctBy(x => x.Coordinates)
             .Any(x => x.ForcesPresent > 0);
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var planets = game.Hexes.WhereOwnedBy(player)
             .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
@@ -45,14 +47,14 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Target = x.Coordinates
-        }));
+        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, planets, interactions);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         FireMegaLaserInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
@@ -60,7 +62,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
 
         builder.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

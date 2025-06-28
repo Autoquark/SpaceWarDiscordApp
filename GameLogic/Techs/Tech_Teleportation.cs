@@ -18,8 +18,9 @@ public class Tech_Teleportation : Tech
 
     private readonly Teleportation_MovementFlowHandler _movementFlowHandler = new(); 
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
-        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player);
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
+        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
 }
 
 public class Teleportation_MovementFlowHandler : MovementFlowHandler<Tech_Teleportation>

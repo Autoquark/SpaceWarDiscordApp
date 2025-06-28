@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.EnervatorBeam;
 using SpaceWarDiscordApp.Discord;
@@ -21,7 +22,8 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && game.Hexes.Any(x => x.Planet?.IsExhausted == false);
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.Where(x => x.Planet?.IsExhausted == false)
             .ToList();
@@ -33,14 +35,15 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
                 Game = game.DocumentId,
                 Target = x.Coordinates,
                 EditOriginalMessage = true
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
 
         builder.AppendContentNewline("Enervator Beam: Choose a planet to exhaust:");
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, UseEnervatorBeamInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        UseEnervatorBeamInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         game.GetHexAt(interactionData.Target).Planet!.IsExhausted = true;
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -50,7 +53,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

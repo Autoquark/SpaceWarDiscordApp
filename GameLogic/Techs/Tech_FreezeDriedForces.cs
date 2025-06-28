@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.FreezeDriedForces;
 using SpaceWarDiscordApp.Discord;
@@ -18,7 +19,8 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         HasSimpleAction = true;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId).ToList();
 
@@ -34,14 +36,14 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 Target = x.Coordinates
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         UseFreezeDriedForcesInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Target);
         hex.Planet!.ForcesPresent += 3;
@@ -53,7 +55,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

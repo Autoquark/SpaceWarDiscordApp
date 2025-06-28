@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
@@ -73,15 +74,16 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// </summary>
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         BeginPlanningMoveInteraction<T> interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
-        await BeginPlanningMoveAsync(builder, game, player);
+        await BeginPlanningMoveAsync(builder, game, player, serviceProvider);
         
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<TBuilder> BeginPlanningMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public async Task<TBuilder> BeginPlanningMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         IEnumerable<BoardHex> destinations;
@@ -130,7 +132,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Destination = x.Coordinates,
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = true
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, destinations, interactionIds);
     }
@@ -140,7 +142,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// </summary>
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         SetMoveDestinationInteraction<T> interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var destination = game.GetHexAt(interactionData.Destination);
         if (destination == null)
@@ -169,7 +172,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             // Only one planet we can move from, skip straight to specifying amount
             await ShowSpecifyMovementAmountButtonsAsync(messageBuilder, game, player,
-                sources.Single(), destination);
+                sources.Single(), destination, serviceProvider);
             return new SpaceWarInteractionOutcome(true, messageBuilder);
         }
 
@@ -178,7 +181,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             player, 
             destination);
         
-        await InteractionsHelper.SetUpInteractionsAsync(interactionsToSetUp);
+        await InteractionsHelper.SetUpInteractionsAsync(interactionsToSetUp, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
 
         return new SpaceWarInteractionOutcome(true, messageBuilder);
     }
@@ -188,7 +191,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// </summary>
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         AddMoveSourceInteraction<T> interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
@@ -202,7 +205,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             game,
             player,
             game.GetHexAt(interactionData.Source),
-            game.GetHexAt(player.PlannedMove.Destination));
+            game.GetHexAt(player.PlannedMove.Destination),
+            serviceProvider);
         
         return new SpaceWarInteractionOutcome(false, builder);
     }
@@ -212,7 +216,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// </summary>
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         SetMovementAmountFromSourceInteraction<T> interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
 
@@ -243,7 +248,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         var sources = GetAllowedMoveSources(game, player, destinationHex);
         if ((sources.Count == 1 || !AllowManyToOne) && entry != null)
         {
-            await PerformMoveAsync(builder, game, player);
+            await PerformMoveAsync(builder, game, player, serviceProvider);
         }
         else
         {
@@ -263,7 +268,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
             transaction.Set(game);
-            InteractionsHelper.SetUpInteractions(interactions, transaction);
+            InteractionsHelper.SetUpInteractions(interactions, transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         });
         
         return new SpaceWarInteractionOutcome(false, builder);
@@ -271,15 +276,15 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         PerformPlannedMoveInteraction<T> interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData));
+        await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData), serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
     protected async Task<TBuilder> ShowSpecifyMovementAmountButtonsAsync<TBuilder>(TBuilder builder, Game game,
-        GamePlayer player, BoardHex source, BoardHex destination) 
+        GamePlayer player, BoardHex source, BoardHex destination, IServiceProvider serviceProvider) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         builder.AppendContentNewline($"{MoveName}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
@@ -300,7 +305,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
                         EditOriginalMessage = true
-                    }, transaction))
+                    }, transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId))
                 .ToList());
 
         builder.AppendButtonRows(Enumerable.Range(0, max + 1).Select(x =>
@@ -340,7 +345,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return interactions;
     }
 
-    protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
@@ -355,11 +360,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             player.GetPlayerTechById(MarkUsedTechId).UsedThisTurn = true;
         }
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType, serviceProvider);
         
         // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
         // printed the turn message for the new player, this will bail out on printing it again
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, serviceProvider);
         
         return builder;
     }

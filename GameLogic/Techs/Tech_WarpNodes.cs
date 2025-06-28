@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.WarpNodes;
 using SpaceWarDiscordApp.Database.Tech;
@@ -28,7 +29,8 @@ public class Tech_WarpNodes : Tech,
         TechId = Id
     };
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         playerTech.MovedTo = [];
@@ -46,27 +48,27 @@ public class Tech_WarpNodes : Tech,
                 ForGamePlayerId = player.GamePlayerId,
                 Source = x.Coordinates,
                 Game = game.DocumentId
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, sources, interactionIds);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         WarpNodes_ChooseSourceInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         playerTech.Source = interactionData.Source;
 
-        await ShowChooseDestinationAsync(builder, game, player, game.GetHexAt(interactionData.Source));
+        await ShowChooseDestinationAsync(builder, game, player, game.GetHexAt(interactionData.Source), serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         WarpNodes_ChooseDestinationInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
@@ -85,7 +87,7 @@ public class Tech_WarpNodes : Tech,
             Game = game.DocumentId,
             Amount = x,
             Destination = interactionData.Destination.Value
-        }));
+        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         builder.AppendContentNewline($"{name}, choose amount of forces to move:")
             .AllowMentions(player)
@@ -96,7 +98,7 @@ public class Tech_WarpNodes : Tech,
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         WarpNodes_ChooseAmountInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
@@ -118,18 +120,18 @@ public class Tech_WarpNodes : Tech,
             && playerTech.MovedTo.Count < BoardUtils.GetNeighbouringHexes(game, source).Count)
         {
             // Go back to destination selection
-            await ShowChooseDestinationAsync(builder, game, player, source); 
+            await ShowChooseDestinationAsync(builder, game, player, source, serviceProvider); 
         }
         else
         {
-            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
         }
         
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
     private async Task<TBuilder> ShowChooseDestinationAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
-        BoardHex source) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        BoardHex source, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var name = await player.GetNameAsync(true);
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
@@ -147,7 +149,7 @@ public class Tech_WarpNodes : Tech,
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 Destination = x
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
 
         return builder.AppendContentNewline($"{name}, choose a planet to move to:")
             .AllowMentions(player)

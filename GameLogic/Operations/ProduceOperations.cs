@@ -7,7 +7,7 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public static class ProduceOperations
 {
-    public static async Task<TBuilder> ProduceOnPlanetAsync<TBuilder>(TBuilder builder, Game game, BoardHex hex) 
+    public static async Task<TBuilder> ProduceOnPlanetAsync<TBuilder>(TBuilder builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (hex.Planet == null)
@@ -38,7 +38,7 @@ public static class ProduceOperations
         if (producedScience)
         {
             builder.AppendContentNewline($"{name} now has {player.Science} science");
-            await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player);
+            await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
         }
 
         return builder;

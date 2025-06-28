@@ -24,6 +24,9 @@ public abstract class InteractionData : PolymorphicFirestoreModel
     /// </summary>
     [FirestoreProperty]
     public bool EditOriginalMessage { get; set; } = false;
+    
+    [FirestoreProperty]
+    public ulong InteractionGroupId { get; set; }
 
     public bool PlayerAllowedToTrigger(Game game, GamePlayer player)
         => ForGamePlayerId == -1

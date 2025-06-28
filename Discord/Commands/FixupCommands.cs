@@ -270,7 +270,7 @@ public class FixupCommands
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .AllowMentions(gamePlayer, previousPlayer);
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }

@@ -16,8 +16,9 @@ public class Tech_HyperspaceRailway : Tech
     
     private readonly HyperspaceRailway_MovementFlowHandler _movementFlowHandler = new();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
-        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player);
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
+        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => 
         base.IsSimpleActionAvailable(game, player) && game.Hexes.WhereOwnedBy(player).Count() > 1;

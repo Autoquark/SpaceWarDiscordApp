@@ -47,6 +47,8 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             outcome.RequiresSave = requiresGameAttribute!.Mode == RequireGameChannelMode.RequiresSave;
         }
         
+        contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+        
         await base.ExecuteAsync(context, cancellationToken);
 
         // Commands that require a game must specify whether a game save is required, either via attribute or dynamically

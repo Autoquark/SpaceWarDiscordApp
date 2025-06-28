@@ -14,7 +14,8 @@ public class Tech_MassRecruitment : Tech
         HasSimpleAction = true;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId && !x.Planet.IsExhausted)
             .ToList();
@@ -29,7 +30,7 @@ public class Tech_MassRecruitment : Tech
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
 
         return builder;
     }

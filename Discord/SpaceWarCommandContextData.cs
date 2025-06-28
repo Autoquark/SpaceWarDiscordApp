@@ -8,4 +8,6 @@ namespace SpaceWarDiscordApp.Discord;
 public class SpaceWarCommandContextData
 {
     public Game? Game { get; set; }
+    
+    public GlobalData GlobalData { get; set; } = null!;
 }

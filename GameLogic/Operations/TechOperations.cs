@@ -1,5 +1,6 @@
 using System.Text;
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord;
@@ -9,7 +10,8 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public static class TechOperations
 {
-    public static async Task<TBuilder> ShowTechPurchaseButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public static async Task<TBuilder> ShowTechPurchaseButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var availableUniversal = player.Science >= GameConstants.UniversalTechCost
@@ -31,6 +33,8 @@ public static class TechOperations
 
         var (universalIds, marketIds, declineId) = await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
+            var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
+                .InteractionGroupId;
             var universalIds = InteractionsHelper.SetUpInteractions(availableUniversal.Select(x => new PurchaseTechInteraction
             {
                 Game = game.DocumentId,
@@ -39,7 +43,7 @@ public static class TechOperations
                 EditOriginalMessage = false,
                 Cost = GameConstants.UniversalTechCost
             }),
-            transaction);
+            transaction, interactionGroupId);
             
             var marketIds = InteractionsHelper.SetUpInteractions(availableMarket
                     .Select(x => new PurchaseTechInteraction
@@ -50,7 +54,7 @@ public static class TechOperations
                     EditOriginalMessage = false,
                     Cost = x.cost
                 }),
-                transaction);
+                transaction, interactionGroupId);
 
             var declineId = InteractionsHelper.SetUpInteraction(new DeclineTechPurchaseInteraction
             {
@@ -58,7 +62,7 @@ public static class TechOperations
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = false
             },
-            transaction);
+            transaction, interactionGroupId);
             
             return (universalIds, marketIds, declineId);
         });
@@ -92,7 +96,7 @@ public static class TechOperations
     }
     
     public static async Task<TBuilder> PurchaseTechAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
-        string techId, int cost)
+        string techId, int cost, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var name = await player.GetNameAsync(false);
@@ -119,7 +123,7 @@ public static class TechOperations
 
         game.IsWaitingForTechPurchaseDecision = false;
         
-        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game);
+        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
         
         return builder;
     }

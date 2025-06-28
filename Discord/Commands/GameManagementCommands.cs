@@ -172,7 +172,7 @@ public static class GameManagementCommands
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game);
+        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }

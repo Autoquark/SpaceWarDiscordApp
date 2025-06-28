@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
@@ -20,7 +21,8 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = GetTargets(game, player).ToList();
 
@@ -36,7 +38,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
                 Game = game.DocumentId,
                 EditOriginalMessage = true,
                 Target = x.Coordinates
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
@@ -48,7 +50,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         UseAggressiveWasteDisposalInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Target);
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -65,7 +67,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         var name = await player.GetNameAsync(false);
         builder.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }

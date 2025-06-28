@@ -92,8 +92,8 @@ public abstract class Tech
             }]
             : [];
 
-    public virtual Task<TBuilder> UseTechActionAsync<TBuilder>(
-        TBuilder builder, Game game, GamePlayer player)
+    public virtual Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder> => Task.FromResult(builder);
 
     /// <summary>

@@ -18,7 +18,8 @@ public class Tech_LocalDefenseForces : Tech
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && GetAffectedHexes(game, player).Any();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var affectedHexes = GetAffectedHexes(game, player).ToList();
         builder.AppendContentNewline("Adding 1 forces to:");
@@ -33,7 +34,7 @@ public class Tech_LocalDefenseForces : Tech
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        return (await GameFlowOperations.OnActionCompletedAsync(builder, game, SimpleActionType))!;
+        return (await GameFlowOperations.OnActionCompletedAsync(builder, game, SimpleActionType, serviceProvider))!;
     }
     
     private static IEnumerable<BoardHex> GetAffectedHexes(Game game, GamePlayer player)

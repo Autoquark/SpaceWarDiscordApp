@@ -21,8 +21,9 @@ public class Tech_SolarTricycle : Tech
     
     private readonly SolarTricycle_MovementFlowHandler _movementFlowHandler;
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
-        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player);
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
+        => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
 }
 
 public class SolarTricycle_MovementFlowHandler : MovementFlowHandler<Tech_SolarTricycle>

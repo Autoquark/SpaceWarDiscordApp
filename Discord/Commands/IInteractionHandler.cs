@@ -8,6 +8,7 @@ public interface IInteractionHandler<T> where T : InteractionData
 {
     public Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         T interactionData,
-        Game game)
+        Game game,
+        IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>;
 }

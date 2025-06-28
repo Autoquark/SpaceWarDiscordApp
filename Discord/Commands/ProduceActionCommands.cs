@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.GameLogic;
@@ -9,7 +10,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, ShowProduceOptionsInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var candidates = game.Hexes
@@ -25,7 +27,7 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
                     Hex = x.Coordinates,
                     EditOriginalMessage = true,
                     ForGamePlayerId = player.GamePlayerId
-                }, transaction))
+                },transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId))
         );
 
         builder.AppendContentNewline("Choose a ready planet to produce on:");
@@ -38,7 +40,8 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, ProduceInteraction interactionData, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+        ProduceInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Hex);
         if (hex.Planet?.IsExhausted != false)
@@ -46,8 +49,8 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
             throw new Exception();
         }
 
-        await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex);
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main);
+        await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex, serviceProvider);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

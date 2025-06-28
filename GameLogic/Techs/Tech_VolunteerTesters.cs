@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.VolunteerTesters;
@@ -20,7 +21,8 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         SimpleActionType = ActionType.Free;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.WhereOwnedBy(player).ToList();
         var name = await player.GetNameAsync(true);
@@ -32,14 +34,14 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Target = x.Coordinates
-        }));
+        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, targets, interactions);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         SetVolunteerTestersTargetInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
         var hex = game.GetHexAt(interactionData.Target);
@@ -50,7 +52,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
                 Game = game.DocumentId,
                 Target = interactionData.Target,
                 Amount = x
-            }));
+            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
 
         var name = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{name}, choose how many forces will 'volunteer'")
@@ -63,7 +65,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
         UseVolunteerTestersInteraction interactionData,
-        Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var hex = game.GetHexAt(interactionData.Target);
 
@@ -79,9 +81,9 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         var tech = player.GetPlayerTechById(Id);
         tech.IsExhausted = true;
 
-        await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player);
+        await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free);
+        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }
