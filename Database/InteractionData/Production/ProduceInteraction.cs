@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.InteractionData;
+namespace SpaceWarDiscordApp.Database.InteractionData.Production;
 
 [FirestoreData]
 public class ProduceInteraction : InteractionData

@@ -14,7 +14,7 @@ public class Tech_SuperpositionalDeployment : Tech
         SimpleActionType = ActionType.Free;
         SimpleActionIsOncePerTurn = true;
         _movementFlowHandler = new SuperpositionalDeployment_MovementFlowHandler(this);
-        AdditionalInteractionHandlers = [_movementFlowHandler];
+        AdditionalHandlers = [_movementFlowHandler];
     }
 
     private readonly SuperpositionalDeployment_MovementFlowHandler _movementFlowHandler;

@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -102,6 +103,11 @@ public static class InteractionDispatcher
         var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
         serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData =
             await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+
+        /*if (interactionData is TriggeredEffectInteractionData triggeredEffectInteraction)
+        {
+            GameFlowOperations.OnUserTriggeredResolveEffectInteraction(game, triggeredEffectInteraction);
+        }*/
         
         var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
 

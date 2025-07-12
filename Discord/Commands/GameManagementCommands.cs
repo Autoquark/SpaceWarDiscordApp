@@ -130,6 +130,7 @@ public static class GameManagementCommands
         if (game.Phase != GamePhase.Setup)
         {
             await context.RespondAsync("Game has already started");
+            return;
         }
         
         var builder = new DiscordMessageBuilder().EnableV2Components();

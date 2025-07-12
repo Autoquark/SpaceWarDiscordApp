@@ -14,7 +14,10 @@ public abstract class Tech
         TechsById = new ReadOnlyDictionary<string, Tech>(_techsById);
     }
 
-    public IEnumerable<object> AdditionalInteractionHandlers { get; init; } = [];
+    /// <summary>
+    /// Additional objects that need to be registered as interaction and/or event resolved handlers
+    /// </summary>
+    public IEnumerable<object> AdditionalHandlers { get; init; } = [];
     
     public static readonly IReadOnlyDictionary<string, Tech> TechsById;
 
@@ -78,7 +81,10 @@ public abstract class Tech
     /// Get triggered effects from this tech in response to the given GameEvent
     /// </summary>
     /// <returns></returns>
-    public virtual IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) => [];
+    public virtual IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+        => GetThisTech(player).IsExhausted ? [] : GetTriggeredEffectsInternal(game, gameEvent, player);
+    
+    protected virtual IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player) => [];
 
     /// <summary>
     /// Get all actions associated with this tech

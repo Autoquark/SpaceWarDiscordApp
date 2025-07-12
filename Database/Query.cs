@@ -22,6 +22,9 @@ public class Query<T>
     public Query<T> WhereNotEqualTo<TProperty>(Expression<Func<T, TProperty>> property, TProperty value)
         => new(FirestoreQuery.WhereNotEqualTo(property.GetPropertyInfo().Name, value));
 
+    public Query<T> WhereIn<TProperty>(Expression<Func<T, TProperty>> property, IEnumerable<TProperty> values)
+        => new (FirestoreQuery.WhereIn(property.GetPropertyInfo().Name, values));
+    
     public Query<T> Limit(int limit) => new(FirestoreQuery.Limit(limit));
 
     public async Task<QuerySnapshot> GetSnapshotAsync() => await FirestoreQuery.GetSnapshotAsync();

@@ -7,20 +7,28 @@ namespace SpaceWarDiscordApp.GameLogic.GameEvents;
 /// <summary>
 /// Effect triggered in response to a GameEvent
 /// </summary>
+[FirestoreData]
 public class TriggeredEffect
 {
     /// <summary>
     /// Whether the effect must be resolved or is optional
     /// </summary>
-    public bool IsMandatory { get; set; }
+    [FirestoreProperty]
+    public required bool IsMandatory { get; set; }
 
     /// <summary>
     /// Display name used e.g. on the button to resolve this effect
     /// </summary>
-    public string DisplayName { get; set; } = "Unknown Effect";
-    
+    [FirestoreProperty]
+    public required string DisplayName { get; set; } = "Unknown Effect";
+
     /// <summary>
     /// Reference to an InteractionData which can resolve this effect
     /// </summary>
-    public DocumentReference ResolveInteraction { get; init; } = null!;
+    [FirestoreProperty]
+    public string ResolveInteractionId { get; set; } = "";
+    
+    // InteractionData to resolve this effect. Used to avoid going via firestore when an effect is created and then
+    // resolved immediately.
+    public required TriggeredEffectInteractionData? ResolveInteractionData { get; set; }
 }

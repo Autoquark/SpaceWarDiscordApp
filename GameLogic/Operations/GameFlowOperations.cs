@@ -1,7 +1,8 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using DSharpPlus.Entities;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
@@ -17,7 +18,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public static class GameFlowOperations
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>
 {
     public static async Task<TBuilder> ShowBoardStateMessageAsync<TBuilder>(TBuilder builder, Game game) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
@@ -123,14 +124,14 @@ public static class GameFlowOperations
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        }, interactionGroupId);;
+        }, interactionGroupId);
 
         var endTurnInteractionId = await InteractionsHelper.SetUpInteractionAsync(new EndTurnInteraction
         {
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
             Game = game.DocumentId,
             EditOriginalMessage = false
-        }, interactionGroupId);;
+        }, interactionGroupId);
 
         var techActions = GetPlayerTechActions(game, game.CurrentTurnPlayer).ToList();
 
@@ -183,7 +184,7 @@ public static class GameFlowOperations
 
         return builder;
     }
-    
+
     public static async Task<TBuilder?> OnActionCompletedAsync<TBuilder>(TBuilder? builder, Game game, ActionType actionType, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
@@ -199,7 +200,7 @@ public static class GameFlowOperations
     public static async Task<TBuilder?> AdvanceTurnOrPromptNextActionAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        if (game.IsWaitingForTechPurchaseDecision)
+        if (game.IsWaitingForTechPurchaseDecision || game.EventStack.Items.Count > 0)
         {
             return builder;
         }
@@ -333,9 +334,183 @@ public static class GameFlowOperations
         }
     }
 
-    public static void ResolveGameEvent(Game game, GameEvent gameEvent)
+    public static async Task PushGameEventsAsync<TBuilder>(TBuilder builder, Game game,
+        IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {
+        foreach (var gameEvent in gameEvents.Reverse())
+        {
+            gameEvent.PlayerIdsToResolveTriggersFor = game.PlayersInTurnOrderFrom(game.CurrentTurnPlayer)
+                .Select(x => x.GamePlayerId)
+                .ToList();
+            game.EventStack.Add(gameEvent);
+        }
+    }
+
+    public static void TriggerResolved(Game game, string interactionId)
+    {
+        var triggerList = game.EventStack.LastOrDefault()?.RemainingTriggersToResolve;
+        var triggeredEffect = triggerList?.Find(x => x.ResolveInteractionId == interactionId);
+        if (triggeredEffect == null)
+        {
+            throw new Exception("Triggered effect not found or is not in response to top event on stack");
+        }
         
+        triggerList!.Remove(triggeredEffect);
+    }
+
+    public static async Task<TBuilder> ContinueResolvingEventStackAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        while (game.EventStack.Items.Count > 0)
+        {
+            var resolvingEvent = game.EventStack.Last();
+            
+            // If there is only one trigger and it's mandatory, we can auto resolve it
+            if (resolvingEvent.RemainingTriggersToResolve is [{ IsMandatory: true }])
+            {
+                var resolvingTrigger = resolvingEvent.RemainingTriggersToResolve[0];
+                if (resolvingTrigger.ResolveInteractionData != null)
+                {
+                    resolvingEvent.RemainingTriggersToResolve.RemoveAt(0);
+                    await ResolveTriggeredEffectAsync(builder, game, resolvingTrigger, serviceProvider);
+                }
+                
+                continue;
+            }
+            // Multiple and/or optional triggers, need to get a player decision
+            else if (resolvingEvent.RemainingTriggersToResolve.Count > 0)
+            {
+                var player = game.GetGamePlayerByGameId(resolvingEvent.ResolvingTriggersForPlayerId);
+                var name = await player.GetNameAsync(true);
+                // TODO: Better messaging, different for if there are any mandatory or not
+                var mandatoryCount = resolvingEvent.RemainingTriggersToResolve.Count(x => x.IsMandatory);
+                var optionalCount = resolvingEvent.RemainingTriggersToResolve.Count - mandatoryCount;
+
+                if (mandatoryCount == 0)
+                {
+                    builder.AppendContentNewline(
+                        $"{name}, you have optional tech effects which you may trigger. Please select one to resolve next or click 'Decline'.");
+                }
+                else if (mandatoryCount > 1 && optionalCount == 0)
+                {
+                    builder.AppendContentNewline(
+                        $"{name}, you may choose the order in which these mandatory tech effects resolve. Please select one to resolve next.");
+                }
+                else
+                {
+                    builder.AppendContentNewline(
+                        $"{name}, you have optional tech effects which you may trigger. There is also at least one mandatory effect which must be resolved before continuing. Please select an effect to resolve next.");
+                }
+                
+                var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
+                    .InteractionGroupId;
+                
+                // Store or update interaction data for buttons in DB
+                await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+                {
+                    // For triggers whose InteractionData has already been saved to the DB, we need to update the 
+                    // interaction group ID so AI players know they are still among the current available choices
+                    var idsToUpdate = resolvingEvent.RemainingTriggersToResolve
+                        .Select(x => x.ResolveInteractionId)
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .ToList();
+
+                    IReadOnlyList<DocumentSnapshot> toUpdate = new ReadOnlyCollection<DocumentSnapshot>([]);
+                    if (idsToUpdate.Count > 0)
+                    {
+                        toUpdate = (await transaction.GetSnapshotAsync(
+                            new Query<InteractionData>(transaction.Database.InteractionData())
+                                .WhereIn(x => x.InteractionId, idsToUpdate))).Documents;
+                    }
+                    
+                    foreach (var trigger in resolvingEvent.RemainingTriggersToResolve
+                        .Where(x => x.ResolveInteractionData != null && string.IsNullOrEmpty(x.ResolveInteractionId)))
+                    {
+                        trigger.ResolveInteractionId =
+                            InteractionsHelper.SetUpInteraction(trigger.ResolveInteractionData!, transaction,
+                                interactionGroupId);
+                    }
+
+                    foreach (var document in toUpdate)
+                    {
+                        transaction.Update(document.Reference, nameof(InteractionData.InteractionGroupId), interactionGroupId);
+                    }
+                });
+                
+                builder.AppendButtonRows(resolvingEvent.RemainingTriggersToResolve.Select(x =>
+                    new DiscordButtonComponent(
+                        x.IsMandatory ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary,
+                        x.ResolveInteractionId, x.DisplayName)));
+
+                // If there are no mandatory triggers left, the player can decline remaining optional triggers
+                if (resolvingEvent.RemainingTriggersToResolve.All(x => !x.IsMandatory))
+                {
+                    var interactionId = await InteractionsHelper.SetUpInteractionAsync(new DeclineOptionalTriggersInteraction
+                    {
+                        Game = game.DocumentId,
+                        ForGamePlayerId = resolvingEvent.ResolvingTriggersForPlayerId
+                    }, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                    builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
+                }
+
+                break;
+            }
+            // No triggers left for this player
+            else
+            {
+                // Move on to the next player
+                if(resolvingEvent.PlayerIdsToResolveTriggersFor.Count > 0)
+                {
+                    var player = game.GetGamePlayerByGameId(resolvingEvent.PlayerIdsToResolveTriggersFor[0]);
+                    resolvingEvent.PlayerIdsToResolveTriggersFor.RemoveAt(0);
+                    resolvingEvent.ResolvingTriggersForPlayerId = player.GamePlayerId;
+                    resolvingEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, resolvingEvent, player).ToList();
+                    
+                    continue;
+                }
+                // No more players to resolve, pop this event from the stack and resolve its OnResolve
+                else
+                {
+                    await PopEventFromStackAndResolveAsync(builder, game, serviceProvider);
+                    continue;
+                }
+            }
+        }
+        
+        return (await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider))!;
+    }
+
+    public static async Task<TBuilder> DeclineOptionalTriggersAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var gameEvent = game.EventStack.LastOrDefault();
+        if (gameEvent == null)
+        {
+            return builder;
+        }
+
+        if (gameEvent.RemainingTriggersToResolve.Any(x => x.IsMandatory))
+        {
+            Debug.Assert(false);
+            return builder;
+        }
+        
+        gameEvent.RemainingTriggersToResolve.Clear();
+        
+        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+    }
+
+    private static async Task<TBuilder> PopEventFromStackAndResolveAsync<TBuilder>(TBuilder builder, Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var resolving = game.EventStack.LastOrDefault();
+        if (resolving == null)
+        {
+            throw new Exception("No events to resolve");
+        }
+        
+        game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
+        await EventResolvedDispatcher.HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
+        
+        return builder;
     }
 
     public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) =>
@@ -360,7 +535,38 @@ public static class GameFlowOperations
         var scoringName = await game.ScoringTokenPlayer.GetNameAsync(false);
         builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
+
+    private static async Task<TBuilder> ResolveTriggeredEffectAsync<TBuilder>(TBuilder builder, Game game,
+        TriggeredEffect triggeredEffect, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var interactionData = triggeredEffect.ResolveInteractionData
+            ?? await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetInteractionDataAsync<TriggeredEffectInteractionData>(Guid.Parse(triggeredEffect.ResolveInteractionId)));
+
+        if (interactionData == null)
+        {
+            throw new Exception("Interaction data not found");
+        }
+
+        await InteractionDispatcher.HandleInteractionAsync(builder, interactionData, game, serviceProvider);
+        return builder;
+    }
     
     public static IEnumerable<TechAction> GetPlayerTechActions(Game game, GamePlayer player)
         => player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, player));
+
+    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_ActionComplete gameEvent, Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        => await OnActionCompletedAsync(builder, game, gameEvent.ActionType, serviceProvider);
+
+    public static void OnUserTriggeredResolveEffectInteraction(Game game, TriggeredEffectInteractionData interactionData)
+    {
+        var triggerList = game.EventStack.LastOrDefault()?.RemainingTriggersToResolve;
+        var triggeredEffect = triggerList?.Find(x => x.ResolveInteractionId == interactionData.InteractionId);
+        if (triggeredEffect == null)
+        {
+            throw new Exception("Triggered effect not found or is not in response to top event on stack");
+        }
+        
+        triggerList!.Remove(triggeredEffect);
+    }
 }

@@ -1,5 +1,4 @@
 using Google.Cloud.Firestore;
-using Microsoft.VisualBasic;
 
 namespace SpaceWarDiscordApp.Database;
 
@@ -35,6 +34,11 @@ public static class InteractionsHelper
     public static string SetUpInteraction(InteractionData.InteractionData data,
         Transaction transaction, ulong interactionGroupId)
     {
+        if (string.IsNullOrEmpty(data.InteractionId))
+        {
+            throw new ArgumentException("InteractionId must be set");
+        }
+        
         var documentRef = transaction.Database.InteractionData().Document();
         data.DocumentId = documentRef;
         data.InteractionGroupId = interactionGroupId;

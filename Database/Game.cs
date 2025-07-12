@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database;
@@ -14,6 +15,11 @@ public enum GamePhase
 [FirestoreData]
 public class Game : FirestoreModel
 {
+    public Game()
+    {
+        EventStack = new LinkedDocumentCollection<GameEvent>(Program.FirestoreDb.GameEvents(), () => EventsDocuments);
+    }
+    
     /// <summary>
     /// All players in the game. Once the game has started, they will be in turn order.
     /// </summary>
@@ -67,7 +73,15 @@ public class Game : FirestoreModel
     
     [FirestoreProperty]
     public bool IsWaitingForTechPurchaseDecision { get; set; }
+
+    [FirestoreProperty]
+    private IList<DocumentReference> EventsDocuments { get; set; } = [];
     
+    /// <summary>
+    /// Stack of events currently being resolved
+    /// </summary>
+    public LinkedDocumentCollection<GameEvent> EventStack { get; set; }
+
     // Intentionally not saved to Firestore
     public bool HavePrintedSelectActionThisInteraction { get; set; } = false;
     
@@ -84,4 +98,6 @@ public class Game : FirestoreModel
     
     public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
     public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);
+    
+    public IEnumerable<GamePlayer> PlayersInTurnOrderFrom(GamePlayer player) => Players.Skip(Players.IndexOf(player)).Concat(Players.Take(Players.IndexOf(player)));
 }

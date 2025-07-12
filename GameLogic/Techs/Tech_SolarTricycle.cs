@@ -16,7 +16,7 @@ public class Tech_SolarTricycle : Tech
         SimpleActionType = ActionType.Free;
         SimpleActionIsOncePerTurn = true;
         _movementFlowHandler = new SolarTricycle_MovementFlowHandler(this);
-        AdditionalInteractionHandlers = [_movementFlowHandler];
+        AdditionalHandlers = [_movementFlowHandler];
     }
     
     private readonly SolarTricycle_MovementFlowHandler _movementFlowHandler;
@@ -32,7 +32,7 @@ public class SolarTricycle_MovementFlowHandler : MovementFlowHandler<Tech_SolarT
     {
         AllowManyToOne = false;
         MarkUsedTechId = tech.Id;
-        MaxAmountPerSource = 1;
+        StaticMaxAmountPerSource = 1;
         ActionType = tech.SimpleActionType;
     }
 }

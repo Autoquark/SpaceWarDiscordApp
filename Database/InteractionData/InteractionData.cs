@@ -6,13 +6,13 @@ namespace SpaceWarDiscordApp.Database.InteractionData;
 public abstract class InteractionData : PolymorphicFirestoreModel
 {
     [FirestoreProperty]
-    public string InteractionId { get; } = Guid.NewGuid().ToString();
+    public string InteractionId { get; set; } = Guid.NewGuid().ToString();
     
     [FirestoreProperty]
     public required DocumentReference? Game { get; set; }
 
     /// <summary>
-    /// GamePlayer ids of player that is expected to perform the interaction, or -1 if it's not player specific
+    /// GamePlayer id of the player that is allowed to perform the interaction, or -1 if it's not player specific
     /// </summary>
     [FirestoreProperty]
     public required int ForGamePlayerId { get; set; }

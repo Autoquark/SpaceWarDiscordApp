@@ -9,7 +9,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
+public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>
 {
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
@@ -49,6 +49,12 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>
     {
         await GameFlowOperations.NextTurnAsync(builder, game, serviceProvider);
 
+        return new SpaceWarInteractionOutcome(true, builder);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, DeclineOptionalTriggersInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        await GameFlowOperations.DeclineOptionalTriggersAsync(builder, game, serviceProvider);
         return new SpaceWarInteractionOutcome(true, builder);
     }
 }

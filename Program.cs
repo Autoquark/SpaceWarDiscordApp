@@ -7,7 +7,6 @@ using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
-using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -15,6 +14,8 @@ using SpaceWarDiscordApp.AI.Services;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp;
@@ -39,7 +40,7 @@ static class Program
     
     static async Task Main()
     {
-        TaskScheduler.UnobservedTaskException += (sender, args) =>
+        TaskScheduler.UnobservedTaskException += (_, args) =>
         {
             Console.WriteLine(args);
             foreach (var innerException in args.Exception.InnerExceptions)
@@ -78,7 +79,7 @@ static class Program
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
         });
-        discordBuilder.UseCommands((IServiceProvider serviceProvider, CommandsExtension extension) =>
+        discordBuilder.UseCommands((_, extension) =>
         {
             var assembly = Assembly.GetExecutingAssembly();
             extension.AddCommands(assembly);
@@ -106,11 +107,14 @@ static class Program
             CommandExecutor = new SpaceWarCommandExecutor()
         });
         
-        InteractionDispatcher.RegisterInteractionHandler(new MoveActionCommands());
-        InteractionDispatcher.RegisterInteractionHandler(new ProduceActionCommands());
-        InteractionDispatcher.RegisterInteractionHandler(new RefreshCommands());
-        InteractionDispatcher.RegisterInteractionHandler(new TechCommands());
-        InteractionDispatcher.RegisterInteractionHandler(new GameplayCommands());
+        RegisterEverything(new MoveActionCommands());
+        RegisterEverything(new ProduceCommands());
+        RegisterEverything(new RefreshCommands());
+        RegisterEverything(new TechCommands());
+        RegisterEverything(new GameplayCommands());
+        
+        RegisterEverything(new GameFlowOperations());
+        RegisterEverything(new ProduceOperations());
         
         // Create tech singletons
         foreach (var techType in Assembly.GetExecutingAssembly()
@@ -118,10 +122,10 @@ static class Program
                      .Where(x => x.IsAssignableTo(typeof(Tech)) && !x.IsAbstract))
         {
             var instance = Activator.CreateInstance(techType) as Tech ?? throw new Exception();
-            InteractionDispatcher.RegisterInteractionHandler(instance);
-            foreach (var handler in instance.AdditionalInteractionHandlers)
+            RegisterEverything(instance);
+            foreach (var handler in instance.AdditionalHandlers)
             {
-                InteractionDispatcher.RegisterInteractionHandler(handler);
+                RegisterEverything(handler);
             }
         }
 
@@ -140,5 +144,11 @@ static class Program
         AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
         
         await Task.Delay(-1);
+    }
+    
+    private static void RegisterEverything(object obj)
+    {
+        InteractionDispatcher.RegisterInteractionHandler(obj);
+        EventResolvedDispatcher.RegisterHandler(obj);
     }
 }

@@ -11,4 +11,13 @@ public class SetMoveDestinationInteraction<T> : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Destination { get; set; }
+    
+    [FirestoreProperty]
+    public required HexCoordinates? FixedSource { get; set; }
+    
+    [FirestoreProperty]
+    public required int? MaxAmountPerSource { get; set; }
+    
+    [FirestoreProperty]
+    public required string? TriggerToMarkResolvedId { get; set; }
 }

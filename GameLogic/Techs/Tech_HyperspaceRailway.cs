@@ -11,7 +11,7 @@ public class Tech_HyperspaceRailway : Tech
         "The 7.15 service to Alpha Centauri has been delayed due to leaves on the toroidal manifold.")
     {
         HasSimpleAction = true;
-        AdditionalInteractionHandlers = [_movementFlowHandler];
+        AdditionalHandlers = [_movementFlowHandler];
     }
     
     private readonly HyperspaceRailway_MovementFlowHandler _movementFlowHandler = new();

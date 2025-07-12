@@ -1,13 +1,15 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.Database.InteractionData.Production;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
+public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
 {
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
@@ -49,8 +51,16 @@ public class ProduceActionCommands : IInteractionHandler<ShowProduceOptionsInter
             throw new Exception();
         }
 
-        await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex, serviceProvider);
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, new GameEvent_BeginProduce
+        {
+            Location = interactionData.Hex
+        }, new GameEvent_ActionComplete
+        {
+            ActionType = ActionType.Main
+        });
+        //await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex, serviceProvider);
+        //await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

@@ -13,7 +13,7 @@ public class Tech_Teleportation : Tech
         "Teleportation isn't an exact science. As long as total limbs in = total limbs out we consider it a success")
     {
         HasSimpleAction = true;
-        AdditionalInteractionHandlers = [_movementFlowHandler];
+        AdditionalHandlers = [_movementFlowHandler];
     }
 
     private readonly Teleportation_MovementFlowHandler _movementFlowHandler = new(); 

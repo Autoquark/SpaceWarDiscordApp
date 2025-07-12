@@ -16,6 +16,8 @@ public static class TransactionExtensions
         {
             return null;
         }
+        
+        await game.EventStack.PopulateAsync(transaction);
 
         foreach (var gamePlayer in game.Players)
         {
@@ -25,6 +27,23 @@ public static class TransactionExtensions
         }
         
         return game;
+    }
+
+    public static async Task<T> GetInteractionDataAsync<T>(this Transaction transaction, Guid interactionId)
+        where T : InteractionData.InteractionData
+    {
+        var interactionData = await GetInteractionDataAsync(transaction, interactionId);
+        if (interactionData is T typedInteractionData)
+        {
+            return typedInteractionData;
+        }
+
+        if (interactionData == null)
+        {
+            throw new Exception($"Interaction data with ID {interactionId} not found");
+        }
+        
+        throw new Exception($"Expected interaction data of type {typeof(T).FullName}, but got {interactionData.GetType().FullName}");
     }
 
     public static async Task<InteractionData.InteractionData?> GetInteractionDataAsync(this Transaction transaction,
@@ -40,6 +59,8 @@ public static class TransactionExtensions
     {
         if (model is Game game)
         {
+            game.EventStack.OnSavingParentDoc(transaction);
+            
             foreach (var gamePlayer in game.Players)
             {
                 gamePlayer.Techs.OnSavingParentDoc(transaction);

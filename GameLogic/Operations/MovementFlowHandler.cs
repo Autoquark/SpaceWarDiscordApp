@@ -45,9 +45,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected bool AllowManyToOne { get; init; } = true;
     
     /// <summary>
-    /// Whether base implementation of PerformMoveAsync should mark action taken for the turn.
+    /// Whether base implementation of PerformMoveAsync should mark main action taken for the turn.
     /// </summary>
-    protected ActionType ActionType { get; init; } = ActionType.Main;
+    protected ActionType? ActionType { get; init; } = GameLogic.ActionType.Main;
 
     /// <summary>
     /// Id of a tech that base implementation of PerformMoveAsync should exhaust.
@@ -65,9 +65,15 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected MoveDestinationRestriction DestinationRestriction { get; init; } = MoveDestinationRestriction.Unrestricted;
     
     /// <summary>
-    /// Maximum amount of forces that may be moved from each source
+    /// Maximum amount of forces that may be moved from each source. This can also be limited dynamically when calling
+    /// BeginPlanningMoveAsync
     /// </summary>
-    protected int MaxAmountPerSource { get; init; } = 99;
+    protected int StaticMaxAmountPerSource { get; init; } = 99;
+    
+    /// <summary>
+    /// Whether to call GameFlowOperations.ContinueResolvingEventStackAsync after the move is complete
+    /// </summary>
+    protected bool ContinueResolvingStackAfterMove { get; init; } = false;
     
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination
@@ -83,14 +89,54 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<TBuilder> BeginPlanningMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, IServiceProvider serviceProvider)
+    public async Task<TBuilder> BeginPlanningMoveAsync<TBuilder>(TBuilder builder,
+        Game game, GamePlayer player,
+        IServiceProvider serviceProvider,
+        HexCoordinates? fixedSource = null,
+        HexCoordinates? fixedDestination = null,
+        int? dynamicMaxAmountPerSource = null,
+        string? triggerToMarkResolved = null)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        if (fixedDestination.HasValue)
+        {
+            player.PlannedMove = new PlannedMove
+            {
+                Destination = fixedDestination.Value
+            };
+
+            if (fixedSource.HasValue)
+            {
+                return await ShowSpecifyMovementAmountButtonsAsync(builder,
+                    game,
+                    player,
+                    game.GetHexAt(fixedSource.Value),
+                    game.GetHexAt(fixedDestination.Value),
+                    dynamicMaxAmountPerSource ?? StaticMaxAmountPerSource,
+                    triggerToMarkResolved,
+                    serviceProvider);
+            }
+            else
+            {
+                var interactions = await ShowSpecifyMovementSourceButtonsAsync(builder,
+                    game,
+                    player,
+                    game.GetHexAt(fixedDestination.Value),
+                    dynamicMaxAmountPerSource ?? StaticMaxAmountPerSource,
+                    triggerToMarkResolved);
+                await InteractionsHelper.SetUpInteractionsAsync(interactions,
+                    serviceProvider.GetRequiredService<GlobalData>().InteractionGroupId);
+                
+                return builder;
+            }
+        }
+        
         IEnumerable<BoardHex> destinations;
         if (RequireAdjacency)
         {
             var destinationsSet = new HashSet<BoardHex>();
-            foreach (var sourceHex in game.Hexes.WhereOwnedBy(player))
+            var allowedSources = fixedSource.HasValue ? [game.GetHexAt(fixedSource.Value)] : game.Hexes.WhereOwnedBy(player);
+            foreach (var sourceHex in allowedSources)
             {
                 destinationsSet.UnionWith(BoardUtils.GetNeighbouringHexes(game, sourceHex));
             }
@@ -131,7 +177,10 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Game = game.DocumentId,
                 Destination = x.Coordinates,
                 ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = true
+                EditOriginalMessage = true,
+                FixedSource = fixedSource,
+                MaxAmountPerSource = dynamicMaxAmountPerSource,
+                TriggerToMarkResolvedId = triggerToMarkResolved
             }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
         return builder.AppendHexButtons(game, destinations, interactionIds);
@@ -158,7 +207,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         };
 
         var player = game.GetGamePlayerForInteraction(interactionData);
-        var sources = GetAllowedMoveSources(game, player, destination);
+        var sources = interactionData.FixedSource.HasValue
+            ? [game.GetHexAt(interactionData.FixedSource.Value)]
+            : GetAllowedMoveSources(game, player, destination);
 
         if (sources.Count == 0)
         {
@@ -171,15 +222,23 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         if (sources.Count == 1)
         {
             // Only one planet we can move from, skip straight to specifying amount
-            await ShowSpecifyMovementAmountButtonsAsync(messageBuilder, game, player,
-                sources.Single(), destination, serviceProvider);
+            await ShowSpecifyMovementAmountButtonsAsync(messageBuilder,
+                game,
+                player,
+                sources.Single(),
+                destination,
+                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                interactionData.TriggerToMarkResolvedId,
+                serviceProvider);
             return new SpaceWarInteractionOutcome(true, messageBuilder);
         }
 
         var interactionsToSetUp = await ShowSpecifyMovementSourceButtonsAsync(messageBuilder,
             game,
             player, 
-            destination);
+            destination,
+            interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+            interactionData.TriggerToMarkResolvedId);
         
         await InteractionsHelper.SetUpInteractionsAsync(interactionsToSetUp, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
 
@@ -206,6 +265,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             player,
             game.GetHexAt(interactionData.Source),
             game.GetHexAt(player.PlannedMove.Destination),
+            interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+            interactionData.TriggerToMarkResolvedId,
             serviceProvider);
         
         return new SpaceWarInteractionOutcome(false, builder);
@@ -248,17 +309,24 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         var sources = GetAllowedMoveSources(game, player, destinationHex);
         if ((sources.Count == 1 || !AllowManyToOne) && entry != null)
         {
-            await PerformMoveAsync(builder, game, player, serviceProvider);
+            await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
         }
         else
         {
             // Otherwise, go back to showing possible sources
             MovementOperations.ShowPlannedMove(builder, player);
-            interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder, game, player, destinationHex));
+            interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder,
+                game,
+                player,
+                destinationHex,
+                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                interactionData.TriggerToMarkResolvedId));
+            
             var confirmInteraction = new PerformPlannedMoveInteraction<T>()
             {
                 Game = game.DocumentId,
                 ForGamePlayerId = player.GamePlayerId,
+                TriggerToMarkResolvedId = interactionData.TriggerToMarkResolvedId,
             };
             interactions.Add(confirmInteraction);
             builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success,
@@ -278,13 +346,13 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         PerformPlannedMoveInteraction<T> interactionData,
         Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData), serviceProvider);
+        await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData), interactionData.TriggerToMarkResolvedId, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
     protected async Task<TBuilder> ShowSpecifyMovementAmountButtonsAsync<TBuilder>(TBuilder builder, Game game,
-        GamePlayer player, BoardHex source, BoardHex destination, IServiceProvider serviceProvider) 
+        GamePlayer player, BoardHex source, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId, IServiceProvider serviceProvider) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         builder.AppendContentNewline($"{MoveName}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
@@ -294,7 +362,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             throw new Exception();
         }
         
-        var max = Math.Min(source.Planet.ForcesPresent, MaxAmountPerSource);
+        var max = Math.Min(source.Planet.ForcesPresent, dynamicMaxAmountPerSource);
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
             => Enumerable.Range(0, max + 1).Select(x => InteractionsHelper.SetUpInteraction(
@@ -304,7 +372,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                         From = source.Coordinates,
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
-                        EditOriginalMessage = true
+                        EditOriginalMessage = true,
+                        MaxAmountPerSource = dynamicMaxAmountPerSource,
+                        TriggerToMarkResolvedId = triggerToMarkResolvedId
                     }, transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId))
                 .ToList());
 
@@ -315,7 +385,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     }
 
     protected async Task<List<AddMoveSourceInteraction<T>>> ShowSpecifyMovementSourceButtonsAsync<TBuilder>(
-        TBuilder builder, Game game, GamePlayer player, BoardHex destination)
+        TBuilder builder, Game game, GamePlayer player, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var sources = RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
@@ -336,7 +406,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Game = game.DocumentId,
                 Source = x.Coordinates,
                 ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = true
+                EditOriginalMessage = true,
+                MaxAmountPerSource = dynamicMaxAmountPerSource,
+                TriggerToMarkResolvedId = triggerToMarkResolvedId
             })
             .ToList();
 
@@ -345,7 +417,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return interactions;
     }
 
-    protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, IServiceProvider serviceProvider)
+    protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
@@ -359,13 +431,25 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             player.GetPlayerTechById(MarkUsedTechId).UsedThisTurn = true;
         }
-        
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType, serviceProvider);
+
+        if (ActionType.HasValue)
+        {
+            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Value, serviceProvider);
+        }
+
+        if (!string.IsNullOrEmpty(triggerToMarkResolved))
+        {
+            GameFlowOperations.TriggerResolved(game, triggerToMarkResolved);
+        }
         
         // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
         // printed the turn message for the new player, this will bail out on printing it again
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, serviceProvider);
-        
+        //await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, serviceProvider);
+        if (ContinueResolvingStackAfterMove)
+        {
+            await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        }
+
         return builder;
     }
     

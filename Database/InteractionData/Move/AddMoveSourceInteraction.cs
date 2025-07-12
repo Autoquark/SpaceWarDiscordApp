@@ -11,4 +11,10 @@ public class AddMoveSourceInteraction<T> : InteractionData
 {
     [FirestoreProperty]
     public required HexCoordinates Source { get; set; }
+    
+    [FirestoreProperty]
+    public required int? MaxAmountPerSource { get; set; }
+    
+    [FirestoreProperty]
+    public required string? TriggerToMarkResolvedId { get; set; }
 }

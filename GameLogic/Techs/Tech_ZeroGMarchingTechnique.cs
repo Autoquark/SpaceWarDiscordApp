@@ -12,7 +12,7 @@ public class Tech_ZeroGMarchingTechnique : Tech
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
-        AdditionalInteractionHandlers = [_movementFlowHandler];
+        AdditionalHandlers = [_movementFlowHandler];
     }
     
     private readonly ZeroGMarchingTechnique_MovementFlowHandler _movementFlowHandler = new();
@@ -27,7 +27,7 @@ class ZeroGMarchingTechnique_MovementFlowHandler : MovementFlowHandler<Tech_Zero
 {
     public ZeroGMarchingTechnique_MovementFlowHandler() : base("Zero G Marching Technique")
     {
-        ActionType = ActionType.Free;
+        ActionType = GameLogic.ActionType.Free;
         ExhaustTechId = Tech_ZeroGMarchingTechnique.StaticId;
     }
 }
