@@ -48,6 +48,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         }
         
         contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+        contextData.User = context.User;
         
         await base.ExecuteAsync(context, cancellationToken);
 

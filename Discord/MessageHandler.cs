@@ -42,16 +42,9 @@ public static partial class MessageHandler
                         return;
                     }
                     
-                    var player = game.GetGamePlayerByDiscordId(args.Author.Id);
-                    if (player == null)
-                    {
-                        // Player is not part of this game, can't click any buttons
-                        return;
-                    }
-                    
                     var builder = new DiscordMessageBuilder().EnableV2Components();
 
-                    if (!interactionData.PlayerAllowedToTrigger(game, player))
+                    if (!interactionData.UserAllowedToTrigger(game, args.Author))
                     {
                         // Seems like there is a bug with reply mentions in DSharpPlus so I have to do this to get the mention to work
                         builder.WithAllowedMentions(Mentions.All);

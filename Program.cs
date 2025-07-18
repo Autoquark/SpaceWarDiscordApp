@@ -107,6 +107,7 @@ static class Program
             CommandExecutor = new SpaceWarCommandExecutor()
         });
         
+        RegisterEverything(new GameManagementCommands());
         RegisterEverything(new MoveActionCommands());
         RegisterEverything(new ProduceCommands());
         RegisterEverything(new RefreshCommands());

@@ -34,16 +34,16 @@ public static class InteractionDispatcher
     /// Allows game logic to trigger resolution of an interaction directly
     /// </summary>
     public static async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
-        InteractionData interactionData,
+        InteractionData gamePlayerInteractionData,
         Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        if (!game.DocumentId!.Equals(interactionData.Game))
+        if (!game.DocumentId!.Equals(gamePlayerInteractionData.Game))
         {
             throw new ArgumentException("InteractionData does not belong to the given game");
         }
         
-        return await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
+        return await HandleInteractionInternalAsync(builder, gamePlayerInteractionData, game, serviceProvider);
     }
 
     /// <summary>
@@ -77,37 +77,28 @@ public static class InteractionDispatcher
         }
         else
         {
-            await args.Interaction.DeferAsync();
+            await args.Interaction.DeferAsync(interactionData.EphemeralResponse);
         }
         
-        var game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(args.Interaction.ChannelId));
+        var game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameAsync(interactionData.Game!));
 
         if (game == null)
         {
             throw new Exception("Game not found");
         }
-        
-        var player = game.GetGamePlayerByDiscordId(args.Interaction.User.Id);
-        if (player == null)
-        {
-            // Player is not part of this game, can't click any buttons
-            return;
-        }
 
-        if (!interactionData.PlayerAllowedToTrigger(game, player))
+        if (!interactionData.UserAllowedToTrigger(game, args.Interaction.User))
         {
-            await args.Interaction.CreateFollowupMessageAsync(new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!"));
+            await args.Interaction.CreateFollowupMessageAsync(
+                new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!").AsEphemeral());
             return;
         }
 
         var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
-        serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData =
-            await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
-
-        /*if (interactionData is TriggeredEffectInteractionData triggeredEffectInteraction)
-        {
-            GameFlowOperations.OnUserTriggeredResolveEffectInteraction(game, triggeredEffectInteraction);
-        }*/
+        var contextData = serviceProvider.GetRequiredService<SpaceWarCommandContextData>();
+        contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+        contextData.Game = game;
+        contextData.User = args.Interaction.User;
         
         var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
 
@@ -140,7 +131,9 @@ public static class InteractionDispatcher
                 else
                 {
                     await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline($"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                        new DiscordFollowupMessageBuilder()
+                            .EnableV2Components()
+                            .AppendContentNewline($"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
                 }
             }
             else
@@ -159,11 +152,11 @@ public static class InteractionDispatcher
     }
     
     private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync<TBuilder>(TBuilder builder,
-        InteractionData interactionData,
+        InteractionData gamePlayerInteractionData,
         Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var interactionType = interactionData.GetType();
+        var interactionType = gamePlayerInteractionData.GetType();
         if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
         {
             throw new Exception("Handler not found");
@@ -172,6 +165,6 @@ public static class InteractionDispatcher
         return await (Task<SpaceWarInteractionOutcome>) typeof(IInteractionHandler<>).MakeGenericType(interactionType)
             .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!
             .MakeGenericMethod(typeof(TBuilder))
-            .Invoke(handler, [builder, interactionData, game, serviceProvider])!;
+            .Invoke(handler, [builder, gamePlayerInteractionData, game, serviceProvider])!;
     }
 }

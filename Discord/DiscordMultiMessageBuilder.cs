@@ -57,7 +57,7 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         {
             CurrentBuilder.AddTextDisplayComponent(content);
         }
-        catch (InvalidOperationException e)
+        catch (InvalidOperationException)
         {
             NewMessage();
             CurrentBuilder.AddTextDisplayComponent(content);

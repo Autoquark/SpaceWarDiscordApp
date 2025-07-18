@@ -4,6 +4,7 @@ using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -12,7 +13,7 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel(RequireGameChannelMode.RequiresSave)]
-public static class GameManagementCommands
+public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
 {
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish",
         "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary", "ignoble",
@@ -71,27 +72,57 @@ public static class GameManagementCommands
                 GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1
             });
         }
+
+        var interactionId = await InteractionsHelper.SetUpInteractionAsync(new JoinGameInteraction
+        {
+            Game = gameRef,
+            ForGamePlayerId = -1,
+            EphemeralResponse = true
+        }, context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
-        await context.RespondAsync($"Game created. Game channel is {gameChannel.Mention}. To add more players, use /addplayer from that channel.");
-        await gameChannel.SendMessageAsync($"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To add more players use /addplayer from this channel.");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"Game created. Game channel is {gameChannel.Mention}.")
+            .AppendContentNewline("Anyone can join the game by clicking this button: ")
+            .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
+        
+        await context.RespondAsync(builder);
+        await gameChannel.SendMessageAsync($"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To invite specific players use /invite from this channel.");
         game.PinnedTechMessageId = (await gameChannel.SendMessageAsync(x => x.EnableV2Components().AppendContentNewline("(This message reserved for future use)"))).Id;
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Create(gameRef, game));
     }
 
-    [Command("AddPlayer")]
-    public static async Task AddPlayerToGameCommand(CommandContext context, DiscordMember user)
+    [Command("Invite")]
+    [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
+    public static async Task InvitePlayerToGameCommand(CommandContext context, DiscordMember user)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        
-        game.Players.Add(new GamePlayer
+
+        if (game.Phase != GamePhase.Setup)
         {
-            DiscordUserId = user.Id,
-            GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-            PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
-        });
+            await context.RespondAsync("You can't invite players once the game has started");
+            return;
+        }
+
+        if (game.TryGetGamePlayerByDiscordId(user.Id) != null)
+        {
+            await context.RespondAsync("That player is already in the game");
+            return;
+        }
+
+        var interactionId = await InteractionsHelper.SetUpInteractionAsync(new JoinGameInteraction
+        {
+            Game = game.DocumentId,
+            ForDiscordUserId = user.Id,
+            ForGamePlayerId = -1
+        }, context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
-        await context.RespondAsync($"{user.Mention} added to the game");
+        var builder = new DiscordMessageBuilder().EnableV2Components();
+        builder.AppendContentNewline($"{user.Mention}, you have been invited to join this game. To accept, click this button:")
+            .WithAllowedMention(new UserMention(user.Id))
+            .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
+        
+        await context.RespondAsync(builder);
     }
 
     [Command("AddDummyPlayer")]
@@ -191,5 +222,40 @@ public static class GameManagementCommands
         builder.AppendContentNewline("Other".DiscordHeading3());
         builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, to everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
         await context.RespondAsync(builder);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, JoinGameInteraction interactionData, Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var userId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().User.Id;
+        if (game.TryGetGamePlayerByDiscordId(userId) != null)
+        {
+            builder.AppendContentNewline("You are already in this game!");
+            return new SpaceWarInteractionOutcome(false, builder);
+        }
+        
+        game.Players.Add(new GamePlayer
+        {
+            DiscordUserId = userId,
+            GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
+            PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
+        });
+        
+        var user = await Program.DiscordClient.GetUserAsync(userId);
+
+        // Hack: If discord id is 0, we are replying outside the game channel. Do an ephemeral response here and proper response
+        // in game channel
+        if (interactionData.ForDiscordUserId == 0)
+        {
+            builder.AppendContentNewline("Game joined!");
+        }
+        
+        var replyBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .WithAllowedMention(new UserMention(userId));
+        replyBuilder.AppendContentNewline($"{user.Mention} joined the game!");
+        
+        await Program.DiscordClient.SendMessageAsync(await Program.DiscordClient.GetChannelAsync(game.GameChannelId), replyBuilder);
+        
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

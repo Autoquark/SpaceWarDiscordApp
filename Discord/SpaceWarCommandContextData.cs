@@ -1,3 +1,4 @@
+using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.Discord;
@@ -9,5 +10,7 @@ public class SpaceWarCommandContextData
 {
     public Game? Game { get; set; }
     
-    public GlobalData GlobalData { get; set; } = null!;
+    public required GlobalData GlobalData { get; set; }
+    
+    public required DiscordUser User { get; set; }
 }

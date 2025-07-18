@@ -11,6 +11,12 @@ public static class MessageBuilderExtensions
     public static TBuilder AppendContentNewline<TBuilder>(this TBuilder builder, string content)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        ((IDiscordMessageBuilder)builder).AppendContentNewline(content);
+        return builder;
+    }
+
+    public static IDiscordMessageBuilder AppendContentNewline(this IDiscordMessageBuilder builder, string content)
+    {
         if (builder.Flags.HasFlag(DiscordMessageFlags.IsComponentsV2))
         {
             builder.AddTextDisplayComponent(content);

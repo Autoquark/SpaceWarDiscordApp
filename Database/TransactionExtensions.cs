@@ -17,15 +17,18 @@ public static class TransactionExtensions
             return null;
         }
         
-        await game.EventStack.PopulateAsync(transaction);
-
-        foreach (var gamePlayer in game.Players)
-        {
-            await gamePlayer.Techs.PopulateAsync(transaction); //TODO: Fetch in parallel?
-            await gamePlayer.LastTurnEvents.PopulateAsync(transaction);
-            await gamePlayer.CurrentTurnEvents.PopulateAsync(transaction);
-        }
+        await PopulateGameSubcollectionsAsync(transaction, game);
         
+        return game;
+    }
+
+    public static async Task<Game?> GetGameAsync(this Transaction transaction, DocumentReference gameRef)
+    {
+        var game = (await transaction.GetSnapshotAsync(gameRef))
+            .ConvertTo<Game>();
+        
+        await PopulateGameSubcollectionsAsync(transaction, game);
+
         return game;
     }
 
@@ -70,5 +73,17 @@ public static class TransactionExtensions
         }
         
         transaction.Set(model.DocumentId, model);
+    }
+
+    private static async Task PopulateGameSubcollectionsAsync(Transaction transaction, Game game)
+    {
+        await game.EventStack.PopulateAsync(transaction);
+
+        foreach (var gamePlayer in game.Players)
+        {
+            await gamePlayer.Techs.PopulateAsync(transaction); //TODO: Fetch in parallel?
+            await gamePlayer.LastTurnEvents.PopulateAsync(transaction);
+            await gamePlayer.CurrentTurnEvents.PopulateAsync(transaction);
+        }
     }
 }

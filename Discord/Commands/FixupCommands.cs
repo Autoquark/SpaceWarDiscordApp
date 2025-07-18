@@ -50,7 +50,7 @@ public class FixupCommands
         
         if (newAmount > 0)
         {
-            newOwner = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId) ?? game.GetGamePlayerByDiscordId(context.User.Id);
+            newOwner = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId) ?? game.TryGetGamePlayerByDiscordId(context.User.Id);
             if (newOwner == null)
             {
                 await context.RespondAsync($"Must specify a player");
@@ -75,7 +75,7 @@ public class FixupCommands
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -117,7 +117,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -193,7 +193,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -253,7 +253,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -284,7 +284,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -312,7 +312,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
@@ -341,7 +341,7 @@ public class FixupCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         
-        var gamePlayer = player == -1 ? game.GetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
