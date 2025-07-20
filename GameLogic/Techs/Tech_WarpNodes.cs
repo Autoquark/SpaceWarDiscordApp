@@ -77,7 +77,8 @@ public class Tech_WarpNodes : Tech,
         // Null value indicates done making moves
         if (!interactionData.Destination.HasValue)
         {
-            return new SpaceWarInteractionOutcome(false, null);
+            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+            return new SpaceWarInteractionOutcome(true, builder);
         }
 
         var maxAmount = game.GetHexAt(playerTech.Source).Planet!.ForcesPresent;
