@@ -151,12 +151,15 @@ public static class TechOperations
     public static async Task<TBuilder> CycleTechMarketAsync<TBuilder>(TBuilder builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        var added = DrawTechFromDeck(builder, game);
-        game.TechMarket.Insert(0, added.Id);
-
         builder.AppendContentNewline("The tech market has been cycled.");
-        builder.AppendContentNewline("A new tech has been added to the tech market:");
-        ShowTechDetails(builder, added.Id);
+        var added = TryDrawTechFromDeck(builder, game);
+        game.TechMarket.Insert(0, added?.Id);
+        
+        if (added != null)
+        {
+            builder.AppendContentNewline("A new tech has been added to the tech market:");
+            ShowTechDetails(builder, added.Id);
+        }
         
         var removed = game.TechMarket.Last();
         game.TechMarket.RemoveAt(game.TechMarket.Count - 1);
@@ -197,17 +200,23 @@ public static class TechOperations
         game.PinnedTechMessageId = message.Id;
     }
 
-    public static Tech DrawTechFromDeckSilent(Game game) => DrawTechFromDeck<DiscordMessageBuilder>(null, game);
+    public static Tech? DrawTechFromDeckSilent(Game game) => TryDrawTechFromDeck<DiscordMessageBuilder>(null, game);
 
-    public static Tech DrawTechFromDeck<TBuilder>(TBuilder? builder, Game game)
+    public static Tech? TryDrawTechFromDeck<TBuilder>(TBuilder? builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (game.TechDeck.Count == 0)
         {
             game.TechDeck.AddRange(game.TechDiscards.Shuffled());
             game.TechDiscards.Clear();
+            if (game.TechDeck.Count == 0)
+            {
+                builder?.AppendContentNewline("Can't draw a new tech, all tech cards are already in play");
+                return null; // All techs are already in play
+            }
             builder?.AppendContentNewline("The tech discards have been shuffled to form a new tech deck");
         }
+        
         var tech = game.TechDeck[0];
         game.TechDeck.RemoveAt(0);
         return Tech.TechsById[tech];
