@@ -1,14 +1,16 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public static class MovementOperations
+public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 {
-    public static async Task PerformPlannedMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player)
+    public static async Task PerformPlannedMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var plannedMove = player.PlannedMove;
@@ -17,7 +19,7 @@ public static class MovementOperations
             throw new Exception();
         }
 
-        await ResolveMoveAsync(builder, game, player, plannedMove);
+        
     }
 
     /// <summary>
@@ -41,7 +43,8 @@ public static class MovementOperations
         return builder;
     }
 
-    public static async Task ResolveMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, PlannedMove move)
+    public static async Task<IEnumerable<GameEvent>> GetResolveMoveEventsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+        PlannedMove move, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var destinationHex = game.GetHexAt(move.Destination);
@@ -49,47 +52,93 @@ public static class MovementOperations
         {
             throw new Exception();
         }
-        
-        var moverName = await player.GetNameAsync(true);
 
+        return [new GameEvent_PreMove
+            {
+                MovingPlayerId = player.GamePlayerId,
+                Sources = move.Sources.ToList(),
+                Destination = move.Destination
+            }];
+    }
+
+    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_PreMove gameEvent, Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var movingPlayer = game.GetGamePlayerByGameId(gameEvent.MovingPlayerId);
+        var moverName = await movingPlayer.GetNameAsync(true);
+        
         // Stage 1: Subtract moving forces from each source planet and calculate total forces moving
         var totalMoving = 0;
-        foreach (var source in move.Sources)
+        foreach (var source in gameEvent.Sources)
         {
             var sourceHex = game.GetHexAt(source.Source);
             if (sourceHex.Planet == null
                 || sourceHex.ForcesPresent < source.Amount
-                || sourceHex.Planet.OwningPlayerId != player.GamePlayerId)
+                || sourceHex.Planet.OwningPlayerId != movingPlayer.GamePlayerId)
             {
                 throw new Exception();
             }
 
             sourceHex.Planet.SubtractForces(source.Amount);
             totalMoving += source.Amount;
-            builder.AppendContentNewline($"Moving {source.Amount} from {source.Source}");
+            builder?.AppendContentNewline($"Moving {source.Amount} from {source.Source}");
         }
 
-        if (move.Sources.Count > 1)
+        if (gameEvent.Sources.Count > 1)
         {
-            builder.AppendContentNewline($"Moving a total of {totalMoving} forces");
+            builder?.AppendContentNewline($"Moving a total of {totalMoving} forces");
+        }
+        
+        var destinationHex = game.GetHexAt(gameEvent.Destination);
+        if (destinationHex.Planet == null)
+        {
+            throw new Exception();
         }
 
         // Stage 2: Resolve combat or merging with allied forces
         var totalPreCapacityLimit = totalMoving;
-        if (destinationHex.Planet.OwningPlayerId == player.GamePlayerId || destinationHex.IsNeutral)
+        if (destinationHex.Planet.OwningPlayerId == movingPlayer.GamePlayerId || destinationHex.IsNeutral)
         {
             totalPreCapacityLimit += destinationHex.ForcesPresent;
         }
         else
         {
+            // Combat
+            var attackerCombatStrength = gameEvent.AttackerCombatStrengthSources.Sum(x => x.Amount);
+            var defenderCombatStrength = gameEvent.DefenderCombatStrengthSources.Sum(x => x.Amount);
+            
             var defender = game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId);
             var defenderName = await defender.GetNameAsync(true);
+
+            if (attackerCombatStrength > 0)
+            {
+                builder?.AppendContentNewline($"{moverName} Combat Strength: {attackerCombatStrength} ({string.Join(", ", gameEvent.AttackerCombatStrengthSources)})");
+            }
+
+            if (defenderCombatStrength > 0)
+            {
+                builder?.AppendContentNewline($"{defenderName} Combat Strength: {defenderCombatStrength} ({string.Join(", ", gameEvent.DefenderCombatStrengthSources)})");
+            }
+
+            if (attackerCombatStrength > defenderCombatStrength)
+            {
+                var difference = attackerCombatStrength - defenderCombatStrength;
+                destinationHex.Planet.SubtractForces(difference);
+                builder?.AppendContentNewline($"{defenderName} loses {difference} forces before combat due to {moverName}'s superior Combat Strength");
+            }
+            else if (defenderCombatStrength > attackerCombatStrength)
+            {
+                var difference = attackerCombatStrength - defenderCombatStrength;
+                totalMoving -= difference;
+                builder?.AppendContentNewline($"{moverName} loses {difference} forces before combat due to {defenderName}'s superior Combat Strength");
+            }
+            
             var combatLoss = Math.Min(totalMoving, destinationHex.ForcesPresent);
             totalPreCapacityLimit -= combatLoss;
             destinationHex.Planet.SubtractForces(combatLoss);
 
-            builder.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat")
-                .AllowMentions(player, defender);
+            builder?.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat")
+                .AllowMentions(movingPlayer, defender);
         }
 
         // Stage 3: Apply planet capacity limit
@@ -98,32 +147,32 @@ public static class MovementOperations
 
         if (lossToCapacityLimit > 0)
         {
-            builder.AppendContentNewline($"{moverName} lost {lossToCapacityLimit} forces that were exceeding the planet capacity");
+            builder?.AppendContentNewline($"{moverName} lost {lossToCapacityLimit} forces that were exceeding the planet capacity");
         }
         
         // Stage 4: Save back to game state
         if (totalPostCapacityLimit > 0)
         {
             destinationHex.Planet.ForcesPresent = totalPostCapacityLimit;
-            destinationHex.Planet.OwningPlayerId = player.GamePlayerId;
+            destinationHex.Planet.OwningPlayerId = movingPlayer.GamePlayerId;
         }
 
-        if (player == game.CurrentTurnPlayer)
+        if (movingPlayer == game.CurrentTurnPlayer)
         {
-            player.CurrentTurnEvents.Add(new MovementEventRecord
+            movingPlayer.CurrentTurnEvents.Add(new MovementEventRecord
             {
-                Destination = move.Destination,
-                Sources = move.Sources.ToList()
+                Destination = gameEvent.Destination,
+                Sources = gameEvent.Sources.ToList()
             });
         }
 
-        player.PlannedMove = null;
+        movingPlayer.PlannedMove = null;
 
-        builder.AppendContentNewline(
+        builder?.AppendContentNewline(
             totalPostCapacityLimit > 0
-                ? $"{moverName} now has {player.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}"
+                ? $"{moverName} now has {movingPlayer.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}"
                 : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
         
-        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
+        return await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
     }
 }

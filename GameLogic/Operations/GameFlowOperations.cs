@@ -296,7 +296,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     /// <summary>
     /// Check if any players have been eliminated. Note that this can end the game.
     /// </summary>
-    public static async Task CheckForPlayerEliminationsAsync<TBuilder>(TBuilder builder, Game game)
+    public static async Task<TBuilder?> CheckForPlayerEliminationsAsync<TBuilder>(TBuilder? builder, Game game)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         foreach (var player in game.Players.Where(x => !x.IsEliminated))
@@ -309,7 +309,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             player.IsEliminated = true;
             
             var name = await player.GetNameAsync(true);
-            builder.AppendContentNewline($"{name} has been eliminated!".DiscordBold())
+            builder?.AppendContentNewline($"{name} has been eliminated!".DiscordBold())
                 .AllowMentions(player);
 
             if (game.ScoringTokenPlayer == player)
@@ -322,20 +322,23 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         if (remainingPlayers == 1)
         {
             var winner = game.Players.First(x => !x.IsEliminated);
-            builder.AppendContentNewline($"{await winner.GetNameAsync(true)} wins the game through glorious violence by being the last one standing!".DiscordBold())
+            builder?.AppendContentNewline($"{await winner.GetNameAsync(true)} is the last one standing, winning the game through glorious violence!".DiscordBold())
                 .AllowMentions(winner);
             game.Phase = GamePhase.Finished;
         }
         else if (remainingPlayers == 0)
         {
-            builder.AppendContentNewline("It would appear that @everyone has wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold())
+            builder?.AppendContentNewline("It would appear that @everyone has wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold())
                 .AddMention(EveryoneMention.All);
             game.Phase = GamePhase.Finished;
         }
+        
+        return builder;
     }
 
-    public static async Task PushGameEventsAsync<TBuilder>(TBuilder builder, Game game,
+    public static async Task PushGameEventsAsync<TBuilder>(TBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
+    where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         foreach (var gameEvent in gameEvents.Reverse())
         {
@@ -358,7 +361,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         triggerList!.Remove(triggeredEffect);
     }
 
-    public static async Task<TBuilder> ContinueResolvingEventStackAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<TBuilder?> ContinueResolvingEventStackAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         while (game.EventStack.Items.Count > 0)
         {
@@ -387,17 +390,17 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
 
                 if (mandatoryCount == 0)
                 {
-                    builder.AppendContentNewline(
+                    builder?.AppendContentNewline(
                         $"{name}, you have optional tech effects which you may trigger. Please select one to resolve next or click 'Decline'.");
                 }
                 else if (mandatoryCount > 1 && optionalCount == 0)
                 {
-                    builder.AppendContentNewline(
+                    builder?.AppendContentNewline(
                         $"{name}, you may choose the order in which these mandatory tech effects resolve. Please select one to resolve next.");
                 }
                 else
                 {
-                    builder.AppendContentNewline(
+                    builder?.AppendContentNewline(
                         $"{name}, you have optional tech effects which you may trigger. There is also at least one mandatory effect which must be resolved before continuing. Please select an effect to resolve next.");
                 }
                 
@@ -436,7 +439,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                     }
                 });
                 
-                builder.AppendButtonRows(resolvingEvent.RemainingTriggersToResolve.Select(x =>
+                builder?.AppendButtonRows(resolvingEvent.RemainingTriggersToResolve.Select(x =>
                     new DiscordButtonComponent(
                         x.IsMandatory ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary,
                         x.ResolveInteractionId, x.DisplayName)));
@@ -449,7 +452,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                         Game = game.DocumentId,
                         ForGamePlayerId = resolvingEvent.ResolvingTriggersForPlayerId
                     }, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
-                    builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
+                    builder?.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
                 }
 
                 break;
@@ -467,12 +470,21 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                     
                     continue;
                 }
+                // Player choice event, display choices and stop resolving
+                else if(resolvingEvent is GameEvent_PlayerChoice choiceEvent)
+                {
+                    await GameEventDispatcher.ShowPlayerChoicesForEvent(builder, choiceEvent, game, serviceProvider);
+                    break;
+                }
                 // No more players to resolve, pop this event from the stack and resolve its OnResolve
                 else
                 {
                     await PopEventFromStackAndResolveAsync(builder, game, serviceProvider);
                     continue;
                 }
+
+                // Event requires explicit resolve, pause resolution
+                break;
             }
         }
         
@@ -495,10 +507,10 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         
         gameEvent.RemainingTriggersToResolve.Clear();
         
-        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
 
-    private static async Task<TBuilder> PopEventFromStackAndResolveAsync<TBuilder>(TBuilder builder, Game game,
+    private static async Task<TBuilder?> PopEventFromStackAndResolveAsync<TBuilder>(TBuilder? builder, Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var resolving = game.EventStack.LastOrDefault();
@@ -508,7 +520,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         }
         
         game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
-        await EventResolvedDispatcher.HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
+        await GameEventDispatcher.HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
         
         return builder;
     }
@@ -536,7 +548,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
 
-    private static async Task<TBuilder> ResolveTriggeredEffectAsync<TBuilder>(TBuilder builder, Game game,
+    private static async Task<TBuilder?> ResolveTriggeredEffectAsync<TBuilder>(TBuilder? builder, Game game,
         TriggeredEffect triggeredEffect, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var interactionData = triggeredEffect.ResolveInteractionData

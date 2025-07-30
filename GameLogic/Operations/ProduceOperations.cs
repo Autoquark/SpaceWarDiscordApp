@@ -8,7 +8,7 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, IEventResolvedHandler<GameEvent_PostProduce>
 {
-    public static async Task<TBuilder?> ProduceOnPlanetAsync<TBuilder>(TBuilder? builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
+    public static async Task<TBuilder?> PushProduceOnPlanetAsync<TBuilder>(TBuilder? builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         if (hex.Planet == null)
@@ -84,5 +84,5 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
 
     public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-        => await ProduceOnPlanetAsync(builder, game, game.GetHexAt(gameEvent.Location), serviceProvider);
+        => await PushProduceOnPlanetAsync(builder, game, game.GetHexAt(gameEvent.Location), serviceProvider);
 }

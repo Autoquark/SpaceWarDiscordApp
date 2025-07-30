@@ -1,3 +1,4 @@
+using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
@@ -5,8 +6,10 @@ using Google.Cloud.Firestore;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord;
@@ -33,7 +36,7 @@ public static class InteractionDispatcher
     /// <summary>
     /// Allows game logic to trigger resolution of an interaction directly
     /// </summary>
-    public static async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public static async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder? builder,
         InteractionData gamePlayerInteractionData,
         Game game,
         IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
@@ -151,20 +154,44 @@ public static class InteractionDispatcher
         }
     }
     
-    private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync<TBuilder>(TBuilder builder,
-        InteractionData gamePlayerInteractionData,
+    private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync<TBuilder>(TBuilder? builder,
+        InteractionData interaction,
         Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder> =>
+        await (Task<SpaceWarInteractionOutcome>) typeof(InteractionDispatcher).GetMethod(nameof(HandleTypedInteractionInternalAsync), BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(TBuilder), interaction.GetType())
+            .Invoke(null, [builder, interaction, game, serviceProvider])!;
+
+    private static async Task<SpaceWarInteractionOutcome> HandleTypedInteractionInternalAsync<TBuilder, TInteractionData>(TBuilder? builder,
+        TInteractionData interaction,
+        Game game,
+        IServiceProvider serviceProvider)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        where TInteractionData : InteractionData
     {
-        var interactionType = gamePlayerInteractionData.GetType();
+        if (interaction.ResolvesChoiceEvent != null)
+        {
+            var currentEvent = game.EventStack.Last();
+            if (currentEvent is GameEvent_PlayerChoice<TInteractionData> choiceEvent)
+            {
+                await (Task<TBuilder?>) typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceEventResolvedAsync))!
+                    .MakeGenericMethod(typeof(TBuilder), currentEvent.GetType(), typeof(TInteractionData))
+                    .Invoke(null, [builder, choiceEvent, interaction, game, serviceProvider])!;
+                return new SpaceWarInteractionOutcome(true, builder);
+            }
+            else
+            {
+                builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
+                return new SpaceWarInteractionOutcome(false, builder);
+            }
+        }
+        
+        var interactionType = interaction.GetType();
         if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
         {
             throw new Exception("Handler not found");
         }
 
-        return await (Task<SpaceWarInteractionOutcome>) typeof(IInteractionHandler<>).MakeGenericType(interactionType)
-            .GetMethod(nameof(IInteractionHandler<InteractionData>.HandleInteractionAsync))!
-            .MakeGenericMethod(typeof(TBuilder))
-            .Invoke(handler, [builder, gamePlayerInteractionData, game, serviceProvider])!;
+        return await ((IInteractionHandler<TInteractionData>) handler).HandleInteractionAsync(builder, interaction, game, serviceProvider);
     }
 }

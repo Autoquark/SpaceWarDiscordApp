@@ -11,6 +11,12 @@ public abstract class InteractionData : PolymorphicFirestoreModel
     
     [FirestoreProperty]
     public required DocumentReference? Game { get; set; }
+    
+    /// <summary>
+    /// Optional reference to a GameEvent_PlayerChoice that is resolved by this interaction
+    /// </summary>
+    [FirestoreProperty]
+    public DocumentReference? ResolvesChoiceEvent { get; set; }
 
     /// <summary>
     /// GamePlayer id of the player that is allowed to perform the interaction, or -1 if it's not player specific

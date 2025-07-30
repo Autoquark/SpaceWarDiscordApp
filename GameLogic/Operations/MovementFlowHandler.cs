@@ -2,6 +2,7 @@ using System.Diagnostics;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
@@ -25,7 +26,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     IInteractionHandler<SetMoveDestinationInteraction<T>>,
     IInteractionHandler<AddMoveSourceInteraction<T>>,
     IInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
-    IInteractionHandler<PerformPlannedMoveInteraction<T>>
+    IInteractionHandler<PerformPlannedMoveInteraction<T>>,
+    IEventResolvedHandler<GameEvent_MovementFlowComplete<T>>
 {
     protected MovementFlowHandler(string moveName)
     {
@@ -420,8 +422,23 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected async Task<TBuilder> PerformMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        await MovementOperations.PerformPlannedMoveAsync(builder, game, player);
+        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, 
+            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider))
+            .Append(new GameEvent_MovementFlowComplete<T>
+            {
+                PlayerGameId = player.GamePlayerId,
+                TriggerToMarkResolved = triggerToMarkResolved
+            }));
+        return (await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
+    }
+    
+    private List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
+        => RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
 
+    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
+        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
         if (!string.IsNullOrEmpty(ExhaustTechId))
         {
             player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
@@ -437,22 +454,19 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Value, serviceProvider);
         }
 
-        if (!string.IsNullOrEmpty(triggerToMarkResolved))
+        if (!string.IsNullOrEmpty(gameEvent.TriggerToMarkResolved))
         {
-            GameFlowOperations.TriggerResolved(game, triggerToMarkResolved);
+            GameFlowOperations.TriggerResolved(game, gameEvent.TriggerToMarkResolved);
         }
         
         // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
         // printed the turn message for the new player, this will bail out on printing it again
         //await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, serviceProvider);
-        if (ContinueResolvingStackAfterMove)
+        /*if (ContinueResolvingStackAfterMove)
         {
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-        }
+        }*/
 
         return builder;
     }
-    
-    private List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
-        => RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
 }

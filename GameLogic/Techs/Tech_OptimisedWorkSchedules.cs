@@ -47,7 +47,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         TargetOptimisedWorkSchedulesInteraction interactionData,
         Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        await ProduceOperations.ProduceOnPlanetAsync(builder, game, game.GetHexAt(interactionData.Target), serviceProvider);
+        await ProduceOperations.PushProduceOnPlanetAsync(builder, game, game.GetHexAt(interactionData.Target), serviceProvider);
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;

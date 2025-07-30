@@ -116,6 +116,7 @@ static class Program
         
         RegisterEverything(new GameFlowOperations());
         RegisterEverything(new ProduceOperations());
+        RegisterEverything(new MovementOperations());
         
         // Create tech singletons
         foreach (var techType in Assembly.GetExecutingAssembly()
@@ -150,6 +151,6 @@ static class Program
     private static void RegisterEverything(object obj)
     {
         InteractionDispatcher.RegisterInteractionHandler(obj);
-        EventResolvedDispatcher.RegisterHandler(obj);
+        GameEventDispatcher.RegisterHandler(obj);
     }
 }

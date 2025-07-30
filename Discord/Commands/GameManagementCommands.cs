@@ -174,12 +174,12 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         // Select universal techs at random
         for (var i = 0; i < GameConstants.UniversalTechCount; i++)
         {
-            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game).Id);
+            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
         }
 
         for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
         {
-            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game).Id);
+            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
         }
         
         game.TechMarket.Add(null);
