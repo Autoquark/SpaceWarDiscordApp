@@ -13,6 +13,7 @@ public class Planet
         Science = otherPlanet.Science;
         Stars = otherPlanet.Stars;
         ForcesPresent = otherPlanet.ForcesPresent;
+        OwningPlayerId = otherPlanet.OwningPlayerId;
         IsHomeSystem = otherPlanet.IsHomeSystem;
     }
 
@@ -39,6 +40,11 @@ public class Planet
     
     public bool IsNeutral => OwningPlayerId == -1;
 
+    public void AddForces(int amount)
+    {
+        SetForces(ForcesPresent + amount, OwningPlayerId);
+    }
+    
     public void SubtractForces(int amount)
     {
         if (amount > ForcesPresent)
@@ -46,10 +52,25 @@ public class Planet
             throw new Exception();
         }
         
-        ForcesPresent -= amount;
+        SetForces(ForcesPresent - amount, OwningPlayerId);
+    }
+
+    public void SetForces(int amount, int newOwningPlayerId)
+    {
+        OwningPlayerId = newOwningPlayerId;
+        SetForces(ForcesPresent);
+    }
+
+    public void SetForces(int amount)
+    {
+        ForcesPresent = amount;
         if (ForcesPresent == 0)
         {
-            OwningPlayerId = -1;
+            OwningPlayerId = GamePlayer.GamePlayerIdNone;
+        }
+        else if (OwningPlayerId == GamePlayer.GamePlayerIdNone)
+        {
+            throw new ArgumentException("Must specify an owner if there are forces present");
         }
     }
 }

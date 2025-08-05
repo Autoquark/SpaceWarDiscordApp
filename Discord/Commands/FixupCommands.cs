@@ -59,8 +59,7 @@ public class FixupCommands
             }
         }
 
-        hex.Planet.ForcesPresent = newAmount;
-        hex.Planet.OwningPlayerId = newOwner?.GamePlayerId ?? 0;
+        hex.Planet.SetForces(newAmount, newOwner?.GamePlayerId ?? GamePlayer.GamePlayerIdNone);
 
         outcome.SetSimpleReply(newOwner != null
             ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)}"

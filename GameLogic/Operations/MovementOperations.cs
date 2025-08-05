@@ -153,8 +153,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
         // Stage 4: Save back to game state
         if (totalPostCapacityLimit > 0)
         {
-            destinationHex.Planet.ForcesPresent = totalPostCapacityLimit;
-            destinationHex.Planet.OwningPlayerId = movingPlayer.GamePlayerId;
+            destinationHex.Planet.SetForces(totalPostCapacityLimit, movingPlayer.GamePlayerId);
         }
 
         if (movingPlayer == game.CurrentTurnPlayer)

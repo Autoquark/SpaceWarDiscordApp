@@ -2,12 +2,15 @@ using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
+using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
@@ -81,6 +84,28 @@ public class BotManagementCommands
 
         outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
             .AppendContentNewline($"Game document ID: {game.DocumentId}");
+    }
+
+    [Command("NewChannelForGame")]
+    public static async Task NewChannelForGame(CommandContext context, string gameId)
+    {
+        var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
+            transaction.GetGameAsync(transaction.Database.Games().Document(gameId)));
+
+        var outcome = context.Outcome();
+        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components();
+        if (game == null)
+        {
+            outcome.ReplyBuilder.AppendContentNewline($"Game not found");
+        }
+        else
+        {
+            var channel = await context.Guild!.CreateChannelAsync(game.Name, DiscordChannelType.Text);
+            game.GameChannelId = channel.Id;
+            await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+            
+            outcome.ReplyBuilder.AppendContentNewline($"Created channel {channel.Mention}");
+        }
     }
     
 }

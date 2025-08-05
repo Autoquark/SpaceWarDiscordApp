@@ -1,3 +1,4 @@
+using DSharpPlus.Exceptions;
 using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.GameLogic;
@@ -18,8 +19,17 @@ public static class GamePlayerExtensions
         }
         else
         {
-            var user = await Program.DiscordClient.GetUserAsync(player.DiscordUserId);
-            name = mention ? user.Mention : user.GlobalName;    
+
+            try
+            {
+                var user = await Program.DiscordClient.GetUserAsync(player.DiscordUserId);
+                name = mention ? user.Mention : user.GlobalName;
+            }
+            catch (NotFoundException e)
+            {
+                name = $"Unknown Player {player.GamePlayerId}";
+            }
+            
         }
 
         return includeDieEmoji ? 

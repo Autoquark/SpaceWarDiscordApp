@@ -19,7 +19,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         var player = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
         var name = await player.GetNameAsync(false);
         
-        hex.Planet.ForcesPresent += hex.Planet.Production;
+        hex.Planet.AddForces(hex.Planet.Production);
         hex.Planet.IsExhausted = true;
         player.Science += hex.Planet.Science;
         var producedScience = hex.Planet.Science > 0;

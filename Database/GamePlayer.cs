@@ -8,6 +8,8 @@ namespace SpaceWarDiscordApp.Database;
 [FirestoreData]
 public class GamePlayer
 {
+    public const int GamePlayerIdNone = -1;
+    
     public GamePlayer()
     {
         Techs = new LinkedDocumentCollection<PlayerTech>(Program.FirestoreDb.PlayerTechs(), () => TechsDocuments);
