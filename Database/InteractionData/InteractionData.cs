@@ -73,6 +73,8 @@ public abstract class InteractionData : PolymorphicFirestoreModel
                 {
                     return true;
                 }
+                
+                return false;
             }
         }
 
