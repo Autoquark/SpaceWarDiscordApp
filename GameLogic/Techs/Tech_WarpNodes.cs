@@ -28,7 +28,8 @@ public class Tech_WarpNodes : Tech,
     
     public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_WarpNodes
     {
-        TechId = Id
+        TechId = Id,
+        Game = game.DocumentId!
     };
 
     public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,

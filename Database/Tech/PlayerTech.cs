@@ -17,4 +17,7 @@ public class PlayerTech : PolymorphicFirestoreModel
     
     [FirestoreProperty]
     public bool UsedThisTurn { get; set; } = false;
+
+    [FirestoreProperty]
+    public required DocumentReference Game { get; set; }
 }
