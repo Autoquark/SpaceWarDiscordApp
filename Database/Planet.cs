@@ -58,7 +58,7 @@ public class Planet
     public void SetForces(int amount, int newOwningPlayerId)
     {
         OwningPlayerId = newOwningPlayerId;
-        SetForces(ForcesPresent);
+        SetForces(amount);
     }
 
     public void SetForces(int amount)
