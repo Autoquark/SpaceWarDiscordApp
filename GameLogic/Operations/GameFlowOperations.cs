@@ -227,6 +227,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        if (game.Phase == GamePhase.Finished)
+        {
+            return;
+        }
+        
         var endingTurnPlayer = game.CurrentTurnPlayer;
         endingTurnPlayer.LastTurnEvents.Clear();
         var currentTurnActions = endingTurnPlayer.CurrentTurnEvents.ToList();
@@ -270,7 +275,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         game.TurnNumber++;
         game.ActionTakenThisTurn = false;
         
-        if (game.Phase == GamePhase.Finished || builder == null)
+        if (builder == null)
         {
             return;
         }
@@ -367,15 +372,19 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         {
             var resolvingEvent = game.EventStack.Last();
             
+            var autoResolveTrigger = resolvingEvent.RemainingTriggersToResolve.FirstOrDefault(x => x.AlwaysAutoResolve);
+            if (autoResolveTrigger != null)
+            {
+                await ResolveTriggeredEffectAsync(builder, game, autoResolveTrigger, serviceProvider);
+                
+                continue;
+            }
+            
             // If there is only one trigger and it's mandatory, we can auto resolve it
             if (resolvingEvent.RemainingTriggersToResolve is [{ IsMandatory: true }])
             {
                 var resolvingTrigger = resolvingEvent.RemainingTriggersToResolve[0];
-                if (resolvingTrigger.ResolveInteractionData != null)
-                {
-                    resolvingEvent.RemainingTriggersToResolve.RemoveAt(0);
-                    await ResolveTriggeredEffectAsync(builder, game, resolvingTrigger, serviceProvider);
-                }
+                await ResolveTriggeredEffectAsync(builder, game, resolvingTrigger, serviceProvider);
                 
                 continue;
             }
@@ -525,8 +534,18 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return builder;
     }
 
-    public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) =>
-        player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetTriggeredEffects(game, gameEvent, player));
+    public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+    {
+        var triggers = player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetTriggeredEffects(game, gameEvent, player))
+            .ToList();
+
+        foreach (var triggeredEffect in triggers)
+        {
+            triggeredEffect.ResolveInteractionId = triggeredEffect.ResolveInteractionData!.InteractionId;
+        }
+        
+        return triggers;
+    }
 
     /// <summary>
     /// Passes the scoring token to the previous valid player in turn order

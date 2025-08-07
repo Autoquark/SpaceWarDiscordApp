@@ -169,9 +169,9 @@ public static class InteractionDispatcher
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
         where TInteractionData : InteractionData
     {
+        var currentEvent = game.EventStack.LastOrDefault();
         if (interaction.ResolvesChoiceEvent != null)
         {
-            var currentEvent = game.EventStack.Last();
             if (currentEvent is GameEvent_PlayerChoice<TInteractionData> choiceEvent)
             {
                 await (Task<TBuilder?>) typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceEventResolvedAsync))!
@@ -190,6 +190,32 @@ public static class InteractionDispatcher
         if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
         {
             throw new Exception("Handler not found");
+        }
+
+        if (interaction is EventModifyingInteractionData eventModifyingInteractionData)
+        {
+            // If this is an EventModifyingInteractionData, populate the event property
+            var baseType = interactionType;
+            while (baseType != null &&
+                   (!baseType.IsGenericType ||
+                    baseType.GetGenericTypeDefinition() != typeof(EventModifyingInteractionData<>)))
+            {
+                baseType = baseType.BaseType;
+            }
+
+            if (baseType != null)
+            {
+                var eventType = baseType.GetGenericArguments()[0];
+                // Document id check for the remote scenario where the top event on the stack is of the right type, but not actually the event that this trigger is associated with
+                if (currentEvent == null || currentEvent.GetType() != eventType || !eventModifyingInteractionData.EventDocumentId.Equals(currentEvent.DocumentId))
+                {
+                    builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
+                    return new SpaceWarInteractionOutcome(false, builder);
+                }
+
+                interactionType.GetProperty(nameof(EventModifyingInteractionData<GameEvent>.Event))!
+                    .SetValue(interaction, currentEvent);
+            }
         }
 
         return await ((IInteractionHandler<TInteractionData>) handler).HandleInteractionAsync(builder, interaction, game, serviceProvider);

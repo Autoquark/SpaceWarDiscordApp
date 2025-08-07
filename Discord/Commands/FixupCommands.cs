@@ -53,7 +53,7 @@ public class FixupCommands
             newOwner = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId) ?? game.TryGetGamePlayerByDiscordId(context.User.Id);
             if (newOwner == null)
             {
-                await context.RespondAsync($"Must specify a player");
+                await context.RespondAsync("Must specify a player");
                 outcome.RequiresSave = false;
                 return;
             }
@@ -97,6 +97,8 @@ public class FixupCommands
         }
         
         gamePlayer.Techs.Add(tech.CreatePlayerTech(game, gamePlayer));
+
+        await TechOperations.UpdatePinnedTechMessage(game);
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")

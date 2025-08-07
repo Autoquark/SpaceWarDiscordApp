@@ -11,6 +11,13 @@ namespace SpaceWarDiscordApp.GameLogic.GameEvents;
 public class TriggeredEffect
 {
     /// <summary>
+    /// If true, this trigger will be resolved immediately; the player will not be prompted for resolution order, and if multiple
+    /// AlwaysAutoResolve effects trigger at the same time, their resolution order is arbitrary
+    /// </summary>
+    [FirestoreProperty]
+    public required bool AlwaysAutoResolve { get; set; }
+    
+    /// <summary>
     /// Whether the effect must be resolved or is optional
     /// </summary>
     [FirestoreProperty]

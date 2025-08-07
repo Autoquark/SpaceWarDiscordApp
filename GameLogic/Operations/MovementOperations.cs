@@ -9,19 +9,6 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 {
-    public static async Task PerformPlannedMoveAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
-        IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-    {
-        var plannedMove = player.PlannedMove;
-        if (plannedMove == null)
-        {
-            throw new Exception();
-        }
-
-        
-    }
-
     /// <summary>
     /// Display a summary of the given player's current planned move
     /// </summary>
@@ -167,9 +154,12 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 
         movingPlayer.PlannedMove = null;
 
+        var newOwner = game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId);
+        var newOwnerName = await newOwner.GetNameAsync(true);
+
         builder?.AppendContentNewline(
-            totalPostCapacityLimit > 0
-                ? $"{moverName} now has {movingPlayer.PlayerColourInfo.GetDieEmoji(totalPostCapacityLimit)} present on {destinationHex.Coordinates}"
+            destinationHex.Planet.ForcesPresent > 0
+                ? $"{newOwnerName} now has {newOwner.PlayerColourInfo.GetDieEmoji(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
                 : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
         
         return await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);

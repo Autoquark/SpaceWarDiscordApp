@@ -33,6 +33,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
         {
             return [new TriggeredEffect
             {
+                AlwaysAutoResolve = false,
                 DisplayName = $"{DisplayName}: Move produced forces",
                 IsMandatory = false,
                 ResolveInteractionData = new TriggerMilitaryGraduationCannonInteractionData
