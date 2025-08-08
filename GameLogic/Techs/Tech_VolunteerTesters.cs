@@ -21,7 +21,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         SimpleActionType = ActionType.Free;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.WhereOwnedBy(player).ToList();
@@ -39,10 +39,11 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return builder.AppendHexButtons(game, targets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SetVolunteerTestersTargetInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         var player = game.GetGamePlayerForInteraction(interactionData);
         var hex = game.GetHexAt(interactionData.Target);
         var interactions = await InteractionsHelper.SetUpInteractionsAsync(Enumerable.Range(1, hex.Planet!.ForcesPresent)
@@ -63,10 +64,11 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseVolunteerTestersInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         var hex = game.GetHexAt(interactionData.Target);
 
         hex.Planet!.SubtractForces(interactionData.Amount);

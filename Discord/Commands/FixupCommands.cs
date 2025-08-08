@@ -100,9 +100,9 @@ public class FixupCommands
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
-            .AllowMentions(gamePlayer);
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+            .AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
+            .WithAllowedMentions(gamePlayer);
         
         outcome.ReplyBuilder = builder;
     }
@@ -142,9 +142,9 @@ public class FixupCommands
         }
         gamePlayer.Techs.RemoveAt(index);
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
-            .AllowMentions(gamePlayer);
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+            .AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
+            .WithAllowedMentions(gamePlayer);
         
         outcome.ReplyBuilder = builder;
     }
@@ -176,7 +176,7 @@ public class FixupCommands
             game.TechDiscards.Add(techId);
         }
         
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline(putInDiscard 
                 ? $"Put {tech.DisplayName} from the tech market into the discard pile"
                 : $"Removed {tech.DisplayName} from the tech market (without putting it in the discard pile)");
@@ -218,9 +218,9 @@ public class FixupCommands
         }
         playerTech.IsExhausted = exhausted;
         
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
-            .AllowMentions(gamePlayer);;
+            .WithAllowedMentions(gamePlayer);;
     }
 
     [Command("setPlanetExhausted")]
@@ -262,7 +262,7 @@ public class FixupCommands
             return;
         }
 
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = new DiscordMultiMessageBuilder(() => new DiscordMessageBuilder());
         var previousPlayer = game.CurrentTurnPlayer;
         
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
@@ -270,7 +270,7 @@ public class FixupCommands
         game.IsWaitingForTechPurchaseDecision = false;
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
-            .AllowMentions(gamePlayer, previousPlayer);
+            .WithAllowedMentions(gamePlayer, previousPlayer);
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
@@ -292,14 +292,14 @@ public class FixupCommands
             await context.RespondAsync("Unknown player");
             return;
         }
-        
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         var previousPlayer = game.ScoringTokenPlayer;
         
         game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         
         builder.AppendContentNewline($"Moved scoring token to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
-            .AllowMentions(gamePlayer, previousPlayer);
+            .WithAllowedMentions(gamePlayer, previousPlayer);
         
         outcome.ReplyBuilder = builder;
     }
@@ -324,10 +324,10 @@ public class FixupCommands
         var previous = gamePlayer.Science;
         gamePlayer.Science = science;
         
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline(
                 $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
-            .AllowMentions(gamePlayer);;
+            .WithAllowedMentions(gamePlayer);;
         
         game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
     }
@@ -353,9 +353,16 @@ public class FixupCommands
         var previous = gamePlayer.VictoryPoints;
         gamePlayer.VictoryPoints = vp;
         
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        // If nobody has now won, unfinish the game if it was finished
+        if (game.Players.All(x => x.VictoryPoints < GameConstants.VpToWin) &&
+            game.Players.Count(x => !x.IsEliminated) >= 2)
+        {
+            game.Phase = GamePhase.Play;
+        }
+        
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
-            .AllowMentions(gamePlayer);
+            .WithAllowedMentions(gamePlayer);
     }
 
     [Command("ShuffleTechDeck")]
@@ -420,8 +427,8 @@ public class FixupCommands
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
-        
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         await TechOperations.CycleTechMarketAsync(builder, game);
         
         outcome.ReplyBuilder = builder;

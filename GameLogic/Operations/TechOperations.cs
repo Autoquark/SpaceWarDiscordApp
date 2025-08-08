@@ -10,9 +10,8 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public static class TechOperations
 {
-    public static async Task<TBuilder> ShowTechPurchaseButtonsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public static async Task<DiscordMultiMessageBuilder> ShowTechPurchaseButtonsAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var availableUniversal = player.Science >= GameConstants.UniversalTechCost
             ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() : [];
@@ -29,7 +28,7 @@ public static class TechOperations
         
         var name = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{name}, you may purchase a tech:")
-            .AllowMentions(player);
+            .WithAllowedMentions(player);
 
         var (universalIds, marketIds, declineId) = await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
@@ -95,9 +94,8 @@ public static class TechOperations
         return builder;
     }
     
-    public static async Task<TBuilder> PurchaseTechAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public static async Task<DiscordMultiMessageBuilder> PurchaseTechAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         string techId, int cost, IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var name = await player.GetNameAsync(false);
         var tech = Tech.TechsById[techId];
@@ -128,7 +126,7 @@ public static class TechOperations
         return builder;
     }
 
-    public static TBuilder ShowTechDetails<TBuilder>(TBuilder builder, string techId) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static DiscordMultiMessageBuilder ShowTechDetails(DiscordMultiMessageBuilder builder, string techId)
     {
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
         {
@@ -147,9 +145,28 @@ public static class TechOperations
 
         return builder;
     }
+    
+    public static IDiscordMessageBuilder ShowTechDetails(IDiscordMessageBuilder builder, string techId)
+    {
+        if (!Tech.TechsById.TryGetValue(techId, out var tech))
+        {
+            builder.AppendContentNewline("Unknown tech");
+            return builder;
+        }
+        
+        var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
+            .AppendLine()
+            .AppendLine(tech.Description);
+        builder.AddContainerComponent(new DiscordContainerComponent(
+        [
+            new DiscordTextDisplayComponent(text.ToString()),
+            new DiscordTextDisplayComponent(tech.FlavourText.DiscordItalic())
+        ]));
 
-    public static async Task<TBuilder> CycleTechMarketAsync<TBuilder>(TBuilder builder, Game game)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        return builder;
+    }
+
+    public static async Task<DiscordMultiMessageBuilder> CycleTechMarketAsync(DiscordMultiMessageBuilder builder, Game game)
     {
         builder.AppendContentNewline("The tech market has been cycled.");
         var added = TryDrawTechFromDeck(builder, game);
@@ -200,10 +217,9 @@ public static class TechOperations
         game.PinnedTechMessageId = message.Id;
     }
 
-    public static Tech? DrawTechFromDeckSilent(Game game) => TryDrawTechFromDeck<DiscordMessageBuilder>(null, game);
+    public static Tech? DrawTechFromDeckSilent(Game game) => TryDrawTechFromDeck(null, game);
 
-    public static Tech? TryDrawTechFromDeck<TBuilder>(TBuilder? builder, Game game)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static Tech? TryDrawTechFromDeck(DiscordMultiMessageBuilder? builder, Game game)
     {
         if (game.TechDeck.Count == 0)
         {

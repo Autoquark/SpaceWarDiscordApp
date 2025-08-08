@@ -18,7 +18,7 @@ public class Tech_LocalDefenseForces : Tech
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && GetAffectedHexes(game, player).Any();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var affectedHexes = GetAffectedHexes(game, player).ToList();

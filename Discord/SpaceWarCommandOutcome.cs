@@ -8,7 +8,7 @@ public class SpaceWarCommandOutcome
     {
     }
 
-    public SpaceWarCommandOutcome(bool requiresSave, IDiscordMessageBuilder replyBuilder)
+    public SpaceWarCommandOutcome(bool requiresSave, DiscordMultiMessageBuilder replyBuilder)
     {
         RequiresSave = requiresSave;
         ReplyBuilder = replyBuilder;
@@ -16,11 +16,11 @@ public class SpaceWarCommandOutcome
 
     public bool? RequiresSave { get; set; } = null;
 
-    public IDiscordMessageBuilder? ReplyBuilder { get; set; } = null;
+    public DiscordMultiMessageBuilder ReplyBuilder { get; set; }
 
     public void SetSimpleReply(string content)
     {
-        ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        ReplyBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder())
             .AppendContentNewline(content);
     }
 }

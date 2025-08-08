@@ -164,7 +164,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
             return;
         }
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
         MapGenerator.GenerateMap(game);
 
@@ -224,9 +224,11 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         await context.RespondAsync(builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, JoinGameInteraction interactionData, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, JoinGameInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        
         var userId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().User.Id;
         if (game.TryGetGamePlayerByDiscordId(userId) != null)
         {

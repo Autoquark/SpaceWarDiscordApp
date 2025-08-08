@@ -12,8 +12,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
     /// <summary>
     /// Display a summary of the given player's current planned move
     /// </summary>
-    public static TBuilder ShowPlannedMove<TBuilder>(TBuilder builder, GamePlayer player)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static DiscordMultiMessageBuilder ShowPlannedMove(DiscordMultiMessageBuilder builder, GamePlayer player)
     {
         var plannedMove = player.PlannedMove;
         if (plannedMove == null)
@@ -30,9 +29,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
         return builder;
     }
 
-    public static async Task<IEnumerable<GameEvent>> GetResolveMoveEventsAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public static async Task<IEnumerable<GameEvent>> GetResolveMoveEventsAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         PlannedMove move, IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         var destinationHex = game.GetHexAt(move.Destination);
         if (destinationHex.Planet == null)
@@ -48,8 +46,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             }];
     }
 
-    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_PreMove gameEvent, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PreMove gameEvent, Game game,
+        IServiceProvider serviceProvider)
     {
         var movingPlayer = game.GetGamePlayerByGameId(gameEvent.MovingPlayerId);
         var moverName = await movingPlayer.GetNameAsync(true);
@@ -125,7 +123,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             destinationHex.Planet.SubtractForces(combatLoss);
 
             builder?.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat")
-                .AllowMentions(movingPlayer, defender);
+                .WithAllowedMentions(movingPlayer, defender);
         }
 
         // Stage 3: Apply planet capacity limit

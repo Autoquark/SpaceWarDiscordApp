@@ -18,7 +18,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         HasSimpleAction = true;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var targets = game.Hexes
@@ -43,9 +43,9 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         TargetOptimisedWorkSchedulesInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
         await ProduceOperations.PushProduceOnPlanetAsync(builder, game, game.GetHexAt(interactionData.Target), serviceProvider);
         

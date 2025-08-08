@@ -42,13 +42,13 @@ public static partial class MessageHandler
                         return;
                     }
                     
-                    var builder = new DiscordMessageBuilder().EnableV2Components();
+                    var builder = new DiscordMultiMessageBuilder(new DiscordMessageBuilder(), () => new DiscordMessageBuilder());
 
                     if (!interactionData.UserAllowedToTrigger(game, args.Author))
                     {
                         // Seems like there is a bug with reply mentions in DSharpPlus so I have to do this to get the mention to work
-                        builder.WithAllowedMentions(Mentions.All);
-                        await args.Message.RespondAsync(builder.AppendContentNewline($"{args.Author.Mention}, looks like you tried to trigger an interaction that is for another player"));
+                        await args.Message.RespondAsync(b => b.AppendContentNewline($"{args.Author.Mention}, looks like you tried to trigger an interaction that is for another player")
+                            .WithAllowedMentions(Mentions.All));
                         return;
                     }
 
@@ -75,10 +75,12 @@ public static partial class MessageHandler
                     }
 
                     // Ignore DeleteOriginalMessage for now
-
-                    if (builder.Components.Count > 0)
+                    if (!builder.IsEmpty())
                     {
-                        await args.Message.RespondAsync(builder);
+                        foreach (var innerBuilder in builder.Builders.Cast<DiscordMessageBuilder>())
+                        {
+                            await args.Message.RespondAsync(innerBuilder);
+                        }
                     }
                 }
                 else

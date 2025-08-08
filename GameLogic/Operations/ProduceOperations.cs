@@ -8,8 +8,7 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, IEventResolvedHandler<GameEvent_PostProduce>
 {
-    public static async Task<TBuilder?> PushProduceOnPlanetAsync<TBuilder>(TBuilder? builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> PushProduceOnPlanetAsync(DiscordMultiMessageBuilder? builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
     {
         if (hex.Planet == null)
         {
@@ -46,8 +45,8 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         return builder;
     }
     
-    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_PostProduce gameEvent, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PostProduce gameEvent, Game game,
+        IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(gameEvent.Location);
         var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
@@ -69,8 +68,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         return builder;
     }
 
-    public static TBuilder? CheckPlanetCapacity<TBuilder>(TBuilder? builder, BoardHex hex)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static DiscordMultiMessageBuilder? CheckPlanetCapacity(DiscordMultiMessageBuilder? builder, BoardHex hex)
     {
         if (hex.ForcesPresent > GameConstants.MaxForcesPerPlanet)
         {
@@ -82,7 +80,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         return builder;
     }
 
-    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
+        IServiceProvider serviceProvider)
         => await PushProduceOnPlanetAsync(builder, game, game.GetHexAt(gameEvent.Location), serviceProvider);
 }

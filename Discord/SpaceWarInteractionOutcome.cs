@@ -4,7 +4,7 @@ namespace SpaceWarDiscordApp.Discord;
 
 public class SpaceWarInteractionOutcome
 {
-    public SpaceWarInteractionOutcome(bool requiresSave, IDiscordMessageBuilder? replyBuilder)
+    public SpaceWarInteractionOutcome(bool requiresSave, DiscordMultiMessageBuilder? replyBuilder)
     {
         RequiresSave = requiresSave;
         ReplyBuilder = replyBuilder;
@@ -18,11 +18,11 @@ public class SpaceWarInteractionOutcome
     // Might become possible again when I add support for multi-message 
     public bool DeleteOriginalMessage { get; set; }
 
-    public IDiscordMessageBuilder? ReplyBuilder { get; set; }
+    public DiscordMultiMessageBuilder? ReplyBuilder { get; set; }
 
     public void SetSimpleReply(string content)
     {
-        ReplyBuilder = new DiscordWebhookBuilder().EnableV2Components()
+        ReplyBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder())
             .AppendContentNewline(content);
     }
 }

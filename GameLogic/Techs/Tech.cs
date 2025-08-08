@@ -98,9 +98,8 @@ public abstract class Tech
             }]
             : [];
 
-    public virtual Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
-        IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder> => Task.FromResult(builder);
+    public virtual Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider) => Task.FromResult(builder);
 
     /// <summary>
     /// Create a PlayerTech for a player that has just acquired this tech, to track related game state

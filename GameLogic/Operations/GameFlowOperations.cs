@@ -20,8 +20,7 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>
 {
-    public static async Task<TBuilder> ShowBoardStateMessageAsync<TBuilder>(TBuilder builder, Game game) 
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
     {
         using var image = BoardImageGenerator.GenerateBoardImage(game);
         var stream = new MemoryStream();
@@ -29,7 +28,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         stream.Position = 0;
 
         var name = await game.CurrentTurnPlayer.GetNameAsync(false);
-        builder
+        builder.NewMessage()
             .AppendContentNewline(
                 $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
             .AddFile("board.png", stream)
@@ -93,8 +92,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return builder;
     }
 
-    public static async Task<TBuilder> ShowSelectActionMessageAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) 
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
         if (game.HavePrintedSelectActionThisInteraction)
         {
@@ -150,7 +148,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             .AppendContentNewline(game.ActionTakenThisTurn ?
                 $"{name}, you have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
                 : $"{name}, it is your turn. Choose an action:")
-            .AllowMentions(game.CurrentTurnPlayer)
+            .WithAllowedMentions(game.CurrentTurnPlayer)
             .AppendContentNewline("Basic Actions:")
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, moveInteractionId, "Move Action", game.ActionTakenThisTurn),
@@ -185,8 +183,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return builder;
     }
 
-    public static async Task<TBuilder?> OnActionCompletedAsync<TBuilder>(TBuilder? builder, Game game, ActionType actionType, IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> OnActionCompletedAsync(DiscordMultiMessageBuilder? builder, Game game, ActionType actionType, IServiceProvider serviceProvider)
     {
         if (actionType == ActionType.Main)
         {
@@ -197,8 +194,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
     }
 
-    public static async Task<TBuilder?> AdvanceTurnOrPromptNextActionAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> AdvanceTurnOrPromptNextActionAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
         if (game.IsWaitingForTechPurchaseDecision || game.EventStack.Items.Count > 0)
         {
@@ -224,8 +220,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     /// <summary>
     /// Advances the game to the next turn
     /// </summary>
-    public static async Task NextTurnAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task NextTurnAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase == GamePhase.Finished)
         {
@@ -256,14 +251,18 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 scoringPlayer.VictoryPoints++;
                 var name = await scoringPlayer.GetNameAsync(true);
                 builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
-                    .AllowMentions(scoringPlayer);
+                    .WithAllowedMentions(scoringPlayer);
 
                 await CheckForVictoryAsync(builder, game);
             }
 
             // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
             // but don't post any messages about it.
-            await CycleScoringTokenAsync(game.Phase == GamePhase.Finished ? null : builder, game);
+            if (game.Phase == GamePhase.Finished)
+            {
+                builder = null;
+            }
+            await CycleScoringTokenAsync(builder, game);
         }
 
         do
@@ -283,14 +282,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         await ShowSelectActionMessageAsync(builder, game, serviceProvider);
     }
 
-    public static async Task<TBuilder?> CheckForVictoryAsync<TBuilder>(TBuilder? builder, Game game) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
         var winner = game.Players.FirstOrDefault(x => x.VictoryPoints == GameConstants.VpToWin);
         if (winner != null)
         {
             var name = await winner.GetNameAsync(true);
             builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1())
-                .AllowMentions(winner)
+                .WithAllowedMentions(winner)
                 .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turn_message to continue playing");
             game.Phase = GamePhase.Finished;
         }
@@ -301,8 +300,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     /// <summary>
     /// Check if any players have been eliminated. Note that this can end the game.
     /// </summary>
-    public static async Task<TBuilder?> CheckForPlayerEliminationsAsync<TBuilder>(TBuilder? builder, Game game)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> CheckForPlayerEliminationsAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
         foreach (var player in game.Players.Where(x => !x.IsEliminated))
         {
@@ -315,7 +313,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             
             var name = await player.GetNameAsync(true);
             builder?.AppendContentNewline($"{name} has been eliminated!".DiscordBold())
-                .AllowMentions(player);
+                .WithAllowedMentions(player);
 
             if (game.ScoringTokenPlayer == player)
             {
@@ -328,22 +326,21 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         {
             var winner = game.Players.First(x => !x.IsEliminated);
             builder?.AppendContentNewline($"{await winner.GetNameAsync(true)} is the last one standing, winning the game through glorious violence!".DiscordBold())
-                .AllowMentions(winner);
+                .WithAllowedMentions(winner);
             game.Phase = GamePhase.Finished;
         }
         else if (remainingPlayers == 0)
         {
             builder?.AppendContentNewline("It would appear that @everyone has wiped each other out, leaving the universe cold and lifeless. Oops.".DiscordBold())
-                .AddMention(EveryoneMention.All);
+                .WithAllowedMentions(EveryoneMention.All);
             game.Phase = GamePhase.Finished;
         }
         
         return builder;
     }
 
-    public static async Task PushGameEventsAsync<TBuilder>(TBuilder? builder, Game game,
+    public static async Task PushGameEventsAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
-    where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         foreach (var gameEvent in gameEvents.Reverse())
         {
@@ -366,7 +363,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         triggerList!.Remove(triggeredEffect);
     }
 
-    public static async Task<TBuilder?> ContinueResolvingEventStackAsync<TBuilder>(TBuilder? builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> ContinueResolvingEventStackAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
         while (game.EventStack.Items.Count > 0)
         {
@@ -482,7 +479,12 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 // Player choice event, display choices and stop resolving
                 else if(resolvingEvent is GameEvent_PlayerChoice choiceEvent)
                 {
-                    await GameEventDispatcher.ShowPlayerChoicesForEvent(builder, choiceEvent, game, serviceProvider);
+                    if (builder != null)
+                    {
+                        await GameEventDispatcher.ShowPlayerChoicesForEvent(builder, choiceEvent, game,
+                            serviceProvider);
+                    }
+
                     break;
                 }
                 // No more players to resolve, pop this event from the stack and resolve its OnResolve
@@ -500,7 +502,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return (await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider))!;
     }
 
-    public static async Task<TBuilder> DeclineOptionalTriggersAsync<TBuilder>(TBuilder builder, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public static async Task<DiscordMultiMessageBuilder?> DeclineOptionalTriggersAsync(DiscordMultiMessageBuilder? builder,
+        Game game, IServiceProvider serviceProvider)
     {
         var gameEvent = game.EventStack.LastOrDefault();
         if (gameEvent == null)
@@ -519,8 +522,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
 
-    private static async Task<TBuilder?> PopEventFromStackAndResolveAsync<TBuilder>(TBuilder? builder, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    private static async Task<DiscordMultiMessageBuilder?> PopEventFromStackAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
+        IServiceProvider serviceProvider)
     {
         var resolving = game.EventStack.LastOrDefault();
         if (resolving == null)
@@ -550,8 +553,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     /// <summary>
     /// Passes the scoring token to the previous valid player in turn order
     /// </summary>
-    private static async Task CycleScoringTokenAsync<TBuilder>(TBuilder? builder, Game game)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    private static async Task CycleScoringTokenAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
         do
         {
@@ -567,8 +569,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
 
-    private static async Task<TBuilder?> ResolveTriggeredEffectAsync<TBuilder>(TBuilder? builder, Game game,
-        TriggeredEffect triggeredEffect, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    private static async Task<DiscordMultiMessageBuilder?> ResolveTriggeredEffectAsync(DiscordMultiMessageBuilder? builder, Game game,
+        TriggeredEffect triggeredEffect, IServiceProvider serviceProvider)
     {
         var interactionData = triggeredEffect.ResolveInteractionData
             ?? await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetInteractionDataAsync<TriggeredEffectInteractionData>(Guid.Parse(triggeredEffect.ResolveInteractionId)));
@@ -585,8 +587,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
     public static IEnumerable<TechAction> GetPlayerTechActions(Game game, GamePlayer player)
         => player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, player));
 
-    public async Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, GameEvent_ActionComplete gameEvent, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_ActionComplete gameEvent, Game game,
+        IServiceProvider serviceProvider)
         => await OnActionCompletedAsync(builder, game, gameEvent.ActionType, serviceProvider);
 
     public static void OnUserTriggeredResolveEffectInteraction(Game game, TriggeredEffectInteractionData interactionData)

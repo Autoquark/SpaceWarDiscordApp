@@ -25,7 +25,7 @@ public static class GamePlayerExtensions
                 var user = await Program.DiscordClient.GetUserAsync(player.DiscordUserId);
                 name = mention ? user.Mention : user.GlobalName;
             }
-            catch (NotFoundException e)
+            catch (NotFoundException)
             {
                 name = $"Unknown Player {player.GamePlayerId}";
             }

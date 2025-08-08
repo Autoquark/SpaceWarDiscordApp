@@ -25,7 +25,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
             .DistinctBy(x => x.Coordinates)
             .Any(x => x.ForcesPresent > 0);
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var planets = game.Hexes.WhereOwnedBy(player)
@@ -52,15 +52,15 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         return builder.AppendHexButtons(game, planets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         FireMegaLaserInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
         game.GetHexAt(interactionData.Target).Planet!.ForcesPresent = 0;
 
-        builder.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
+        builder?.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
         

@@ -22,7 +22,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && game.Hexes.Any(x => x.Planet?.IsExhausted == false);
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.Where(x => x.Planet?.IsExhausted == false)
@@ -42,14 +42,14 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
-        UseEnervatorBeamInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        UseEnervatorBeamInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         game.GetHexAt(interactionData.Target).Planet!.IsExhausted = true;
         var player = game.GetGamePlayerForInteraction(interactionData);
         var name = await player.GetNameAsync(false);
         
-        builder.AppendContentNewline($"{name} has exhausted {interactionData.Target} using Enervator Beam");
+        builder?.AppendContentNewline($"{name} has exhausted {interactionData.Target} using Enervator Beam");
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         

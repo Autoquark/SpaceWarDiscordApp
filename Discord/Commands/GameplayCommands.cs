@@ -25,7 +25,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
             return;
         }
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         await GameFlowOperations.ShowBoardStateMessageAsync(builder, game);
         outcome.ReplyBuilder = builder;
     }
@@ -37,22 +37,25 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
-        
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
-        EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         await GameFlowOperations.NextTurnAsync(builder, game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, DeclineOptionalTriggersInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        DeclineOptionalTriggersInteraction interactionData,
+        Game game,
+        IServiceProvider serviceProvider)
     {
         await GameFlowOperations.DeclineOptionalTriggersAsync(builder, game, serviceProvider);
         return new SpaceWarInteractionOutcome(true, builder);

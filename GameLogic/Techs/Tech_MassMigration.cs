@@ -44,8 +44,8 @@ public class Tech_MassMigration : Tech, IInteractionHandler<ApplyMassMigrationBo
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
-        IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
     {
         interactionData.Event.AttackerCombatStrengthSources.Add(new CombatStrengthSource
         {

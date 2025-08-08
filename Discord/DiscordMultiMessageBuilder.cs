@@ -1,9 +1,19 @@
 using DSharpPlus.Entities;
+using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.Discord;
 
 public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
 {
+    public static DiscordMultiMessageBuilder Create<T>() where T : BaseDiscordMessageBuilder<T>, new()
+    => new DiscordMultiMessageBuilder(() => new T());
+    
+    public DiscordMultiMessageBuilder(Func<IDiscordMessageBuilder> followupBuilderFactory)
+    {
+        _followupBuilderFactory = () => followupBuilderFactory().EnableV2Components();
+        _builders.Add(_followupBuilderFactory());
+    }
+    
     public DiscordMultiMessageBuilder(IDiscordMessageBuilder initial,
         Func<IDiscordMessageBuilder> followupBuilderFactory)
     {
@@ -64,5 +74,74 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         }
 
         return this;
+    }
+    
+    public DiscordMultiMessageBuilder AddFile(FileStream stream, AddFileOptions fileOptions)
+    {
+        CurrentBuilder.AddFile(stream, fileOptions);
+        return this;
+    }
+    
+    public DiscordMultiMessageBuilder AddFile(string fileName, Stream stream)
+    {
+        CurrentBuilder.AddFile(fileName, stream);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder AddContainerComponent(DiscordContainerComponent component)
+    {
+        CurrentBuilder.AddContainerComponent(component);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder AddMediaGalleryComponent(params IEnumerable<DiscordMediaGalleryItem> items)
+    {
+        CurrentBuilder.AddMediaGalleryComponent(items);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder WithAllowedMention(IMention mention) => WithAllowedMentions([mention]);
+
+    public DiscordMultiMessageBuilder WithAllowedMentions(params IEnumerable<IMention> allowedMentions)
+    {
+        CurrentBuilder.AddMentions(allowedMentions);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder WithAllowedMentions(GamePlayer first, params IEnumerable<GamePlayer> players)
+    {
+        CurrentBuilder.AllowMentions(first, players);
+        return this;
+    }
+
+    public bool IsEmpty() => _builders.FirstOrDefault()?.Components.Any() != true;
+
+    public DiscordMultiMessageBuilder AddActionRowComponent(params IEnumerable<DiscordButtonComponent> buttons)
+    {
+        buttons = buttons.ToList();
+        try
+        {
+            CurrentBuilder.AddActionRowComponent(buttons);
+        }
+        catch (InvalidOperationException)
+        {
+            NewMessage();
+            CurrentBuilder.AddActionRowComponent(buttons);
+        }
+        
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder AppendButtonRows(IEnumerable<DiscordButtonComponent> buttons)
+    {
+        CurrentBuilder.AppendButtonRows(buttons);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder AppendHexButtons(Game game, IEnumerable<BoardHex> hexes,
+        IEnumerable<string> interactionIds)
+    {
+        CurrentBuilder.AppendHexButtons(game, hexes, interactionIds);
+        return this;   
     }
 }

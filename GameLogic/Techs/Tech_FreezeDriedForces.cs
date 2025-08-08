@@ -19,7 +19,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         HasSimpleAction = true;
     }
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var targets = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId).ToList();
@@ -41,16 +41,16 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseFreezeDriedForcesInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
         hex.Planet!.ForcesPresent += 3;
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} produces 3 forces on {hex.Coordinates} using {DisplayName}");
+        builder?.AppendContentNewline($"{name} produces 3 forces on {hex.Coordinates} using {DisplayName}");
         ProduceOperations.CheckPlanetCapacity(builder, hex);
         
         player.GetPlayerTechById(Id).IsExhausted = true;

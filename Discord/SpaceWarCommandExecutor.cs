@@ -76,7 +76,13 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
 
         if (outcome.ReplyBuilder != null)
         {
-            await context.EditResponseAsync(outcome.ReplyBuilder);
+            var first = outcome.ReplyBuilder.Builders.First();
+            await context.EditResponseAsync(first);
+
+            foreach (var followupBuilder in outcome.ReplyBuilder.Builders.Skip(1))
+            {
+                await context.FollowupAsync(followupBuilder);
+            }
         }
     }
 }

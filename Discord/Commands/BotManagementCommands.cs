@@ -82,7 +82,7 @@ public class BotManagementCommands
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline($"Game document ID: {game.DocumentId}");
     }
 
@@ -93,7 +93,7 @@ public class BotManagementCommands
             transaction.GetGameAsync(transaction.Database.Games().Document(gameId)));
 
         var outcome = context.Outcome();
-        outcome.ReplyBuilder = new DiscordMessageBuilder().EnableV2Components();
+        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         if (game == null)
         {
             outcome.ReplyBuilder.AppendContentNewline($"Game not found");

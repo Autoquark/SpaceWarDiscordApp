@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
@@ -22,7 +23,7 @@ public class Tech_SuperpositionalDeployment : Tech
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) 
         => base.IsSimpleActionAvailable(game, player) && game.Hexes.WhereOwnedBy(player).Any(x => BoardUtils.GetNeighbouringHexes(game, x).WhereOwnedBy(player).Any());
 
-    public override Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
         => _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
 }

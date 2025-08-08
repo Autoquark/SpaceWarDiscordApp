@@ -21,7 +21,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var targets = GetTargets(game, player).ToList();
@@ -48,9 +48,9 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         .WhereForcesPresent()
         .DistinctBy(x => x.Coordinates);
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseAggressiveWasteDisposalInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -65,7 +65,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         tech.IsExhausted = true;
         
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
+        builder?.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
 

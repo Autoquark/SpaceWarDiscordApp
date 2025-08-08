@@ -41,6 +41,13 @@ public static class MessageBuilderExtensions
         IEnumerable<DiscordButtonComponent> buttons)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
+        ((IDiscordMessageBuilder)builder).AppendButtonRows(buttons);
+        return builder;
+    }
+
+    public static IDiscordMessageBuilder AppendButtonRows(this IDiscordMessageBuilder builder,
+        IEnumerable<DiscordButtonComponent> buttons)
+    {
         foreach (var group in buttons.ZipWithIndices().GroupBy(x => x.index / 5))
         {
             builder.AddActionRowComponent(group.Select(x => x.item));
@@ -53,6 +60,13 @@ public static class MessageBuilderExtensions
         Game game,
         IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        ((IDiscordMessageBuilder)builder).AppendHexButtons(game, hexes, interactionIds);
+        return builder;
+    }
+    
+    public static IDiscordMessageBuilder AppendHexButtons(this IDiscordMessageBuilder builder, Game game,
+        IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds)
         => builder.AppendButtonRows(hexes.Zip(interactionIds)
             .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
 
@@ -61,6 +75,13 @@ public static class MessageBuilderExtensions
     /// </summary>
     public static TBuilder AllowMentions<TBuilder>(this TBuilder builder, GamePlayer first, params IEnumerable<GamePlayer> players)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        ((IDiscordMessageBuilder)builder).AllowMentions(first, players);
+        return builder;
+    }
+
+    public static IDiscordMessageBuilder AllowMentions(this IDiscordMessageBuilder builder, GamePlayer first,
+        params IEnumerable<GamePlayer> players)
     {
         players = players.Append(first);
         foreach (var player in players.Where(x => !x.IsDummyPlayer))

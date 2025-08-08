@@ -12,8 +12,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
     IInteractionHandler<ProduceInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
-        ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var candidates = game.Hexes
@@ -32,18 +32,18 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
                 },transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId))
         );
 
-        builder.AppendContentNewline("Choose a ready planet to produce on:");
+        builder?.AppendContentNewline("Choose a ready planet to produce on:");
         foreach (var group in candidates.ZipWithIndices().GroupBy(x => x.Item2 / 5))
         {
-            builder.AddActionRowComponent(
+            builder?.AddActionRowComponent(
                 group.Select(x => DiscordHelpers.CreateButtonForHex(game, x.Item1, interactionIds[x.Item1])));
         }
 
         return new SpaceWarInteractionOutcome(false, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
-        ProduceInteraction interactionData, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        ProduceInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Hex);
         if (hex.Planet?.IsExhausted != false)

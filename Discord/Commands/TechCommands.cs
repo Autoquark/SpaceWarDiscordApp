@@ -1,11 +1,9 @@
 using System.ComponentModel;
-using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
@@ -19,10 +17,11 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
     IInteractionHandler<PurchaseTechInteraction>,
     IInteractionHandler<DeclineTechPurchaseInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseTechActionInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         var tech = Tech.TechsById[interactionData.TechId];
         var player = game.GetGamePlayerByGameId(interactionData.UsingPlayerId);
         
@@ -31,10 +30,11 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         PurchaseTechInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         await TechOperations.PurchaseTechAsync(builder,
             game,
             game.GetGamePlayerForInteraction(interactionData),
@@ -45,14 +45,14 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         DeclineTechPurchaseInteraction interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
         var name = await player.GetNameAsync(false);
 
-        builder.AppendContentNewline($"{name} declines to purchase a tech");
+        builder?.AppendContentNewline($"{name} declines to purchase a tech");
 
         game.IsWaitingForTechPurchaseDecision = false;
         await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
@@ -62,20 +62,21 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
 
     [Command("ShowTech")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
-    public async Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
+    public Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
     {
         var outcome = context.Outcome();
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
         TechOperations.ShowTechDetails(builder, techId);
         
         outcome.ReplyBuilder = builder;
+        return Task.CompletedTask;
     }
 
     [Command("ShowTechDeck")]
     [Description("List the techs in the tech deck (in alphabetical order)")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
-    public async Task ShowTechDeck(CommandContext context, bool fullInfo = false)
+    public Task ShowTechDeck(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -84,7 +85,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
             .OrderBy(x => x.DisplayName)
             .ToList();
 
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
         if (deckTechs.Count == 0)
         {
@@ -108,12 +109,13 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         }
         
         outcome.ReplyBuilder = builder;
+        return Task.CompletedTask;
     }
     
     [Command("ShowTechDiscards")]
     [Description("Show the contents of the tech discard pile")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
-    public async Task ShowTechDiscards(CommandContext context, bool fullInfo = false)
+    public Task ShowTechDiscards(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -121,7 +123,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         var deckTechs = game.TechDiscards.Select(x => Tech.TechsById[x])
             .ToList();
 
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
         if (deckTechs.Count == 0)
         {
@@ -145,5 +147,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         }
         
         outcome.ReplyBuilder = builder;
+        return Task.CompletedTask;
     }
 }

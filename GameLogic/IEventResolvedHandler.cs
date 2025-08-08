@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic;
 
@@ -11,5 +12,6 @@ namespace SpaceWarDiscordApp.GameLogic;
 /// <typeparam name="T">Subtype of GameEvent handled</typeparam>
 public interface IEventResolvedHandler<T> where T : GameEvent
 {
-    public Task<TBuilder?> HandleEventResolvedAsync<TBuilder>(TBuilder? builder, T gameEvent, Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>;
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, T gameEvent,
+        Game game, IServiceProvider serviceProvider);
 }

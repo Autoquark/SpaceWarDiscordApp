@@ -16,7 +16,7 @@ public class Tech_ScientificSuperiority : Tech
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player)
         && GameStateOperations.GetPlayerScienceIconsControlled(game, player) > game.Players.Except(player).Max(x => GameStateOperations.GetPlayerScienceIconsControlled(game, x));
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
         var name = await player.GetNameAsync(false);

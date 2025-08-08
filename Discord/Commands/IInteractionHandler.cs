@@ -6,9 +6,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 public interface IInteractionHandler<T> where T : InteractionData
 {
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder? builder,
+    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         T interactionData,
         Game game,
-        IServiceProvider serviceProvider)
-        where TBuilder : BaseDiscordMessageBuilder<TBuilder>;
+        IServiceProvider serviceProvider);
 }

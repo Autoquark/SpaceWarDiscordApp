@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
@@ -17,7 +18,7 @@ public class Tech_ZeroGMarchingTechnique : Tech
     
     private readonly ZeroGMarchingTechnique_MovementFlowHandler _movementFlowHandler = new();
 
-    public override async Task<TBuilder> UseTechActionAsync<TBuilder>(TBuilder builder, Game game, GamePlayer player,
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider) => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
 
     public static string StaticId => "zeroGMarchingTechnique";

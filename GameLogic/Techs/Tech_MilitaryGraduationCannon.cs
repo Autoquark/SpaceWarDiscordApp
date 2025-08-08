@@ -50,9 +50,10 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
     }
 
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync<TBuilder>(TBuilder builder, TriggerMilitaryGraduationCannonInteractionData interactionData,
-        Game game, IServiceProvider serviceProvider) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, TriggerMilitaryGraduationCannonInteractionData interactionData,
+        Game game, IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         await _movementFlowHandler.BeginPlanningMoveAsync(builder,
             game,
             game.GetGamePlayerByGameId(interactionData.ForGamePlayerId),
