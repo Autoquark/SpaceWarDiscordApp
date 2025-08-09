@@ -113,7 +113,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             }
             else if (defenderCombatStrength > attackerCombatStrength)
             {
-                var difference = attackerCombatStrength - defenderCombatStrength;
+                var difference = defenderCombatStrength - attackerCombatStrength;
                 totalMoving -= difference;
                 builder?.AppendContentNewline($"{moverName} loses {difference} forces before combat due to {defenderName}'s superior Combat Strength");
             }
@@ -152,12 +152,11 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 
         movingPlayer.PlannedMove = null;
 
-        var newOwner = game.GetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId);
-        var newOwnerName = await newOwner.GetNameAsync(true);
+        var newOwner = game.TryGetGamePlayerByGameId(destinationHex.Planet.OwningPlayerId);
 
         builder?.AppendContentNewline(
-            destinationHex.Planet.ForcesPresent > 0
-                ? $"{newOwnerName} now has {newOwner.PlayerColourInfo.GetDieEmoji(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
+            newOwner != null
+                ? $"{await newOwner.GetNameAsync(true)} now has {newOwner.PlayerColourInfo.GetDieEmoji(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
                 : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
         
         return await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
