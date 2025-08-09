@@ -94,7 +94,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
 
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
-        if (game.HavePrintedSelectActionThisInteraction)
+        if (game.HavePrintedSelectActionThisInteraction || game.Phase == GamePhase.Finished)
         {
             return builder;
         }

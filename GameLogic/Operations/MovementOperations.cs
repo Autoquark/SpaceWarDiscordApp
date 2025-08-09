@@ -105,6 +105,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
                 builder?.AppendContentNewline($"{defenderName} Combat Strength: {defenderCombatStrength} ({string.Join(", ", gameEvent.DefenderCombatStrengthSources)})");
             }
 
+            // Apply combat strength effects
             if (attackerCombatStrength > defenderCombatStrength)
             {
                 var difference = attackerCombatStrength - defenderCombatStrength;
@@ -114,11 +115,11 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             else if (defenderCombatStrength > attackerCombatStrength)
             {
                 var difference = defenderCombatStrength - attackerCombatStrength;
-                totalMoving -= difference;
+                totalPreCapacityLimit -= difference;
                 builder?.AppendContentNewline($"{moverName} loses {difference} forces before combat due to {defenderName}'s superior Combat Strength");
             }
             
-            var combatLoss = Math.Min(totalMoving, destinationHex.ForcesPresent);
+            var combatLoss = Math.Min(totalPreCapacityLimit, destinationHex.ForcesPresent);
             totalPreCapacityLimit -= combatLoss;
             destinationHex.Planet.SubtractForces(combatLoss);
 
