@@ -65,16 +65,13 @@ public abstract class Tech
     /// <summary>
     /// Gets a discord message string representing the state of this tech for the given game and player
     /// </summary>
-    public virtual string GetTechDisplayString(Game game, GamePlayer player)
+    public virtual IEnumerable<FormattedTextRun> GetTechDisplayString(Game game, GamePlayer player)
     {
-        var result = DisplayName;
+        var result = new FormattedTextRun(DisplayName);
         var tech = player.GetPlayerTechById(Id);
-        if (tech.IsExhausted || (HasSimpleAction && SimpleActionIsOncePerTurn && tech.UsedThisTurn))
-        {
-            result = result.DiscordStrikeThrough(); //TODO: Emoji
-        }
+        result.IsStrikethrough = tech.IsExhausted || (HasSimpleAction && SimpleActionIsOncePerTurn && tech.UsedThisTurn);
         
-        return result;
+        return [result];
     }
 
     /// <summary>

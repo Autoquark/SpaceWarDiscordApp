@@ -20,6 +20,38 @@ public static class DiscordHelpers
         return new DiscordButtonComponent(style, interactionId, techAction.DisplayName, !techAction.IsAvailable); //TODO: emojis on techs?   
     }
 
+    public static string FormatToDiscordMarkdown(IEnumerable<FormattedTextRun> formattedTextRuns)
+    {
+        var text = new StringBuilder();
+        foreach (var formattedTextRun in formattedTextRuns)
+        {
+            text.Append(FormatToDiscordMarkdown(formattedTextRun));
+        }
+
+        return text.ToString();
+    }
+    
+    public static StringBuilder FormatToDiscordMarkdown(FormattedTextRun formattedTextRun)
+    {
+        var text = new StringBuilder(formattedTextRun.Text);
+        if (formattedTextRun.IsBold)
+        {
+            text = text.DiscordBold();
+        }
+
+        if (formattedTextRun.IsItalic)
+        {
+            text = text.DiscordItalic();
+        }
+
+        if (formattedTextRun.IsStrikethrough)
+        {
+            text = text.DiscordStrikeThrough();
+        }
+
+        return text;
+    }
+
     public static string DiscordBold(this string message) => $"**{message}**";
     public static StringBuilder DiscordBold(this StringBuilder message) => new($"**{message}**");
     public static string DiscordItalic(this string message) => $"*{message}*";

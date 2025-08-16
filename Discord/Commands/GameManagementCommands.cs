@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
@@ -15,6 +16,13 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 [RequireGameChannel(RequireGameChannelMode.RequiresSave)]
 public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
 {
+    private class NounProjectImageCredit
+    {
+        public required string ImageName { get; set; }
+        
+        public required string ArtistName { get; set; }
+    }
+    
     private static readonly IReadOnlyList<string> NameAdjectives = new List<string>(["futile", "pointless", "childish",
         "regrettable", "silly", "absurd", "peculiar", "sudden", "endless", "unexpected", "undignified", "unnecessary", "ignoble",
         "infamous", "dishonourable", "sinister", "dire", "unfortunate", "stupid", "weird", "unusual", "unpredictable", "shameful",
@@ -34,6 +42,35 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         new List<string>(["Lorelentenei", "Gerg", "Goodcoe", "Neutralcoe", "Zogak", "Benjermy", "Georgery"]);
     
     private static readonly MapGenerator MapGenerator = new MapGenerator();
+
+    private static readonly IReadOnlyList<NounProjectImageCredit> NounProjectImageCredits =
+    [
+        new()
+        {
+            ImageName = "Arrow",
+            ArtistName = "Rainbow Designs"
+        },
+        new()
+        {
+            ImageName = "Flying Flag",
+            ArtistName = "AFY Studio"
+        },
+        new()
+        {
+            ImageName = "Chevron Double Up",
+            ArtistName = "tezar tantular"
+        },
+        new()
+        {
+            ImageName = "Chevron Double Up Line",
+            ArtistName = "tezar tantular"
+        },
+        new()
+        {
+            ImageName = "Trophy Cup",
+            ArtistName = "tezar tantular"
+        }
+    ];
     
     [Command("CreateGame")]
     [RequireGuild]
@@ -219,6 +256,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         builder.AppendContentNewline("Image Credits".DiscordHeading3());
         builder.AppendContentNewline("Die icons by [Delapouite](https://delapouite.com/)");
         builder.AppendContentNewline("Science & star icons by [Lorc](https://lorcblog.blogspot.com/)");
+        var text = new StringBuilder();
+        text.AppendJoin("\n", NounProjectImageCredits.Select(x => $"\"{x.ImageName}\" image by {x.ArtistName} from thenounproject.com"));
+        builder.AppendContentNewline(text.ToString());
         builder.AppendContentNewline("Other".DiscordHeading3());
         builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, to everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
         await context.RespondAsync(builder);

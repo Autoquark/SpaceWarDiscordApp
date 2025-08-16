@@ -67,7 +67,7 @@ public class BotManagementCommands
                 await dieImage.SaveAsPngAsync(fileStream);
             }
             
-            using var blankImage = BoardImageGenerator.BlankDieIcon.Clone(x => x.Fill(recolorBrush));
+            using var blankImage = BoardImageGenerator.BlankDieIconFullSize.Clone(x => x.Fill(recolorBrush));
             await using var fileStream2 = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_blank.png"), FileMode.Create);
             await blankImage.SaveAsPngAsync(fileStream2);
         }

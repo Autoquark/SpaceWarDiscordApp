@@ -83,7 +83,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             if (player.Techs.Any())
             {
                 text.AppendLine();
-                text.AppendJoin(", ", player.Techs.Select(x => Tech.TechsById[x.TechId].GetTechDisplayString(game, player)));
+                text.AppendJoin(", ", player.Techs.Select(x => DiscordHelpers.FormatToDiscordMarkdown(Tech.TechsById[x.TechId].GetTechDisplayString(game, player))));
             }
             
             builder.AppendContentNewline(text.ToString());
