@@ -352,7 +352,9 @@ public static class BoardImageGenerator
                     playerTechTable.DrawTextInCell(context, 0, 0, techTableTextOptions, "TECH", InfoTextBrush);
                     playerTechTable.DrawTextInCell(context, 1, 0, techTableTextOptions, "STATUS", InfoTextBrush);
                     
-                    foreach (var (playerTech, index) in player.Techs.ZipWithIndices())
+                    foreach (var (playerTech, index) in player.Techs
+                                 .OrderBy(x => 0 + (x.UsedThisTurn ? 1 : 0) + (x.IsExhausted ? 2 : 0))
+                                 .ZipWithIndices())
                     {
                         playerTechTable.DrawTextInCell(context, 0, index + 1, techTableTextOptions,
                             playerTech.GetTech().DisplayName, InfoTextBrush);
