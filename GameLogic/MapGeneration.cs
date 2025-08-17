@@ -75,14 +75,14 @@ public class MapGenerator
     
     private List<BoardHex> CenterSystems =
     [
-        new()
+        /*new()
         {
             Planet = new Planet
             {
                 Production = 6,
                 Science = 1
             }
-        },
+        },*/
         new()
         {
             Planet = new Planet
@@ -91,13 +91,13 @@ public class MapGenerator
                 Science = 1
             }
         },
-        new()
+        /*new()
         {
             Planet = new Planet
             {
                 Science = 3
             }
-        },
+        },*/
     ];
     
     
