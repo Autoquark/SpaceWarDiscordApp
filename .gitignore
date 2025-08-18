@@ -55,3 +55,4 @@ nunit-*.xml
 
 # Secrets
 Secrets.json
+/SpaceWarDiscordApp.sln.DotSettings.user
