@@ -6,5 +6,6 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 [FirestoreData]
 public class FireMegaLaserInteraction : InteractionData
 {
+    [FirestoreProperty]
     public required HexCoordinates Target { get; set; }
 }
