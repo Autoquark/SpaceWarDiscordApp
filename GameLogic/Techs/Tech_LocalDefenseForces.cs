@@ -21,8 +21,9 @@ public class Tech_LocalDefenseForces : Tech
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
+        var name = await player.GetNameAsync(false);
         var affectedHexes = GetAffectedHexes(game, player).ToList();
-        builder.AppendContentNewline("Adding 1 forces to:");
+        builder.AppendContentNewline($"{name} is using {DisplayName}. Adding 1 forces to:");
         builder.AppendContentNewline(string.Join(", ", affectedHexes.Select(x => x.Coordinates)));
         
         foreach (var affectedHex in affectedHexes)

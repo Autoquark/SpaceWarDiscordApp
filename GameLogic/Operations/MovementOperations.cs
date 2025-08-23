@@ -53,6 +53,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
         var moverName = await movingPlayer.GetNameAsync(true);
         
         // Stage 1: Subtract moving forces from each source planet and calculate total forces moving
+        builder?.AppendContentNewline($"Moving to {gameEvent.Destination}");
         var totalMoving = 0;
         foreach (var source in gameEvent.Sources)
         {
