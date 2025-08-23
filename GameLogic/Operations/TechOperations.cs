@@ -136,7 +136,7 @@ public static class TechOperations
         
         var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
             .AppendLine()
-            .AppendLine(tech.Description);
+            .AppendLine(tech.Description.ReplaceIconTokens());
         builder.AddContainerComponent(new DiscordContainerComponent(
             [
                 new DiscordTextDisplayComponent(text.ToString()),
@@ -156,7 +156,7 @@ public static class TechOperations
         
         var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
             .AppendLine()
-            .AppendLine(tech.Description);
+            .AppendLine(tech.Description.ReplaceIconTokens());
         builder.AddContainerComponent(new DiscordContainerComponent(
         [
             new DiscordTextDisplayComponent(text.ToString()),

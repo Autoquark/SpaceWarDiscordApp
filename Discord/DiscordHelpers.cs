@@ -20,6 +20,13 @@ public static class DiscordHelpers
         return new DiscordButtonComponent(style, interactionId, techAction.DisplayName, !techAction.IsAvailable); //TODO: emojis on techs?   
     }
 
+    // Replaces icon tokens with the appropriate discord emoji
+    public static string ReplaceIconTokens(this string text)
+    {
+        StringBuilder stringBuilder = new(text);
+        return stringBuilder.Replace("$science$", Program.AppEmojisByName["science"].ToString()).ToString();
+    }
+
     public static string FormatToDiscordMarkdown(IEnumerable<FormattedTextRun> formattedTextRuns)
     {
         var text = new StringBuilder();

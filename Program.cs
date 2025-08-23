@@ -37,6 +37,8 @@ static class Program
     public static Random Random => _random.Value!;
     
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
+
+    public static bool IsTestEnvironment { get; private set; } = false;
     
     static async Task Main()
     {
@@ -56,6 +58,8 @@ static class Program
         {
             return;
         }
+
+        IsTestEnvironment = secrets.IsTestEnvironment;
         
         var firestoreBuilder = new FirestoreDbBuilder
         {
@@ -141,12 +145,27 @@ static class Program
         
         CommonEmoji = new CommonEmoji(DiscordClient);
         
-        await DiscordClient.ConnectAsync();
-        
-        AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
+        await DiscordClient.ConnectAsync(new DiscordActivity("SpaceWar", DiscordActivityType.Playing));
+
+        // Skip updating emoji every time in test because it makes startup slow and discord might get annoyed if we
+        // spam the API that much
+        if (!IsTestEnvironment)
+        {
+            Console.WriteLine("Updating emoji...");
+            await BotManagementOperations.UpdateEmojiAsync();
+            Console.WriteLine("Emoji updated");
+        }
+        else
+        {
+            await RebuildEmojiCache();
+        }
+
+        Console.WriteLine("Ready to go. Let's play some SpaceWar!");
         
         await Task.Delay(-1);
     }
+    
+    public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
     
     private static void RegisterEverything(object obj)
     {
