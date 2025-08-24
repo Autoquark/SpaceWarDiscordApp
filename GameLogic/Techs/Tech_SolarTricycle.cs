@@ -10,8 +10,9 @@ public class Tech_SolarTricycle : Tech
     
     public Tech_SolarTricycle() : base(StaticId,
         "Solar Tricycle",
-        "Free Action, Once per turn: Move 1 of your forces to an adjacent planet.",
-        "It's both ecologically friendly and a great form of exercise!")
+        "Move 1 of your forces to an adjacent planet.",
+        "It's both ecologically friendly and a great form of exercise!",
+        ["Free Action", "Once per turn"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

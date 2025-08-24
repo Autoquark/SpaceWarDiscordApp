@@ -133,10 +133,11 @@ public static class TechOperations
             builder.AppendContentNewline("Unknown tech");
             return builder;
         }
-        
+
+        var keywordsText = tech.DescriptionKeywords.Any() ? (string.Join(", ", tech.DescriptionKeywords) + ": ").DiscordBold() : "";
         var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
             .AppendLine()
-            .AppendLine(tech.Description.ReplaceIconTokens());
+            .AppendLine(keywordsText + tech.Description.ReplaceIconTokens());
         builder.AddContainerComponent(new DiscordContainerComponent(
             [
                 new DiscordTextDisplayComponent(text.ToString()),
@@ -238,5 +239,5 @@ public static class TechOperations
         return Tech.TechsById[tech];
     }
 
-    public static int GetMarketSlotCost(int slotNumber) => GameConstants.MaxMarketTechCost - slotNumber;
+    public static int GetMarketSlotCost(int slotNumber) => slotNumber == 0 ? 3 : 2;
 }

@@ -8,8 +8,9 @@ public class Tech_SuperpositionalDeployment : Tech
 {
     public Tech_SuperpositionalDeployment() : base("superpositionalDeployment",
         "Superpositional Deployment",
-        "Free Action, Once per turn: Move any number of forces from one planet you control to an adjacent planet you control.",
-        "It's not so much travelling as always having been there.")
+        "Move any number of forces from one planet you control to an adjacent planet you control.",
+        "It's not so much travelling as always having been there.",
+        ["Free Action", "Once per turn"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

@@ -9,11 +9,11 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MassMigration : Tech, IInteractionHandler<ApplyMassMigrationBonusInteraction>
+public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigrationBonusInteraction>
 {
-    public Tech_MassMigration() : base("massMigration", "Mass Migration",
-        "When attacking, if you moved all of your forces from at least one planet, +1 Combat Strength.",
-        "Due to recent budget cutbacks, the planetary government will unfortunately no longer be able to provide certain public services to residents, such as a breathable atmosphere.")
+    public Tech_XlClassDropships() : base("xl-class-dropships", "XL Class Dropships",
+        "When attacking, if you moved all of your forces that were present on at least one planet, +1 Combat Strength.",
+        "Personnel of rank sergeant and below should seat themselves in the economy section.")
     {
     }
 

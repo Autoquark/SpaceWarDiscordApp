@@ -13,8 +13,9 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
 {
     public Tech_MilitaryGraduationCannon() : base("militaryGraduationCannon",
         "Military Graduation Cannon",
-        "Exhaust: When you produce Forces, you may immediately move any number of the forces produced to one adjacent planet. (This occurs before forces on the producing planet are capped to 6)",
-        "When your identification number is called, please collect your medal and climb into the barrel")
+        "When you produce Forces, immediately move any number of the forces produced to one adjacent planet. (This occurs before forces on the producing planet are capped to 6)",
+        "When your identification number is called, please collect your medal and climb into the barrel",
+        ["Exhaust"])
     {
         _movementFlowHandler = new MilitaryGraduationCannon_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];

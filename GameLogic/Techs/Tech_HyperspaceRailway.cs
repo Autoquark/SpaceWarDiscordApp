@@ -8,8 +8,9 @@ public class Tech_HyperspaceRailway : Tech
 {
     public Tech_HyperspaceRailway() : base("hyperspaceRailway",
         "Hyperspace Railway",
-        "Action: Move any number of forces from one planet you control to another planet you control.",
-        "The 7.15 service to Alpha Centauri has been delayed due to leaves on the toroidal manifold.")
+        "Move any number of forces from one planet you control to another planet you control.",
+        "The 7.15 service to Alpha Centauri has been delayed due to leaves on the toroidal manifold.",
+        ["Action"])
     {
         HasSimpleAction = true;
         AdditionalHandlers = [_movementFlowHandler];

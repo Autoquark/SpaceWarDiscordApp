@@ -12,8 +12,9 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
 {
     public Tech_OptimisedWorkSchedules() : base("optimisedWorkSchedules", 
         "Optimised Work Schedules",
-        "Action, Exhaust: Produce from an exhausted planet", 
-        "October will continue indefinitely until production quotas are met")
+        "Produce from an exhausted planet", 
+        "October will continue indefinitely until production quotas are met",
+        ["Action", "Exhaust"])
     {
         HasSimpleAction = true;
     }

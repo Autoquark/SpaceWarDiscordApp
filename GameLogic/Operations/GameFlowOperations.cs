@@ -33,61 +33,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
             .AddFile("board.png", stream)
             .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
-
-        builder.AppendContentNewline($"Universal Tech ({GameConstants.UniversalTechCost})".DiscordHeading2());
-        builder.AppendContentNewline(string.Join(", ", game.UniversalTechs.Select(x => Tech.TechsById[x].DisplayName)));
-        
-        builder.AppendContentNewline("Tech Market".DiscordHeading2());
-        builder.AppendContentNewline(string.Join(", ", game.TechMarket.Select((x, i) => (x == null ? "[empty]" : Tech.TechsById[x].DisplayName) + $" ({TechOperations.GetMarketSlotCost(i)})")));
-        
-        builder.AppendContentNewline("Player Info".DiscordHeading2());
-        
-        List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)
-            .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
-            .OrderByDescending(x => x.Item2)
-            .ToList();
-
-        var playerWillScore = playerScores[0].Item2 > playerScores[1].Item2 ? playerScores[0].player : null;
-        
-        foreach (var player in game.Players)
-        {
-            List<string> parts = [await player.GetNameAsync(false),
-                $"Science: {player.Science}", $"VP: {player.VictoryPoints}/6",
-                $"Stars: {GameStateOperations.GetPlayerStars(game, player)}"];
-            if (game.CurrentTurnPlayer == player)
-            {
-                parts.Add("[Current Turn]");
-            }
-
-            if (game.ScoringTokenPlayer == player)
-            {
-                parts.Add("[Scoring Token]");
-            }
-
-            if (player == playerWillScore)
-            {
-                parts.Add("[Most Stars]");
-            }
-
-            var text = new StringBuilder(string.Join(" | ", parts));
-
-            if (player.IsEliminated)
-            {
-                text = text.DiscordStrikeThrough();
-            }
-            else if (player == game.CurrentTurnPlayer)
-            {
-                text = text.DiscordBold();
-            }
-            
-            if (player.Techs.Any())
-            {
-                text.AppendLine();
-                text.AppendJoin(", ", player.Techs.Select(x => DiscordHelpers.FormatToDiscordMarkdown(Tech.TechsById[x.TechId].GetTechDisplayString(game, player))));
-            }
-            
-            builder.AppendContentNewline(text.ToString());
-        }
         
         return builder;
     }

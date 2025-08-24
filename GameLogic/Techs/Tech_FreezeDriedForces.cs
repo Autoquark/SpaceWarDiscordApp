@@ -13,8 +13,9 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
     public Tech_FreezeDriedForces() : base(
         "freeze_dried_forces",
         "Freeze Dried Forces",
-        "Action, Exhaust: Produce 3 forces on a planet you control.",
-        "War has never been so convenient!")
+        "Produce 3 forces on a planet you control.",
+        "War has never been so convenient!",
+        ["Action", "Exhaust"])
     {
         HasSimpleAction = true;
     }

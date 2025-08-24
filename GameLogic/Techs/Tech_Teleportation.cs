@@ -10,8 +10,9 @@ public class Tech_Teleportation : Tech
     
     public Tech_Teleportation() : base(StaticId,
         "Teleportation",
-        "Action, Exhaust: Move any number of forces from one planet you control to any other planet.",
-        "Teleportation isn't an exact science. As long as total limbs in = total limbs out we consider it a success")
+        "Move any number of forces from one planet you control to any other planet.",
+        "Teleportation isn't an exact science. As long as total limbs in = total limbs out we consider it a success",
+        ["Action", "Exhaust"])
     {
         HasSimpleAction = true;
         AdditionalHandlers = [_movementFlowHandler];

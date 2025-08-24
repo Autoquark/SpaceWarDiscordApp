@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using System.Net.WebSockets;
 using System.Numerics;
 using System.Text;
 using SixLabors.Fonts;
@@ -47,7 +48,7 @@ public static class BoardImageGenerator
     private static readonly int HexOuterDiameter = 420;
     private static readonly float HexInnerDiameter = (float)(HexOuterDiameter / InnerToOuterRatio);
     
-    // Additional Margin around edge of map image
+    // Additional Margin around edge of map image and between sections
     private const int Margin = 100;
     
     // * Planets *
@@ -72,8 +73,9 @@ public static class BoardImageGenerator
     private static readonly Image TopStarsIcon;
     public static readonly IReadOnlyList<Image> ColourlessDieIcons;
     public static readonly Image BlankDieIconFullSize;
-    public static readonly Image PlayerAreaBlankDieIcon;
-    public static readonly Image CurrentTurnPlayerIcon;
+    private static readonly Image PlayerAreaBlankDieIcon;
+    private static readonly Image CurrentTurnPlayerIcon;
+    private static readonly Image ScienceCostIcon;
 
     // Fonts
     private static readonly FontCollection FontCollection = new();
@@ -84,6 +86,8 @@ public static class BoardImageGenerator
     private static readonly Font InfoTableFontItalic;
     private static readonly Font InfoTableFontBoldItalic;
     private static readonly Font PlayerAreaNameFont;
+    private static readonly Font SectionHeaderFont;
+    private static readonly Font TechCostFont;
     
     // Recap graphics
     private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
@@ -102,13 +106,22 @@ public static class BoardImageGenerator
     private static readonly Brush InfoTextBrush = new SolidBrush(Color.Black);
     private static readonly Pen InfoTextStrikethroughPen = new SolidPen(Color.Black);
     private const int InfoTableIconHeight = 32;
-    private const int InfoTableCellDrawingMargin = 12;
+    private const int InfoTableCellDrawingMargin = 16;
+
+    private static readonly int SectionHeaderHeight;
+    private const int ScienceCostIconSize = 80;
+    private const int SpacingBelowSectionHeader = 50;
     
     // Player tech table
     private static readonly int PlayerAreaTitleHeight;
     private const int PlayerTechTableNameColumnWidth = 600;
     private const int PlayerTechTableStateColumnWidth = 600;
     private static readonly int PlayerAreaWidth = PlayerTechTableNameColumnWidth + PlayerTechTableNameColumnWidth + Margin / 2;
+    
+    // Purchaseable techs
+    private const int TechBoxWidth = 700;
+    private static readonly int TechBoxMinHeight;
+    private const int TechBoxToCostSpacing = 8;
 
     static BoardImageGenerator()
     {
@@ -145,15 +158,24 @@ public static class BoardImageGenerator
             InfoTableFontItalic = family.CreateFont(42, FontStyle.Italic);
             InfoTableFontBoldItalic = family.CreateFont(42, FontStyle.BoldItalic);
             PlayerAreaNameFont = family.CreateFont(48, FontStyle.Bold);
+            SectionHeaderFont = family.CreateFont(72, FontStyle.Bold);
+            TechCostFont = SectionHeaderFont;
+
+            const string alphabet = "abcdefghijklmnopqrstuvwxyz";
+            
+            SectionHeaderHeight = (int)TextMeasurer.MeasureSize(alphabet, new TextOptions(SectionHeaderFont)).Height;
 
             var playerAreaTitleSpacer = 12;
-            PlayerAreaTitleHeight = (int)TextMeasurer.MeasureBounds("abcdefghijklmnopqrstuvwxyz", new TextOptions(PlayerAreaNameFont)
+            PlayerAreaTitleHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(PlayerAreaNameFont)
             {
                 
             }).Height + playerAreaTitleSpacer;
             
+            TechBoxMinHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(InfoTableFont)).Height * 4;
+            
             PlayerAreaBlankDieIcon = BlankDieIconFullSize.Clone(x => x.Resize(0, PlayerAreaTitleHeight - playerAreaTitleSpacer));
         
+            ScienceCostIcon = ScienceIcon.Clone(x => x.Resize(ScienceCostIconSize, 0));
             ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
             StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
             ScoringTokenIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
@@ -194,11 +216,47 @@ public static class BoardImageGenerator
             .Select(player => (player, player.GetNameAsync(false, false).GetAwaiter().GetResult()))
             .ToDictionary(x => x.player, x => x.Item2);
         
+        // === Calculate required image dimensions ===
+        
+        // Board size
         var boardSize = PrecalculateBoardSize(game);
         var imageSize = boardSize;
         imageSize.Height += Margin;
+        
+        // Universal techs
+        imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
+        
+        var maxUniversalTechDescriptionHeight = 0;
+        var universalTechSectionHeight = 0;
+        foreach (var tech in game.UniversalTechs.ToTechsById())
+        {
+            var descriptionHeight = 0;
+            var table = LayoutPurchaseableTech(tech, ref descriptionHeight);
+            maxUniversalTechDescriptionHeight = Math.Max(maxUniversalTechDescriptionHeight, descriptionHeight);
+            universalTechSectionHeight = Math.Max(universalTechSectionHeight, table.GetRect().Height);;
+        }
 
-        // Take info table dimensions into account
+        universalTechSectionHeight += TechBoxToCostSpacing + ScienceCostIcon.Height;
+        imageSize.Height += universalTechSectionHeight + Margin;
+        
+        // Tech Market
+        imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
+        
+        var maxMarketTechDescriptionHeight = 0;
+        var marketTechSectionHeight = 0;
+        foreach (var tech in game.UniversalTechs.ToTechsById())
+        {
+            var descriptionHeight = 0;
+            var table = LayoutPurchaseableTech(tech, ref descriptionHeight);
+            maxMarketTechDescriptionHeight = Math.Max(maxMarketTechDescriptionHeight, descriptionHeight);
+            marketTechSectionHeight = Math.Max(marketTechSectionHeight, table.GetRect().Height);
+        }
+        marketTechSectionHeight += TechBoxToCostSpacing + ScienceCostIcon.Height;
+        imageSize.Height += marketTechSectionHeight + Margin;
+        
+        // Summary table
+        imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
+        
         var summaryTable = new Table();
         summaryTable.LinePen = new SolidPen(Color.Black, InfoTableLineThickness);
         summaryTable.RowInternalHeights = Enumerable.Repeat(InfoTableRowHeight, game.Players.Count + 1).ToList();
@@ -207,13 +265,13 @@ public static class BoardImageGenerator
         {
             summaryTable.ColumnInternalWidths.Add(SummaryTableColumnWidths[column]);
         }
-
-        // Account for summary table
+        
         var summaryRect = summaryTable.GetRect();
         imageSize.Width = Math.Max(imageSize.Width, summaryRect.Width);
         imageSize.Height += summaryRect.Height + Margin;
         
-        // Take player areas into account. We display 2 side by side with a margin between
+        // Player areas. We display 2 side by side with a margin between
+        imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
         imageSize.Width = Math.Max(imageSize.Width, PlayerAreaWidth * 2);
 
         var playerAreaSize = PrecalculatePlayerAreaSize(game);
@@ -228,12 +286,32 @@ public static class BoardImageGenerator
         var image = new Image<Rgba32>(imageSize.Width, imageSize.Height);
         image.Mutate(x => x.BackgroundColor(Color.White));
         
+        
+        // === Draw image ===
+        var verticalMargin = new Size(0, Margin);
+        
         // Draw board
-        var boardTopLeft = new Point(Margin, Margin);
-        DrawBoard(game, image, boardTopLeft);
+        var sectionTopLeft = new Point(Margin, Margin);
+        sectionTopLeft = DrawBoard(game, image, sectionTopLeft);
+        sectionTopLeft += verticalMargin;
+
+        // Universal Techs
+        sectionTopLeft = DrawSectionHeader("Universal Techs", image, sectionTopLeft);
+        
+        sectionTopLeft = DrawUniversalTechs(game, image, sectionTopLeft, maxUniversalTechDescriptionHeight);
+        sectionTopLeft += verticalMargin;
+        
+        // Tech Market
+        sectionTopLeft = DrawSectionHeader("Tech Market", image, sectionTopLeft);
+        
+        sectionTopLeft = DrawMarketTechs(game, image, sectionTopLeft, maxMarketTechDescriptionHeight);
+        sectionTopLeft += verticalMargin;
         
         // Draw summary table
-        summaryTable.TopLeft = boardTopLeft + new Size(0, boardSize.Height + Margin);
+        sectionTopLeft = DrawSectionHeader("Summary", image, sectionTopLeft);
+        
+        var spareHorizontalSpace = image.Width - Margin * 2 - summaryRect.Width;
+        summaryTable.TopLeft = sectionTopLeft + new Size(spareHorizontalSpace / 2, 0);
         summaryRect = summaryTable.GetRect(); // Recalculate with final top left
         image.Mutate(x => summaryTable.Draw(x));
 
@@ -309,7 +387,12 @@ public static class BoardImageGenerator
             }
         });
         
-        var location = new Point(Margin, summaryRect.Bottom + Margin);
+        sectionTopLeft = new Point(Margin, summaryRect.Bottom + Margin);
+        
+        // Player areas
+        sectionTopLeft = DrawSectionHeader("Players", image, sectionTopLeft);
+        
+        var location = sectionTopLeft;
 
         var playerNameTextOptions = new RichTextOptions(PlayerAreaNameFont)
         {
@@ -378,20 +461,172 @@ public static class BoardImageGenerator
         
         return image;
     }
+
+    private static Point DrawSectionHeader(string text, Image<Rgba32> image, Point topLeft)
+    {
+        var textOptions = new RichTextOptions(SectionHeaderFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Origin = new Point(image.Width / 2, topLeft.Y)
+        };
+        image.Mutate(x => x.DrawText(textOptions, text, Color.Black));
+        return topLeft + new Size(0, SectionHeaderHeight + SpacingBelowSectionHeader);
+    }
+
+    private static Point DrawUniversalTechs(Game game, Image<Rgba32> image, Point topLeft,
+        int maxDescriptionHeight)
+    {
+        // Draw universal techs (assume 3 for now)
+        var spareHorizontalSpace = image.Width - Margin * 4 - TechBoxWidth * 3;
+
+        var height = 0;
+        image.Mutate(context =>
+        {
+            var xLocation = topLeft.X + spareHorizontalSpace / 2;
+            foreach (var tech in game.UniversalTechs.Select(x => Tech.TechsById[x]))
+            {
+                var size = DrawPurchaseableTech(context, new Point(xLocation, topLeft.Y), tech, GameConstants.UniversalTechCost, maxDescriptionHeight);
+                xLocation += TechBoxWidth + Margin;
+                height = Math.Max(height, size.Height);
+            }
+        });
+
+        return topLeft + new Size(0, height);
+    }
     
-    private static void DrawBoard(Game game, Image<Rgba32> image, Point topLeft)
+    private static Point DrawMarketTechs(Game game, Image<Rgba32> image, Point topLeft, int maxDescriptionHeight)
+    {
+        var spareHorizontalSpace = image.Width - Margin * 4 - TechBoxWidth * 3;
+
+        var height = 0;
+        image.Mutate(context =>
+        {
+            var xLocation = topLeft.X + spareHorizontalSpace / 2;
+            foreach (var (tech, i) in game.TechMarket.Select(x => x == null ? null : Tech.TechsById[x]).ZipWithIndices())
+            {
+                var size = DrawPurchaseableTech(context, new Point(xLocation, topLeft.Y), tech, TechOperations.GetMarketSlotCost(i), maxDescriptionHeight);
+                xLocation += TechBoxWidth + Margin;
+                height = Math.Max(height, size.Height);
+            }
+        });
+
+        return topLeft + new Size(0, height);
+    }
+
+    private static (string text, List<RichTextRun> runs) FormatTechDescription(Tech tech)
+    {
+        var keywords = tech.DescriptionKeywords.Any() ? string.Join(", ", tech.DescriptionKeywords) + ": " : "";
+        var text = keywords + tech.Description;
+        var runs = new List<RichTextRun>();
+        if (tech.DescriptionKeywords.Any())
+        {
+            runs.Add(new RichTextRun
+            {
+                Start = 0,
+                End = keywords.Length,
+                Font = InfoTableFontBold
+            });
+        }
+
+        runs.Add(new RichTextRun
+        {
+            Start = keywords.Length,
+            End = text.Length,
+            Font = InfoTableFont
+        });
+        
+        return (text, runs);
+    }
+
+    private static Table LayoutPurchaseableTech(Tech? tech, ref int descriptionHeight)
+    {
+        if (descriptionHeight == 0)
+        {
+            if (tech == null)
+            {
+                descriptionHeight = TechBoxMinHeight;
+            }
+            else
+            {
+                var (description, runs) = FormatTechDescription(tech);
+                var descriptionBounds = TextMeasurer.MeasureSize(description, new TextOptions(InfoTableFont)
+                {
+                    WrappingLength = TechBoxWidth - 2 * InfoTableCellDrawingMargin,
+                    TextRuns = runs
+                });
+
+                descriptionHeight = Math.Max(TechBoxMinHeight, (int)(descriptionBounds.Height + 2 * InfoTableCellDrawingMargin));
+            }
+        }
+
+        return new Table
+        {
+            RowInternalHeights = [InfoTableRowHeight, descriptionHeight],
+            ColumnInternalWidths = [TechBoxWidth],
+            CellDrawingMargin = InfoTableCellDrawingMargin,
+            LinePen = new SolidPen(Color.Black, InfoTableLineThickness)
+        };
+    }
+
+    private static Size DrawPurchaseableTech(IImageProcessingContext context, Point topLeft, Tech? tech, int cost, int heightOverride)
+    {
+        var table = LayoutPurchaseableTech(tech, ref heightOverride);
+        table.TopLeft = topLeft;
+        
+        table.Draw(context);
+        
+        var textOptions = new RichTextOptions(InfoTableFontBold)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        
+        if (tech != null)
+        {
+            table.DrawTextInCell(context, 0, 0, textOptions, tech.DisplayName, InfoTextBrush);
+
+            var (text, runs) = FormatTechDescription(tech);
+            textOptions.Font = InfoTableFont;
+            textOptions.HorizontalAlignment = HorizontalAlignment.Left;
+            textOptions.VerticalAlignment = VerticalAlignment.Top;
+            textOptions.TextRuns = runs;
+
+            table.DrawTextInCell(context, 0, 1, textOptions, text,
+                InfoTextBrush); //TODO: Inline icons (e.g. science), somehow?
+        }
+
+        // Draw cost beneath table
+        var rect = table.GetRect();
+        var costPosition = topLeft + new Size(rect.Width / 2, rect.Height + TechBoxToCostSpacing);
+
+        textOptions.TextRuns = [];
+        textOptions.Font = TechCostFont;
+        textOptions.VerticalAlignment = VerticalAlignment.Center;
+        textOptions.HorizontalAlignment = HorizontalAlignment.Left;
+        var digitSize = TextMeasurer.MeasureSize(cost.ToString(), textOptions);
+        
+        
+        textOptions.Origin = costPosition + new Size(-(int)digitSize.Width - 4, ScienceCostIcon.Height / 2);
+        
+        context.DrawText(textOptions, cost.ToString(), Color.Black);
+        context.DrawImage(ScienceCostIcon, costPosition + new Size(4, 0), 1.0f);
+        
+        return rect.Size + new Size(0, TechBoxToCostSpacing + ScienceCostIcon.Height);
+    }
+    
+    private static Point DrawBoard(Game game, Image<Rgba32> image, Point topLeft)
     {
         var minBoardX = (int)game.Hexes.Min(x => HexToPixelOffset(x.Coordinates).X);
         var minBoardY = (int)game.Hexes.Min(x => HexToPixelOffset(x.Coordinates).Y);
         // Used to convert a pixel offset into absolute pixel coordinates
         //var offset = new PointF(minBoardX - HexOuterDiameter / 2.0f - Margin, minBoardY - HexInnerDiameter / 2.0f - Margin);
-        var offset = (PointF)topLeft + new SizeF(HexOuterDiameter / 2.0f - minBoardX, HexInnerDiameter / 2.0f - minBoardY);
+        var boardOffset = (PointF)topLeft + new SizeF(HexOuterDiameter / 2.0f - minBoardX, HexInnerDiameter / 2.0f - minBoardY);
         
         // Draw hexes
         foreach(var hex in game.Hexes)
         {
             var hexOffset = HexToPixelOffset(hex.Coordinates);
-            var hexCentre = hexOffset + offset;
+            var hexCentre = hexOffset + boardOffset;
             var hexPolygon = new RegularPolygon(hexCentre, 6,
                 HexOuterDiameter / 2.0f, GeometryUtilities.DegreeToRadian(30)).GenerateOutline(2.0f);
             
@@ -517,10 +752,10 @@ public static class BoardImageGenerator
                 {
                     case MovementEventRecord movement:
                         
-                        var destinationHexCentre = HexToPixelOffset(movement.Destination) + offset;
+                        var destinationHexCentre = HexToPixelOffset(movement.Destination) + boardOffset;
                         foreach (var sourceAndAmount in movement.Sources)
                         {
-                            var sourceHexCentre = HexToPixelOffset(sourceAndAmount.Source) + offset;
+                            var sourceHexCentre = HexToPixelOffset(sourceAndAmount.Source) + boardOffset;
                             var controlPoint = (sourceHexCentre + destinationHexCentre) / 2.0f;
 
                             // Movement with no horizontal component, move the control point to the right so
@@ -556,7 +791,7 @@ public static class BoardImageGenerator
 
                     case RefreshPlanetEventRecord refresh:
                     {
-                        var hexCentre = HexToPixelOffset(refresh.Coordinates) + offset;
+                        var hexCentre = HexToPixelOffset(refresh.Coordinates) + boardOffset;
                         var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, RefreshedRecapIconAngle);
 
                         image.Mutate(x => x.DrawImageCentred(RefreshRecapIcons[player.PlayerColour], iconLocation));
@@ -565,7 +800,7 @@ public static class BoardImageGenerator
 
                     case ProduceEventRecord produce:
                     {
-                        var hexCentre = HexToPixelOffset(produce.Coordinates) + offset;
+                        var hexCentre = HexToPixelOffset(produce.Coordinates) + boardOffset;
                         var iconLocation = hexCentre + GetPointPolar(PlanetIconDistance, ProduceRecapIconAngle);
                         
                         image.Mutate(x => x.DrawImageCentred(ProduceRecapIcons[player.PlayerColour], iconLocation));
@@ -574,6 +809,9 @@ public static class BoardImageGenerator
                 }
             }
         }
+        
+        var maxBoardY = (int)game.Hexes.Max(x => HexToPixelOffset(x.Coordinates).Y);
+        return new Point(topLeft.X, (int)boardOffset.Y + maxBoardY + (int)(HexInnerDiameter / 2));
     }
 
     /// <summary>
@@ -638,7 +876,7 @@ public static class BoardImageGenerator
     }
 
     [Pure]
-    private static (string, IEnumerable<RichTextRun>) FormatText(List<FormattedTextRun> textRuns)
+    private static (string, List<RichTextRun>) FormatText(IReadOnlyCollection<FormattedTextRun> textRuns)
     {
         var text = new StringBuilder();
         foreach (var run in textRuns)
@@ -661,7 +899,7 @@ public static class BoardImageGenerator
             End = text.Length + x.Text.Length
         });
         
-        return (text.ToString(), richTextRuns);
+        return (text.ToString(), richTextRuns.ToList());
     }
     
     [Pure]

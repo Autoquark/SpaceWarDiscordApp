@@ -20,8 +20,9 @@ public class Tech_WarpNodes : Tech,
 {
     public Tech_WarpNodes() : base("warpNodes", 
         "Warp Nodes", 
-        "**Action**: Choose a planet you control. Move any number of forces to any number of adjacent planets.", 
-        "They're nodes that are made out of warp. I really don't know how I can make this any simpler")
+        "Choose a planet you control. Move any number of forces to any number of adjacent planets.", 
+        "They're nodes that are made out of warp. I really don't know how I can make this any simpler",
+        ["Action"])
     {
         HasSimpleAction = true;
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp
 {
@@ -30,6 +31,8 @@ namespace SpaceWarDiscordApp
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
+
+        public static IEnumerable<Tech> ToTechsById(this IEnumerable<string> techIds) => techIds.Select(x => Tech.TechsById[x]);
 
         public static IEnumerable<int> Indices(this ICollection collection) => Enumerable.Range(0, collection.Count);
 

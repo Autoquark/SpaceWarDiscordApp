@@ -23,12 +23,13 @@ public abstract class Tech
 
     private static readonly Dictionary<string, Tech> _techsById = new();
     
-    protected Tech(string id, string displayName, string description, string flavourText)
+    protected Tech(string id, string displayName, string description, string flavourText, IEnumerable<string>? descriptionKeywords = null)
     {
         Id = id;
         Description = description;
         FlavourText = flavourText;
         DisplayName = displayName;
+        DescriptionKeywords = descriptionKeywords?.ToList() ?? [];
         if (!_techsById.TryAdd(id, this))
         {
             throw new ArgumentException($"Tech {id} already exists");
@@ -41,6 +42,8 @@ public abstract class Tech
     public string Id { get; }
     
     public string DisplayName { get; }
+
+    public IReadOnlyList<string> DescriptionKeywords { get; }
     
     /// <summary>
     /// Player facing rules text for this tech

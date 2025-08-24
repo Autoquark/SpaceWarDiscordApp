@@ -219,7 +219,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             throw new Exception();
         }
 
-        MovementOperations.ShowPlannedMove(builder, player);
+        await MovementOperations.ShowPlannedMoveAsync(builder, player);
 
         if (sources.Count == 1)
         {
@@ -318,7 +318,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         else
         {
             // Otherwise, go back to showing possible sources
-            MovementOperations.ShowPlannedMove(builder, player);
+            await MovementOperations.ShowPlannedMoveAsync(builder, player);
             interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder,
                 game,
                 player,

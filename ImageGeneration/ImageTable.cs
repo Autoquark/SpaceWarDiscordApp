@@ -140,7 +140,10 @@ public class Table
         RichTextOptions options, string text, Brush brush, Size offset, float? xAlignmentOverride = null,
         float? yAlignmentOverride = null)
     {
-        var optionsCopy = new RichTextOptions(options);
+        var optionsCopy = new RichTextOptions(options)
+        {
+            WrappingLength = GetCellInternalRect(column, row).Width - 2 * CellDrawingMargin
+        };
 
         var left = GetCellInternalLeft(column);
         var x = left + (xAlignmentOverride.HasValue ? (int)(ColumnInternalWidths[column] * xAlignmentOverride) : optionsCopy.HorizontalAlignment switch

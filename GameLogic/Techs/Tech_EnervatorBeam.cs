@@ -12,8 +12,9 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
 {
     public Tech_EnervatorBeam() : base("enervatorBeam",
         "Enervator Beam",
-        "Free Action, Exhaust: Exhaust any planet",
-        "Does anybody else feel tired today?")
+        "Exhaust any planet",
+        "Does anybody else feel tired today?",
+        ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

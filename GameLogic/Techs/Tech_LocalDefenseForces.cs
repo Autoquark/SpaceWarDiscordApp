@@ -8,8 +8,9 @@ public class Tech_LocalDefenseForces : Tech
 {
     public Tech_LocalDefenseForces() : base("localDefenseForces",
         "Local Defense Forces",
-        "Free Action, Exhaust: Add 1 forces to each of your planets where you have exactly 1 forces. Don't exhaust those planets.",
-        "We pay taxes for the privilege of not getting bombed by our own government. Not getting bombed by the enemy is our own responsibility.")
+        "Add 1 forces to each of your planets where you have exactly 1 forces. Don't exhaust those planets.",
+        "We pay taxes for the privilege of not getting bombed by our own government. Not getting bombed by the enemy is our own responsibility.",
+        ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

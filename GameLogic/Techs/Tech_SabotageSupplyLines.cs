@@ -7,8 +7,9 @@ public class Tech_SabotageSupplyLines : Tech
 {
     public Tech_SabotageSupplyLines() : base("sabotageSupplyLines",
         "Sabotage Supply Lines",
-        "Free Action, Once per turn: Remove 1 forces from each opponent's planet where there are 5 or more forces.",
-        "Pleased to report the capture of an enemy Heinz-class intergalactic tomato soup tanker.")
+        "Remove 1 forces from each opponent's planet where there are 5 or more forces.",
+        "Pleased to report the capture of an enemy Heinz-class intergalactic tomato soup tanker.",
+        ["Free Action", "Once per turn"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

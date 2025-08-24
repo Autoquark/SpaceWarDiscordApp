@@ -14,8 +14,9 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
 {
     public Tech_VolunteerTesters() : base("volunteerTesters",
         "'Volunteer' Testers",
-        "Free action, Exhaust: Destroy any number of your forces on a planet, gain 1 $science$ per forces destroyed.",
-        "Hold the experimental device such that the aperture is pointed directly towards your forehead and press the red button on the top. Now, anybody who is still alive, please raise a hand. No? Excellent.")
+        "Destroy any number of your forces on a planet, gain 1 $science$ per forces destroyed.",
+        "Hold the experimental device such that the aperture is pointed directly towards your forehead and press the red button on the top. Now, anybody who is still alive, please raise a hand. No? Excellent.",
+        ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

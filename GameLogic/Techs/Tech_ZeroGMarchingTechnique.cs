@@ -8,8 +8,9 @@ public class Tech_ZeroGMarchingTechnique : Tech
 {
     public Tech_ZeroGMarchingTechnique() : base(StaticId,
         "Zero G Marching Technique",
-        "Free Action, Exhaust: Perform a Move action.",
-        "Left! Right! Left! Right! Hey, you! Stop floating!")
+        "Perform a Move action.",
+        "Left! Right! Left! Right! Hey, you! Stop floating!",
+        ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
