@@ -20,6 +20,9 @@ public class GameEvent_PreMove : GameEvent
     
     [FirestoreProperty]
     public List<CombatStrengthSource> DefenderCombatStrengthSources { get; set; } = [];
+    
+    [FirestoreProperty]
+    public string? MoveName { get; set; } = null;
 }
 
 [FirestoreData]

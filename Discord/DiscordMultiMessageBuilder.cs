@@ -90,7 +90,16 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
 
     public DiscordMultiMessageBuilder AddContainerComponent(DiscordContainerComponent component)
     {
-        CurrentBuilder.AddContainerComponent(component);
+        try
+        {
+            CurrentBuilder.AddContainerComponent(component);
+        }
+        catch (InvalidOperationException)
+        {
+            NewMessage();
+            CurrentBuilder.AddContainerComponent(component);
+        }
+        
         return this;
     }
 

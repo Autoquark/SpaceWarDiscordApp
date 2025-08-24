@@ -3,6 +3,10 @@ using SpaceWarDiscordApp.Database.GameEvents;
 
 namespace SpaceWarDiscordApp.Database.InteractionData;
 
+/// <summary>
+/// Base class for interactions that trigger off an event of a specific type
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [FirestoreData]
 public abstract class EventModifyingInteractionData<T> : EventModifyingInteractionData where T : GameEvent
 {

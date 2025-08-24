@@ -76,6 +76,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// Whether to call GameFlowOperations.ContinueResolvingEventStackAsync after the move is complete
     /// </summary>
     protected bool ContinueResolvingStackAfterMove { get; init; } = false;
+
+    /// <summary>
+    /// If true, forces moving all forces from each source
+    /// </summary>
+    protected bool MustMoveAll { get; init; } = false;
     
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination
@@ -203,13 +208,12 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             throw new Exception();
         }
 
-        game.GetGamePlayerByGameId(interactionData.ForGamePlayerId)
-            .PlannedMove = new PlannedMove
+        var player = game.GetGamePlayerForInteraction(interactionData);
+        player.PlannedMove = new PlannedMove
         {
             Destination = interactionData.Destination
         };
-
-        var player = game.GetGamePlayerForInteraction(interactionData);
+        
         var sources = interactionData.FixedSource.HasValue
             ? [game.GetHexAt(interactionData.FixedSource.Value)]
             : GetAllowedMoveSources(game, player, destination);
@@ -218,23 +222,40 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             throw new Exception();
         }
-
-        await MovementOperations.ShowPlannedMoveAsync(builder, player);
-
+        
         if (sources.Count == 1)
         {
-            // Only one planet we can move from, skip straight to specifying amount
-            await ShowSpecifyMovementAmountButtonsAsync(builder,
-                game,
-                player,
-                sources.Single(),
-                destination,
-                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
-                interactionData.TriggerToMarkResolvedId,
-                serviceProvider);
+            var onlySource = sources.Single();
+            // Only one planet we can move from and amount is fixed, perform move
+            if (MustMoveAll)
+            {
+                player.PlannedMove.Sources =
+                [
+                    new SourceAndAmount { Source = onlySource.Coordinates, Amount = onlySource.Planet!.ForcesPresent }
+                ];
+                await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
+            }
+            else
+            {
+                await MovementOperations.ShowPlannedMoveAsync(builder, player);
+                
+                // Only one planet we can move from, skip straight to specifying amount
+                await ShowSpecifyMovementAmountButtonsAsync(builder,
+                    game,
+                    player,
+                    sources.Single(),
+                    destination,
+                    interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                    interactionData.TriggerToMarkResolvedId,
+                    serviceProvider);
+            }
+            
             return new SpaceWarInteractionOutcome(true, builder);
         }
+        
+        await MovementOperations.ShowPlannedMoveAsync(builder, player);
 
+        // Let player specify a source
         var interactionsToSetUp = await ShowSpecifyMovementSourceButtonsAsync(builder,
             game,
             player, 
@@ -260,6 +281,40 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         if (player.PlannedMove == null)
         {
             throw new Exception();
+        }
+
+        // If we must move all forces:
+        // If player has already specified this source, they can choose it again to have the option of cancelling
+        // moving forces from it.
+        // Otherwise just add all forces to the planned move and go back to source selection
+        if (MustMoveAll && player.PlannedMove.Sources.All(x => x.Source != interactionData.Source))
+        {
+            player.PlannedMove.Sources.Add(new SourceAndAmount
+            {
+                Source = interactionData.Source, Amount = game.GetHexAt(interactionData.Source).Planet!.ForcesPresent
+            });
+
+            var sources = GetAllowedMoveSources(game, player, game.GetHexAt(player.PlannedMove.Destination));
+            // If there's no possibility of wanting to add another source, perform the move now
+            if (!AllowManyToOne || sources.Count == 1)
+            {
+                await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
+                return new SpaceWarInteractionOutcome(true, builder);
+            }
+            
+            var interactions = new List<InteractionData>(
+            await ShowSpecifyMovementSourceButtonsAsync(builder,
+                game,
+                player,
+                game.GetHexAt(player.PlannedMove.Destination),
+                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                interactionData.TriggerToMarkResolvedId));
+            
+            interactions.Add(ShowConfirmMoveButtonAsync(builder, game, player, interactionData.TriggerToMarkResolvedId));
+            
+            await InteractionsHelper.SetUpInteractionsAsync(interactions, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            
+            return new SpaceWarInteractionOutcome(true, builder);
         }
 
         await ShowSpecifyMovementAmountButtonsAsync(
@@ -326,15 +381,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                 interactionData.TriggerToMarkResolvedId));
             
-            var confirmInteraction = new PerformPlannedMoveInteraction<T>()
-            {
-                Game = game.DocumentId,
-                ForGamePlayerId = player.GamePlayerId,
-                TriggerToMarkResolvedId = interactionData.TriggerToMarkResolvedId,
-            };
-            interactions.Add(confirmInteraction);
-            builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success,
-                confirmInteraction.InteractionId, "Confirm move"));
+            interactions.Add(ShowConfirmMoveButtonAsync(builder, game, player, interactionData.TriggerToMarkResolvedId));
         }
         
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
@@ -367,9 +414,10 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var max = Math.Min(source.Planet.ForcesPresent, dynamicMaxAmountPerSource);
+        var options = MustMoveAll ? [0, source.Planet.ForcesPresent] : Enumerable.Range(0, max + 1).ToArray();
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
-            => Enumerable.Range(0, max + 1).Select(x => InteractionsHelper.SetUpInteraction(
+            => options.Select(x => InteractionsHelper.SetUpInteraction(
                     new SetMovementAmountFromSourceInteraction<T>
                     {
                         Amount = x,
@@ -420,10 +468,24 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return interactions;
     }
 
+    protected PerformPlannedMoveInteraction<T> ShowConfirmMoveButtonAsync(DiscordMultiMessageBuilder builder,
+        Game game, GamePlayer player, string? triggerToMarkResolvedId)
+    {
+        var confirmInteraction = new PerformPlannedMoveInteraction<T>()
+        {
+            Game = game.DocumentId,
+            ForGamePlayerId = player.GamePlayerId,
+            TriggerToMarkResolvedId = triggerToMarkResolvedId,
+        };
+        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success,
+            confirmInteraction.InteractionId, "Confirm move"));
+        return confirmInteraction;
+    }
+
     protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
     {
         await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, 
-            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider))
+            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider, MoveName))
             .Append(new GameEvent_MovementFlowComplete<T>
             {
                 PlayerGameId = player.GamePlayerId,

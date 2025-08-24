@@ -92,7 +92,7 @@ public class Tech_WarpNodes : Tech,
             {
                 Sources = [new SourceAndAmount { Source = source.Coordinates, Amount = interactionData.Amount }],
                 Destination = interactionData.Destination
-            }, serviceProvider));
+            }, serviceProvider, DisplayName));
             playerTech.MovedTo.Add(interactionData.Destination);
         }
         

@@ -31,7 +31,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
     }
 
     public static async Task<IEnumerable<GameEvent>> GetResolveMoveEventsAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
-        PlannedMove move, IServiceProvider serviceProvider)
+        PlannedMove move, IServiceProvider serviceProvider, string moveName)
     {
         var destinationHex = game.GetHexAt(move.Destination);
         if (destinationHex.Planet == null)
@@ -43,7 +43,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             {
                 MovingPlayerId = player.GamePlayerId,
                 Sources = move.Sources.ToList(),
-                Destination = move.Destination
+                Destination = move.Destination,
+                MoveName = moveName 
             }];
     }
 
@@ -54,7 +55,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
         var moverName = await movingPlayer.GetNameAsync(true);
         
         // Stage 1: Subtract moving forces from each source planet and calculate total forces moving
-        builder?.AppendContentNewline($"{moverName} is moving to {gameEvent.Destination}");
+        builder?.AppendContentNewline($"{moverName} is moving to {gameEvent.Destination} ({gameEvent.MoveName})");
         var totalMoving = 0;
         foreach (var source in gameEvent.Sources)
         {
