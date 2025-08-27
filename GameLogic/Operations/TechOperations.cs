@@ -155,9 +155,10 @@ public static class TechOperations
             return builder;
         }
         
+        var keywordsText = tech.DescriptionKeywords.Any() ? (string.Join(", ", tech.DescriptionKeywords) + ": ").DiscordBold() : "";
         var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
             .AppendLine()
-            .AppendLine(tech.Description.ReplaceIconTokens());
+            .AppendLine(keywordsText + tech.Description.ReplaceIconTokens());
         builder.AddContainerComponent(new DiscordContainerComponent(
         [
             new DiscordTextDisplayComponent(text.ToString()),

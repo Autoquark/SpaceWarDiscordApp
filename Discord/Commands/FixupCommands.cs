@@ -149,6 +149,18 @@ public class FixupCommands
         outcome.ReplyBuilder = builder;
     }
 
+    [Command("refreshPinnedTechMessage")]
+    [Description("Updates the pinned message with the details of all techs in use")]
+    public static async Task RefreshPinnedTechMessage(CommandContext context)
+    {
+        await TechOperations.UpdatePinnedTechMessage(context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!);
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+            .AppendContentNewline($"Updated pinned tech message");
+        
+        var outcome = context.Outcome();
+        outcome.ReplyBuilder = builder;
+    }
+
     [Command("discardMarketTech")]
     [Description("Discards a tech from the tech market, leaving an empty slot")]
     public static async Task DiscardMarketTech(CommandContext context,
