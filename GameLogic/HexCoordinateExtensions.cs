@@ -15,4 +15,6 @@ public static class HexCoordinateExtensions
             _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null)
         };
     }
+
+    public static HexDirection RotateClockwise(this HexDirection direction, int sixths) => (HexDirection)((int)(direction + sixths) % (int)(HexDirection.NorthWest + 1));
 }

@@ -105,224 +105,93 @@ public class MapGenerator
     {
         var map = new List<BoardHex>();
         
-        if (game.Players.Count == 4)
+        if (game.Players.Count is >= 4 and <= 6)
         {
-            // Slice 1 (top)
-            var system = new BoardHex(HomeSystems.Random());
-            system.Coordinates = new HexCoordinates(0, -3);
-            system.Planet!.OwningPlayerId = game.Players[0].GamePlayerId;
-            map.Add(system);
-            
-            OuterSystems.Shuffle();
-            system = new BoardHex(OuterSystems[0]);
-            system.Coordinates = new HexCoordinates(-1, -2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[1]);
-            system.Coordinates = new HexCoordinates(0, -2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[2]);
-            system.Coordinates = new HexCoordinates(1, -3);
-            map.Add(system);
-            
-            // Slice 2 (top right)
-            system = new BoardHex(HomeSystems.Random());
-            system.Coordinates = new HexCoordinates(3, -3);
-            system.Planet!.OwningPlayerId = game.Players[1].GamePlayerId;
-            map.Add(system);
-            
-            OuterSystems.Shuffle();
-            system = new BoardHex(OuterSystems[0]);
-            system.Coordinates = new HexCoordinates(2, -3);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[1]);
-            system.Coordinates = new HexCoordinates(2, -2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[2]);
-            system.Coordinates = new HexCoordinates(3, -2);
-            map.Add(system);
-            
-            // Slice 3 (bottom left)
-            system = new BoardHex(HomeSystems.Random());
-            system.Coordinates = new HexCoordinates(-3, 3);
-            system.Planet!.OwningPlayerId = game.Players[2].GamePlayerId;
-            map.Add(system);
-            
-            OuterSystems.Shuffle();
-            system = new BoardHex(OuterSystems[0]);
-            system.Coordinates = new HexCoordinates(-3, 2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[1]);
-            system.Coordinates = new HexCoordinates(-2, 2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[2]);
-            system.Coordinates = new HexCoordinates(-2, 3);
-            map.Add(system);
-            
-            // Slice 4 (bottom)
-            system = new BoardHex(HomeSystems.Random());
-            system.Coordinates = new HexCoordinates(0, 3);
-            system.Planet!.OwningPlayerId = game.Players[3].GamePlayerId;
-            map.Add(system);
-            
-            OuterSystems.Shuffle();
-            system = new BoardHex(OuterSystems[0]);
-            system.Coordinates = new HexCoordinates(-1, 3);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[1]);
-            system.Coordinates = new HexCoordinates(0, 2);
-            map.Add(system);
-            
-            system = new BoardHex(OuterSystems[2]);
-            system.Coordinates = new HexCoordinates(1, 2);
-            map.Add(system);
-            
             // Centre
-            system = new BoardHex(CenterSystems.Random());
+            var system = new BoardHex(CenterSystems.Random());
             system.Coordinates = new HexCoordinates(0, 0);
             map.Add(system);
             
-            system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(0, -1);
-            map.Add(system);
-            
-            system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(+1, -1);
-            map.Add(system);
-            
-            system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(0, +1);
-            map.Add(system);
-            
-            system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(-1, +1);
-            map.Add(system);
-            
-            // Hyperlanes
-            // Left side
-            // Outer edge
-            system = new BoardHex()
+            // Player slices
+            var playerSliceRotations = new List<int> { 0, 1, 3, 4 };
+            if (game.Players.Count >= 5)
             {
-                Coordinates = new HexCoordinates(-2, -1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthEast, HexDirection.SouthWest)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
+                playerSliceRotations.Add(2);
+            }
+
+            if (game.Players.Count >= 6)
             {
-                Coordinates = new HexCoordinates(-3, 0),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthEast, HexDirection.South)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
+                playerSliceRotations.Add(5);
+            }
+            foreach (var (rotation, player) in playerSliceRotations.Zip(game.Players))
             {
-                Coordinates = new HexCoordinates(-3, 1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.North, HexDirection.South)]
-            };
-            map.Add(system);
+                // Home system
+                system = new BoardHex(HomeSystems.Random());
+                system.Coordinates = new HexCoordinates(0, -3).RotateClockwise(rotation);
+                system.Planet!.OwningPlayerId = player.GamePlayerId;
+                map.Add(system);
             
-            // Inner
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(-1, -1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.North, HexDirection.SouthEast)]
-            };
-            map.Add(system);
+                // Neighbours
+                OuterSystems.Shuffle();
+                system = new BoardHex(OuterSystems[0]);
+                system.Coordinates = new HexCoordinates(-1, -2).RotateClockwise(rotation);
+                map.Add(system);
             
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(-1, 0),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthEast, HexDirection.South)]
-            };
-            map.Add(system);
+                system = new BoardHex(OuterSystems[1]);
+                system.Coordinates = new HexCoordinates(0, -2).RotateClockwise(rotation);
+                map.Add(system);
             
-            system = new BoardHex()
+                system = new BoardHex(OuterSystems[2]);
+                system.Coordinates = new HexCoordinates(1, -3).RotateClockwise(rotation);
+                map.Add(system);
+                
+                // Inner system
+                system = new BoardHex(InnerSystems.Random());
+                system.Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation);
+                map.Add(system);
+                
+                // Hyperlane
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(1, -2).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.North.RotateClockwise(rotation), HexDirection.SouthWest.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+            }
+
+            // Empty slices
+            foreach (var rotation in Enumerable.Range(0, 6).Except(playerSliceRotations))
             {
-                Coordinates = new HexCoordinates(-2, 1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.SouthEast)]
-            };
-            map.Add(system);
-            
-            // Right side
-            // Outer edge
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(3, -1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.North, HexDirection.South)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(3, 0),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.North, HexDirection.SouthWest)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(2, 1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthEast, HexDirection.SouthWest)]
-            };
-            map.Add(system);
-            
-            // Inner
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(1, 1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest, HexDirection.South)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(1, 0),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.North, HexDirection.SouthWest)]
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(2, -1),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest, HexDirection.NorthEast)]
-            };
-            map.Add(system);
-            
-            // Asteroids
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(-2, 0),
-                HasAsteroids = true
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(1, -2),
-                HasAsteroids = true
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(-1, 2),
-                HasAsteroids = true
-            };
-            map.Add(system);
-            
-            system = new BoardHex()
-            {
-                Coordinates = new HexCoordinates(2, 0),
-                HasAsteroids = true
-            };
-            map.Add(system);
+                // Outer hyperlane
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(-1, -2).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.NorthEast.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+                
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(0, -3).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+                
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(1, -3).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+                
+                // Inner hyperlane
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+            }
         }
         else if (game.Players.Count == 2)
         {
@@ -388,11 +257,11 @@ public class MapGenerator
             map.Add(system);
             
             system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(0, +1);
+            system.Coordinates = new HexCoordinates(0, 1);
             map.Add(system);
             
             system = new BoardHex(InnerSystems.Random());
-            system.Coordinates = new HexCoordinates(-1, +1);
+            system.Coordinates = new HexCoordinates(-1, 1);
             map.Add(system);
             
             // Hyperlanes

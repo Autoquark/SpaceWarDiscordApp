@@ -70,6 +70,25 @@ public readonly partial record struct HexCoordinates
         return $"({Q}, {R})";
     }
     
+    /// <summary>
+    /// Returns this position rotated the given number of 60 degree increments clockwise around 0, 0
+    /// </summary>
+    /// <param name="sixths"></param>
+    /// <returns></returns>
+    public HexCoordinates RotateClockwise(int sixths)
+    {
+        var q = Q;
+        var r = R;
+        for (var i = 0; i < sixths; i++)
+        {
+            var s = -q - r;
+            q = -r;
+            r = -s;
+        }
+        
+        return new HexCoordinates(q, r);
+    }
+
     public static HexCoordinates operator +(HexCoordinates coordinates, HexDirection direction)
         => coordinates + direction.ToHexOffset();
 
