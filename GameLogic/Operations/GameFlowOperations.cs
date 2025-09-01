@@ -418,6 +418,10 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                     resolvingEvent.PlayerIdsToResolveTriggersFor.RemoveAt(0);
                     resolvingEvent.ResolvingTriggersForPlayerId = player.GamePlayerId;
                     resolvingEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, resolvingEvent, player).ToList();
+
+                    await InteractionsHelper.SetUpInteractionsAsync(resolvingEvent.RemainingTriggersToResolve
+                        .Select(x => x.ResolveInteractionData).WhereNonNull(),
+                        serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
                     
                     continue;
                 }

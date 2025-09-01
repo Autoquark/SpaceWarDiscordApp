@@ -30,16 +30,16 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         outcome.ReplyBuilder = builder;
     }
 
-    [Command("TurnMessage")]
-    [Description("Repost the start of turn message for the current player")]
+    [Command("Reprompt")]
+    [Description("Repost whatever decision the game is currently waiting for, and ping the relevant player")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
-    public static async Task TurnMessageCommand(CommandContext context)
+    public static async Task Reprompt(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }
