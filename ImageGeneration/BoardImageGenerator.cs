@@ -92,11 +92,13 @@ public static class BoardImageGenerator
     // Recap graphics
     private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
     private static readonly float PreviousMoveArrowControlPointOffset = HexInnerDiameter * 0.1f;
+    private static readonly float PreviousMoveArrowTechIconOffset = HexInnerDiameter * 0.17f;
     private const float RefreshedRecapIconAngle = 30;
     private const float ProduceRecapIconAngle = 45;
     private const float RecapAlpha = 0.8f;
     private static readonly Dictionary<PlayerColour, Image> RefreshRecapIcons = new();
     private static readonly Dictionary<PlayerColour, Image> ProduceRecapIcons = new();
+    private static readonly Dictionary<PlayerColour, Image> TechRecapIcons = new();
     private const int PlanetRecapIconSize = 48;
     
     // Info tables (general)
@@ -197,11 +199,15 @@ public static class BoardImageGenerator
             using var produceIcon = Image.Load("Icons/trample.png");
             produceIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
             
+            using var techIcon = Image.Load("Icons/noun-exclamation-7818018.png");
+            techIcon.Mutate(x => x.Resize(PlanetRecapIconSize, 0));
+            
             foreach (var colour in Enum.GetValues<PlayerColour>())
             {
-                var recolorBrush = new RecolorBrush(Color.White, PlayerColourInfo.Get(colour).ImageSharpColor, 0.5f);
+                var recolorBrush = new RecolorBrush(Color.White, PlayerColourInfo.Get(colour).ImageSharpColor.WithAlpha(RecapAlpha), 0.5f);
                 RefreshRecapIcons.Add(colour, refreshIcon.Clone(x => x.Fill(recolorBrush)));
                 ProduceRecapIcons.Add(colour, produceIcon.Clone(x => x.Fill(recolorBrush)));
+                TechRecapIcons.Add(colour, techIcon.Clone(x => x.Fill(recolorBrush)));
             }
         }
         catch (Exception e)
@@ -758,16 +764,19 @@ public static class BoardImageGenerator
                         {
                             var sourceHexCentre = HexToPixelOffset(sourceAndAmount.Source) + boardOffset;
                             var controlPoint = (sourceHexCentre + destinationHexCentre) / 2.0f;
+                            var techIconLocation = controlPoint;
 
                             // Movement with no horizontal component, move the control point to the right so
                             // we still get a curve
                             if (sourceAndAmount.Source.Q == movement.Destination.Q)
                             {
                                 controlPoint.X += PreviousMoveArrowControlPointOffset;
+                                techIconLocation.X += PreviousMoveArrowTechIconOffset;
                             }
                             else
                             {
                                 controlPoint.Y -= PreviousMoveArrowControlPointOffset;
+                                techIconLocation.Y -= PreviousMoveArrowTechIconOffset;
                             }
                             
                             
@@ -785,8 +794,15 @@ public static class BoardImageGenerator
                                 .GenerateOutline(PreviousMoveThickness);
 
                             
-                            image.Mutate(x => x.Fill(colour, bezier)
-                                .Fill(colour, arrowhead));
+                            image.Mutate(x =>
+                            {
+                                x.Fill(colour, bezier).Fill(colour, arrowhead);
+
+                                if (movement.IsTechMove)
+                                {
+                                    x.DrawImageCentred(TechRecapIcons[player.PlayerColour], techIconLocation);
+                                }
+                            });
                         }
                         break;
 
