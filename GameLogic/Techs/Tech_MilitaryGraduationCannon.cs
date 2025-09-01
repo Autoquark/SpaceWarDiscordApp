@@ -69,7 +69,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
 
 class MilitaryGraduationCannon_MovementFlowHandler : MovementFlowHandler<Tech_MilitaryGraduationCannon>
 {
-    public MilitaryGraduationCannon_MovementFlowHandler(Tech_MilitaryGraduationCannon tech) : base(tech.DisplayName)
+    public MilitaryGraduationCannon_MovementFlowHandler(Tech_MilitaryGraduationCannon tech) : base(tech)
     {
         AllowManyToOne = false;
         ExhaustTechId = tech.Id;

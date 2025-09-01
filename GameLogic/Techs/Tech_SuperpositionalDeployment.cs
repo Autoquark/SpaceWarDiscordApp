@@ -31,7 +31,7 @@ public class Tech_SuperpositionalDeployment : Tech
 
 public class SuperpositionalDeployment_MovementFlowHandler : MovementFlowHandler<Tech_SuperpositionalDeployment>
 {
-    public SuperpositionalDeployment_MovementFlowHandler(Tech_SuperpositionalDeployment tech) : base(tech.DisplayName)
+    public SuperpositionalDeployment_MovementFlowHandler(Tech_SuperpositionalDeployment tech) : base(tech)
     {
         AllowManyToOne = false;
         MarkUsedTechId = tech.Id;

@@ -14,10 +14,11 @@ public class Tech_ZeroGMarchingTechnique : Tech
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
+        _movementFlowHandler = new ZeroGMarchingTechnique_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];
     }
     
-    private readonly ZeroGMarchingTechnique_MovementFlowHandler _movementFlowHandler = new();
+    private readonly ZeroGMarchingTechnique_MovementFlowHandler _movementFlowHandler;
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider) => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
@@ -27,7 +28,7 @@ public class Tech_ZeroGMarchingTechnique : Tech
 
 class ZeroGMarchingTechnique_MovementFlowHandler : MovementFlowHandler<Tech_ZeroGMarchingTechnique>
 {
-    public ZeroGMarchingTechnique_MovementFlowHandler() : base("Zero G Marching Technique")
+    public ZeroGMarchingTechnique_MovementFlowHandler(Tech_ZeroGMarchingTechnique tech) : base(tech)
     {
         ActionType = GameLogic.ActionType.Free;
         ExhaustTechId = Tech_ZeroGMarchingTechnique.StaticId;

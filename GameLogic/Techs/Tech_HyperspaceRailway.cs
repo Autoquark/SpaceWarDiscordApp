@@ -13,10 +13,11 @@ public class Tech_HyperspaceRailway : Tech
         ["Action"])
     {
         HasSimpleAction = true;
+        _movementFlowHandler = new HyperspaceRailway_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];
     }
     
-    private readonly HyperspaceRailway_MovementFlowHandler _movementFlowHandler = new();
+    private readonly HyperspaceRailway_MovementFlowHandler _movementFlowHandler;
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
@@ -28,7 +29,7 @@ public class Tech_HyperspaceRailway : Tech
 
 public class HyperspaceRailway_MovementFlowHandler : MovementFlowHandler<Tech_HyperspaceRailway>
 {
-    public HyperspaceRailway_MovementFlowHandler() : base("Hyperspace Railway")
+    public HyperspaceRailway_MovementFlowHandler(Tech_HyperspaceRailway tech) : base(tech)
     {
         AllowManyToOne = false;
         RequireAdjacency = false;

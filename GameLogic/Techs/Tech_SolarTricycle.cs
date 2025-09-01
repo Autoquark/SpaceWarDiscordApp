@@ -30,7 +30,7 @@ public class Tech_SolarTricycle : Tech
 
 public class SolarTricycle_MovementFlowHandler : MovementFlowHandler<Tech_SolarTricycle>
 {
-    public SolarTricycle_MovementFlowHandler(Tech_SolarTricycle tech) : base(tech.DisplayName)
+    public SolarTricycle_MovementFlowHandler(Tech_SolarTricycle tech) : base(tech)
     {
         AllowManyToOne = false;
         MarkUsedTechId = tech.Id;

@@ -7,6 +7,7 @@ using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -29,12 +30,12 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     IInteractionHandler<PerformPlannedMoveInteraction<T>>,
     IEventResolvedHandler<GameEvent_MovementFlowComplete<T>>
 {
-    protected MovementFlowHandler(string moveName)
+    protected MovementFlowHandler(Tech? tech)
     {
-        MoveName = moveName;
+        Tech = tech;
     }
-    
-    protected string MoveName { get; init; }
+
+    protected Tech? Tech;
     
     /// <summary>
     /// Whether movement sources are required to be adjacent to the destination hex.
@@ -173,7 +174,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var playerName = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{MoveName}: {playerName}, choose a {"destination".DiscordBold()} for your move: ")
+        builder.AppendContentNewline($"{GetMoveName()}: {playerName}, choose a {"destination".DiscordBold()} for your move: ")
             .WithAllowedMentions(player);
 
         destinations = destinations.ToList();
@@ -406,7 +407,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected async Task<DiscordMultiMessageBuilder> ShowSpecifyMovementAmountButtonsAsync(DiscordMultiMessageBuilder builder, Game game,
         GamePlayer player, BoardHex source, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId, IServiceProvider serviceProvider) 
     {
-        builder.AppendContentNewline($"{MoveName}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
+        builder.AppendContentNewline($"{GetMoveName()}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
 
         if (source.Planet == null)
         {
@@ -447,7 +448,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{MoveName}: {name}, choose a planet to move forces from: ")
+        builder.AppendContentNewline($"{GetMoveName()}: {name}, choose a planet to move forces from: ")
             .WithAllowedMentions(player);
         builder.AddActionRowComponent();
 
@@ -485,7 +486,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
     {
         await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, 
-            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider, MoveName))
+            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider, Tech))
             .Append(new GameEvent_MovementFlowComplete<T>
             {
                 PlayerGameId = player.GamePlayerId,
@@ -531,4 +532,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
         return builder;
     }
+
+    protected string GetMoveName() => Tech?.DisplayName ?? MovementOperations.DefaultMoveName;
 }

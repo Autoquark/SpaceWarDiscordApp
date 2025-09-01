@@ -25,7 +25,7 @@ public class Tech_MassMigration : Tech
 
 class MassMigrationMovementFlowHandler : MovementFlowHandler<Tech_MassMigration>
 {
-    public MassMigrationMovementFlowHandler(Tech_MassMigration tech) : base(tech.DisplayName)
+    public MassMigrationMovementFlowHandler(Tech_MassMigration tech) : base(tech)
     {
         AllowManyToOne = false;
         ActionType = tech.SimpleActionType;

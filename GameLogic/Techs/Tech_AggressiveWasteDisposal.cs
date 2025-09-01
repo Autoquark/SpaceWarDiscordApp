@@ -68,6 +68,8 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         var name = await player.GetNameAsync(false);
         builder?.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
         
+        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
+        
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);

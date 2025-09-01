@@ -86,6 +86,9 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
 
         await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
         
+        // I guess you can eliminate yourself with this, if you want to...
+        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
+        
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);

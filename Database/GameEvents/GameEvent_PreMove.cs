@@ -22,7 +22,7 @@ public class GameEvent_PreMove : GameEvent
     public List<CombatStrengthSource> DefenderCombatStrengthSources { get; set; } = [];
     
     [FirestoreProperty]
-    public string? MoveName { get; set; } = null;
+    public string? TechId { get; set; } = null;
 }
 
 [FirestoreData]

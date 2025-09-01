@@ -15,10 +15,11 @@ public class Tech_Teleportation : Tech
         ["Action", "Exhaust"])
     {
         HasSimpleAction = true;
+        _movementFlowHandler = new Teleportation_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];
     }
 
-    private readonly Teleportation_MovementFlowHandler _movementFlowHandler = new(); 
+    private readonly Teleportation_MovementFlowHandler _movementFlowHandler; 
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
@@ -27,7 +28,7 @@ public class Tech_Teleportation : Tech
 
 public class Teleportation_MovementFlowHandler : MovementFlowHandler<Tech_Teleportation>
 {
-    public Teleportation_MovementFlowHandler() : base("Teleportation")
+    public Teleportation_MovementFlowHandler(Tech_Teleportation tech) : base(tech)
     {
         AllowManyToOne = false;
         RequireAdjacency = false;

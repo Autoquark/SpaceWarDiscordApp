@@ -4,11 +4,14 @@ using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 {
+    public const string DefaultMoveName = "Move Action";
+    
     /// <summary>
     /// Display a summary of the given player's current planned move
     /// </summary>
@@ -31,7 +34,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
     }
 
     public static async Task<IEnumerable<GameEvent>> GetResolveMoveEventsAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
-        PlannedMove move, IServiceProvider serviceProvider, string moveName)
+        PlannedMove move, IServiceProvider serviceProvider, Tech? tech)
     {
         var destinationHex = game.GetHexAt(move.Destination);
         if (destinationHex.Planet == null)
@@ -44,7 +47,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
                 MovingPlayerId = player.GamePlayerId,
                 Sources = move.Sources.ToList(),
                 Destination = move.Destination,
-                MoveName = moveName 
+                TechId = tech?.Id
             }];
     }
 
@@ -55,7 +58,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
         var moverName = await movingPlayer.GetNameAsync(true);
         
         // Stage 1: Subtract moving forces from each source planet and calculate total forces moving
-        builder?.AppendContentNewline($"{moverName} is moving to {gameEvent.Destination} ({gameEvent.MoveName})");
+        var moveName = gameEvent.TechId != null ? Tech.TechsById[gameEvent.TechId].DisplayName : DefaultMoveName;
+        builder?.AppendContentNewline($"{moverName} is moving to {gameEvent.Destination} ({moveName})");
         var totalMoving = 0;
         foreach (var source in gameEvent.Sources)
         {
@@ -150,7 +154,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             movingPlayer.CurrentTurnEvents.Add(new MovementEventRecord
             {
                 Destination = gameEvent.Destination,
-                Sources = gameEvent.Sources.ToList()
+                Sources = gameEvent.Sources.ToList(),
+                IsTechMove = gameEvent.TechId != null
             });
         }
 
