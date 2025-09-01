@@ -36,7 +36,7 @@ public class PlayerColourInfo
                 {
                     Name = "green",
                     PlayerColour = PlayerColour.Green,
-                    ImageSharpColor = Color.LightGreen
+                    ImageSharpColor = Color.LimeGreen
                 }
             },
             {
@@ -63,7 +63,7 @@ public class PlayerColourInfo
                 {
                     Name = "yellow",
                     PlayerColour = PlayerColour.Yellow,
-                    ImageSharpColor = Color.Yellow
+                    ImageSharpColor = Color.Gold
                 }
             },
             {
@@ -72,7 +72,7 @@ public class PlayerColourInfo
                 {
                     Name = "cyan",
                     PlayerColour = PlayerColour.Cyan,
-                    ImageSharpColor = Color.Cyan
+                    ImageSharpColor = Color.DarkTurquoise
                 }
             },
             {

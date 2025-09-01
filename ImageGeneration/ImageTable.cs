@@ -114,9 +114,9 @@ public class Table
     }
     
     public IImageProcessingContext DrawTextInCell(IImageProcessingContext imageProcessingContext, int column, int row,
-        RichTextOptions options, string text, Brush brush, float? xPositionOverride = null,
+        RichTextOptions options, string text, Brush brush, Pen? outlinePen = null, float? xPositionOverride = null,
         float? yPositionOverride = null)
-        => DrawTextInCell(imageProcessingContext, column, row, options, text, brush, Size.Empty, xPositionOverride, yPositionOverride);
+        => DrawTextInCell(imageProcessingContext, column, row, options, text, brush, Size.Empty, outlinePen, xPositionOverride, yPositionOverride);
 
     /// <summary>
     /// 
@@ -128,6 +128,7 @@ public class Table
     /// <param name="text"></param>
     /// <param name="brush"></param>
     /// <param name="offset">Flat offset to the text's positioning, applied after all other factors</param>
+    /// <param name="outlinePen">Pen used to draw an outline around the text, if not null</param>
     /// <param name="xAlignmentOverride">A 0..1 value which if set overrides text x positioning, with 0 being at the left
     /// of the cell and 1 at the right. options.HorizontalAlignment still controls what pivot point of the text
     /// (left, center or right) is being positioned</param>
@@ -137,7 +138,7 @@ public class Table
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public IImageProcessingContext DrawTextInCell(IImageProcessingContext imageProcessingContext, int column, int row,
-        RichTextOptions options, string text, Brush brush, Size offset, float? xAlignmentOverride = null,
+        RichTextOptions options, string text, Brush brush, Size offset, Pen? outlinePen = null, float? xAlignmentOverride = null,
         float? yAlignmentOverride = null)
     {
         var optionsCopy = new RichTextOptions(options)
@@ -164,7 +165,7 @@ public class Table
         });
 
         optionsCopy.Origin = new Point(x, y) + offset;
-        imageProcessingContext.DrawText(optionsCopy, text, brush);
+        imageProcessingContext.DrawText(optionsCopy, text, brush, outlinePen);
         
         return imageProcessingContext;
     }

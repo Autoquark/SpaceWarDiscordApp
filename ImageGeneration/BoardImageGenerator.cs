@@ -104,6 +104,7 @@ public static class BoardImageGenerator
     private const int InfoTableSingleIconColumnWidth = 76;
     private const float InfoTableLineThickness = 2;
     private static readonly Brush InfoTextBrush = new SolidBrush(Color.Black);
+    private static readonly Pen InfoTextOutlinePen = Pens.Solid(Color.Grey);
     private static readonly Pen InfoTextStrikethroughPen = new SolidPen(Color.Black);
     private const int InfoTableIconHeight = 32;
     private const int InfoTableCellDrawingMargin = 16;
@@ -363,22 +364,22 @@ public static class BoardImageGenerator
                     offset = new Size(CurrentTurnPlayerIcon.Width + 12, 0);
                 }
                 
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, row, textOptions, playerNames[player], brush, offset);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, row, textOptions, playerNames[player], brush, offset, InfoTextOutlinePen);
                 
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
                 textOptions.Font = InfoTableFont;
                 
                 // Science
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Science, row, textOptions, player.Science.ToString(), brush);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Science, row, textOptions, player.Science.ToString(), brush, InfoTextOutlinePen);
                 
                 // VP
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, player.VictoryPoints.ToString(), brush);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, player.VictoryPoints.ToString(), brush, InfoTextOutlinePen);
                 
                 // Stars
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
                 
                 var stars = playerStars.First(x => x.player == player).stars;
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Stars, row, textOptions, stars.ToString(), brush, 0.333f);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Stars, row, textOptions, stars.ToString(), brush, InfoTextOutlinePen, 0.333f);
                 if (stars == playerStars[0].stars)
                 {
                     summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Stars, row,
