@@ -73,7 +73,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         if (hex.ForcesPresent > GameConstants.MaxForcesPerPlanet)
         {
             var loss = hex.ForcesPresent - GameConstants.MaxForcesPerPlanet;
-            hex.Planet!.ForcesPresent = GameConstants.MaxForcesPerPlanet;
+            hex.Planet!.SetForces(GameConstants.MaxForcesPerPlanet);
             builder?.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space from {hex.Coordinates} due to exceeding the capacity limit");
         }
 

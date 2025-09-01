@@ -23,7 +23,7 @@ public class Tech_MassRecruitment : Tech
 
         foreach (var boardHex in targets)
         {
-            boardHex.Planet!.ForcesPresent++;
+            boardHex.Planet!.AddForces(1);
             ProduceOperations.CheckPlanetCapacity(builder, boardHex);
         }
         

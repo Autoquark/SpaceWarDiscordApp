@@ -26,8 +26,15 @@ public class Planet
     [FirestoreProperty]
     public int Stars {get; set;} = 0;
     
+    // Allow init, but otherwise require using methods to set, to avoid having no forces but an owning player
     [FirestoreProperty]
-    public int ForcesPresent {get; set;} = 0;
+    public int ForcesPresent
+    {
+        get => _forcesPresent;
+        init => _forcesPresent = value;
+    }
+
+    private int _forcesPresent = 0;
 
     [FirestoreProperty]
     public int OwningPlayerId { get; set; } = -1;
@@ -63,7 +70,7 @@ public class Planet
 
     public void SetForces(int amount)
     {
-        ForcesPresent = amount;
+        _forcesPresent = amount;
         if (ForcesPresent == 0)
         {
             OwningPlayerId = GamePlayer.GamePlayerIdNone;

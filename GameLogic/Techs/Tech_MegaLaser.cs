@@ -59,7 +59,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
-        game.GetHexAt(interactionData.Target).Planet!.ForcesPresent = 0;
+        game.GetHexAt(interactionData.Target).Planet!.SetForces(0);
 
         builder?.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         

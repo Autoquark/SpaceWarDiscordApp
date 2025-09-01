@@ -47,7 +47,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
-        hex.Planet!.ForcesPresent += 3;
+        hex.Planet!.AddForces(3);
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var name = await player.GetNameAsync(false);

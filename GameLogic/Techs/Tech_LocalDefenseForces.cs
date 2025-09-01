@@ -29,7 +29,7 @@ public class Tech_LocalDefenseForces : Tech
         
         foreach (var affectedHex in affectedHexes)
         {
-            affectedHex.Planet!.ForcesPresent++;
+            affectedHex.Planet!.AddForces(1);
             // Don't see how we actually could exceed capacity, but just in case of future complexity
             ProduceOperations.CheckPlanetCapacity(builder, affectedHex);
         }
