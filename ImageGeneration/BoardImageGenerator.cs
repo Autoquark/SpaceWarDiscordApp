@@ -253,7 +253,7 @@ public static class BoardImageGenerator
         
         var maxMarketTechDescriptionHeight = 0;
         var marketTechSectionHeight = 0;
-        foreach (var tech in game.UniversalTechs.ToTechsById())
+        foreach (var tech in game.TechMarket.ToTechsByIdNullable())
         {
             var descriptionHeight = 0;
             var table = LayoutPurchaseableTech(tech, ref descriptionHeight);

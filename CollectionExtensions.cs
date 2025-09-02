@@ -33,6 +33,7 @@ namespace SpaceWarDiscordApp
         }
 
         public static IEnumerable<Tech> ToTechsById(this IEnumerable<string> techIds) => techIds.Select(x => Tech.TechsById[x]);
+        public static IEnumerable<Tech?> ToTechsByIdNullable(this IEnumerable<string?> techIds) => techIds.Select(x => x == null ? null : Tech.TechsById[x]);
 
         public static IEnumerable<int> Indices(this ICollection collection) => Enumerable.Range(0, collection.Count);
 
