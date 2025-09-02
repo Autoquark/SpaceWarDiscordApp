@@ -51,7 +51,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var name = await player.GetNameAsync(false);
-        builder?.AppendContentNewline($"{name} produces 3 forces on {hex.Coordinates} using {DisplayName}");
+        builder?.AppendContentNewline($"{name} added 3 forces to {hex.Coordinates} using {DisplayName}");
         ProduceOperations.CheckPlanetCapacity(builder, hex);
         
         player.GetPlayerTechById(Id).IsExhausted = true;

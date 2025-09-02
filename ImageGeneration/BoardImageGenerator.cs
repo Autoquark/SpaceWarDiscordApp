@@ -95,6 +95,8 @@ public static class BoardImageGenerator
     private static readonly float PreviousMoveArrowTechIconOffset = HexInnerDiameter * 0.17f;
     private const float RefreshedRecapIconAngle = 30;
     private const float ProduceRecapIconAngle = 45;
+    private const float TechRecapIconAngle = 60;
+    private const float TechRecapIconSeparation = 25;
     private const float RecapAlpha = 0.8f;
     private static readonly Dictionary<PlayerColour, Image> RefreshRecapIcons = new();
     private static readonly Dictionary<PlayerColour, Image> ProduceRecapIcons = new();
@@ -824,6 +826,22 @@ public static class BoardImageGenerator
                     }
                         break;
                 }
+            }
+        }
+        
+        // Draw planet targeted tech icons. We need to group them by planet first as there could be multiple on one planet
+        foreach (var grouping in game.Players.SelectMany(x => x.LastTurnEvents.OfType<PlanetTargetedTechEventRecord>(),
+                         (player, record) => (player, record))
+                     .GroupBy(x => x.record.Coordinates))
+        {
+            var iconLocation = boardOffset + HexToPixelOffset(grouping.Key) + GetPointPolar(PlanetIconDistance, TechRecapIconAngle);
+            var count = grouping.Count();
+            iconLocation.X -= (TechRecapIconSeparation * (count - 1)) / 2;
+
+            foreach (var (player, _) in grouping)
+            {
+                image.Mutate(context => context.DrawImageCentred(TechRecapIcons[player.PlayerColour], iconLocation));
+                iconLocation.X += TechRecapIconSeparation;
             }
         }
         

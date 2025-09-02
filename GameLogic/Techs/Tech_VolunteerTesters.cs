@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.VolunteerTesters;
 using SpaceWarDiscordApp.Discord;
@@ -83,6 +84,11 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         
         var tech = player.GetPlayerTechById(Id);
         tech.IsExhausted = true;
+        
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = hex.Coordinates
+        });
 
         await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
         

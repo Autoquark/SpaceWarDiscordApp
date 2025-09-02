@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -67,6 +68,11 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         
         var name = await player.GetNameAsync(false);
         builder?.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
+        
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = hex.Coordinates
+        });
         
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         

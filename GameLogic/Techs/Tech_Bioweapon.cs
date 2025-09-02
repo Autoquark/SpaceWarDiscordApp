@@ -1,5 +1,6 @@
 using System.Text;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -29,6 +30,10 @@ public class Tech_Bioweapon : Tech
         foreach (var hex in affected)
         {
             hex.Planet!.SubtractForces(1);
+            player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+            {
+                Coordinates = hex.Coordinates
+            });
         }
         
         builder.AppendContentNewline(stringBuilder.ToString());

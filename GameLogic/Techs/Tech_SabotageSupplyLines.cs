@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
@@ -28,6 +29,10 @@ public class Tech_SabotageSupplyLines : Tech
         foreach (var boardHex in targets)
         {
             boardHex.Planet!.SubtractForces(1);
+            player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+            {
+                Coordinates = boardHex.Coordinates
+            });
         }
 
         var name = await player.GetNameAsync(false);

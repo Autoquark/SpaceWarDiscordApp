@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.EnervatorBeam;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -53,6 +54,10 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         builder?.AppendContentNewline($"{name} has exhausted {interactionData.Target} using Enervator Beam");
         
         player.GetPlayerTechById(Id).IsExhausted = true;
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = interactionData.Target
+        });
         
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
         

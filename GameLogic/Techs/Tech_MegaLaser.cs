@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -60,6 +61,10 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
         game.GetHexAt(interactionData.Target).Planet!.SetForces(0);
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = interactionData.Target
+        });
 
         builder?.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         
