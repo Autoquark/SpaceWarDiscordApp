@@ -149,6 +149,31 @@ public class FixupCommands
         outcome.ReplyBuilder = builder;
     }
 
+    [Command("DiscardUniversalTech")]
+    [Description("Puts a universal tech into the tech discards.")]
+    public static async Task DiscardUniversalTech(CommandContext context,
+        [SlashAutoCompleteProvider<UniversalTechIdChoiceProvider>] string techId)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var techName = Tech.TechsById[techId].DisplayName;
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        outcome.ReplyBuilder = builder;
+        
+        if (game.UniversalTechs.Remove(techId))
+        {
+            game.TechDiscards.Add(techId);
+            builder.AppendContentNewline($"Removed {techName} from universal techs");
+            outcome.RequiresSave = true;
+        }
+        else
+        {
+            builder.AppendContentNewline($"{techName} is not a universal tech");
+            outcome.RequiresSave = false;
+        }
+    }
+
     [Command("refreshPinnedTechMessage")]
     [Description("Updates the pinned message with the details of all techs in use")]
     public static async Task RefreshPinnedTechMessage(CommandContext context)
