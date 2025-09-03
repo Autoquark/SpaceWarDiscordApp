@@ -105,7 +105,8 @@ public class MapGenerator
     {
         var map = new List<BoardHex>();
         
-        if (game.Players.Count is >= 4 and <= 6)
+        var playerCount = game.Players.Count;
+        if (playerCount is >= 3 and <= 6)
         {
             // Centre
             var system = new BoardHex(CenterSystems.Random());
@@ -113,13 +114,13 @@ public class MapGenerator
             map.Add(system);
             
             // Player slices
-            var playerSliceRotations = new List<int> { 0, 1, 3, 4 };
-            if (game.Players.Count >= 5)
+            var playerSliceRotations = playerCount == 3 ? new List<int> { 0, 2, 4 } : new List<int> { 0, 1, 3, 4 };
+            if (playerCount >= 5)
             {
                 playerSliceRotations.Add(2);
             }
 
-            if (game.Players.Count >= 6)
+            if (playerCount >= 6)
             {
                 playerSliceRotations.Add(5);
             }
