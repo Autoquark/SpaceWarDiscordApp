@@ -79,7 +79,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected bool ContinueResolvingStackAfterMove { get; init; } = false;
 
     /// <summary>
-    /// If true, forces moving all forces from each source
+    /// If true, must move all forces from each source
     /// </summary>
     protected bool MustMoveAll { get; init; } = false;
     
@@ -440,7 +440,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected async Task<List<AddMoveSourceInteraction<T>>> ShowSpecifyMovementSourceButtonsAsync(
         DiscordMultiMessageBuilder builder, Game game, GamePlayer player, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId)
     {
-        var sources = RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
+        var sources = GetAllowedMoveSources(game, player, destination);
         sources.Remove(destination);
         if (sources.Count == 0)
         {
@@ -490,15 +490,20 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             .Append(new GameEvent_MovementFlowComplete<T>
             {
                 PlayerGameId = player.GamePlayerId,
-                TriggerToMarkResolved = triggerToMarkResolved
+                TriggerToMarkResolved = triggerToMarkResolved,
+                Sources = player.PlannedMove!.Sources.ToList(),
+                Destination = player.PlannedMove!.Destination
             }));
         return (await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
     
-    private List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
-        => RequireAdjacency ? BoardUtils.GetStandardMoveSources(game, destination, player).ToList() : game.Hexes.WhereOwnedBy(player).ToList();
+    protected virtual List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
+        => (RequireAdjacency
+                ? BoardUtils.GetStandardMoveSources(game, destination, player)
+                : game.Hexes.WhereOwnedBy(player))
+            .Except(destination).ToList();
 
-    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
+    public virtual async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);

@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 
@@ -10,4 +11,10 @@ public class GameEvent_MovementFlowComplete<T> : GameEvent
     
     [FirestoreProperty]
     public required string? TriggerToMarkResolved { get; set; }
+    
+    [FirestoreProperty]
+    public required List<SourceAndAmount> Sources { get; set; }
+    
+    [FirestoreProperty]
+    public required HexCoordinates Destination {get; set;}
 }
