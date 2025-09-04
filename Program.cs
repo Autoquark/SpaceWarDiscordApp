@@ -7,6 +7,7 @@ using DSharpPlus;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -139,6 +140,7 @@ static class Program
         {
             builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
             builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
+            builder.HandleGuildDownloadCompleted(GuildDownloadCompleted);
         });
         
         DiscordClient = discordBuilder.Build();
@@ -159,12 +161,20 @@ static class Program
         {
             await RebuildEmojiCache();
         }
-
+        
         Console.WriteLine("Ready to go. Let's play some SpaceWar!");
         
         await Task.Delay(-1);
     }
-    
+
+    private static async Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs arg)
+    {
+        foreach (var guild in arg.Guilds.Values)
+        {
+            await GuildOperations.UpdateServerTechListingAsync(guild);
+        }
+    }
+
     public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
     
     private static void RegisterEverything(object obj)

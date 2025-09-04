@@ -43,5 +43,38 @@ namespace SpaceWarDiscordApp
         
         public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> enumerable) => enumerable.Where(x => x != null)!;
         public static IEnumerable<T1> WhereNonNull<T1, T2>(this IEnumerable<T1> enumerable, Func<T1, T2?> extractor) => enumerable.Where(x => extractor(x) != null);
+
+        /// <summary>
+        /// Combines two sequences into a single sequence of tuples. If one sequence is shorter, it is padded with
+        /// default values to match the length other sequence
+        /// </summary>
+        public static IEnumerable<(T1?, T2?)> ZipLongest<T1, T2>(this IEnumerable<T1> enumerable,
+            IEnumerable<T2> enumerable2)
+        {
+            using var enumerator1 = enumerable.GetEnumerator();
+            using var enumerator2 = enumerable2.GetEnumerator();
+
+            var hasLeft = enumerator1.MoveNext();
+            var hasRight = enumerator2.MoveNext();
+
+            while (hasLeft || hasRight)
+            {
+                if (hasLeft && hasRight)
+                {
+                    yield return (enumerator1.Current, enumerator2.Current);
+                }
+                else if (hasLeft)
+                {
+                    yield return (enumerator1.Current, default);
+                }
+                else if (hasRight)
+                {
+                    yield return (default, enumerator2.Current);
+                }
+
+                hasLeft = enumerator1.MoveNext();
+                hasRight = enumerator2.MoveNext();
+            }
+        }
     }
 }

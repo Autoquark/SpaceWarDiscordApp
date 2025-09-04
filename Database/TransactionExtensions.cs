@@ -4,6 +4,14 @@ namespace SpaceWarDiscordApp.Database;
 
 public static class TransactionExtensions
 {
+    public static async Task<GuildData> GetOrCreateGuildDataAsync(this Transaction transaction, ulong guildId) =>
+        (await transaction.GetSnapshotAsync(
+            new Query<GuildData>(transaction.Database.GuildData())
+                .WhereEqualTo(x => x.GuildId, guildId)
+                .Limit(1)))
+        .FirstOrDefault()
+        ?.ConvertTo<GuildData>() ?? new GuildData { GuildId = guildId, DocumentId = transaction.Database.GuildData().Document() };
+
     public static async Task<Game?> GetGameForChannelAsync(this Transaction transaction, ulong channelId)
     {
         var game = (await transaction.GetSnapshotAsync(
