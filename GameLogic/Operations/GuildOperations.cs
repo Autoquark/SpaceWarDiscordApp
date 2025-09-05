@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
@@ -14,8 +15,20 @@ public static class GuildOperations
         var guildData = await Program.FirestoreDb.RunTransactionAsync(async transaction =>
             await transaction.GetOrCreateGuildDataAsync(guild.Id));
 
-        DiscordChannel channel;
-        if (guildData.TechListingChannelId == 0)
+        DiscordChannel? channel = null;
+        if (guildData.TechListingChannelId != 0)
+        {
+            try
+            {
+                channel = await guild.GetChannelAsync(guildData.TechListingChannelId);
+            }
+            catch (NotFoundException)
+            {
+                guildData.TechListingMessageIds = [];
+            }
+        }
+        
+        if(channel! == null!)
         {
             var role = await guild.GetRoleAsync(guild.Id);
             channel = await guild.CreateChannelAsync(TechListingChannelName,
@@ -26,10 +39,6 @@ public static class GuildOperations
                     new DiscordOverwriteBuilder(guild.CurrentMember).Allow(DiscordPermission.SendMessages)
                 ]);
         }
-        else
-        {
-            channel = await guild.GetChannelAsync(guildData.TechListingChannelId);
-        }
 
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         builder.AppendContentNewline("This channel will be kept updated with details of all techs in SpaceWar:");
@@ -38,7 +47,8 @@ public static class GuildOperations
             TechOperations.ShowTechDetails(builder, techId);
         }
 
-        foreach (var (discordMessageBuilder, messageId) in builder.Builders.Cast<DiscordMessageBuilder>().ZipLongest(guildData.TechListingMessageIds))
+        foreach (var (discordMessageBuilder, messageId) in builder.Builders.Cast<DiscordMessageBuilder>()
+                     .ZipLongest(guildData.TechListingMessageIds.ToList()))
         {
             // We need fewer messages now, delete this one
             if (discordMessageBuilder == null)
