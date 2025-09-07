@@ -40,6 +40,8 @@ static class Program
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
 
     public static bool IsTestEnvironment { get; private set; } = false;
+
+    private static Task _updateEmojiTask;
     
     static async Task Main()
     {
@@ -154,13 +156,15 @@ static class Program
         if (!IsTestEnvironment)
         {
             Console.WriteLine("Updating emoji...");
-            await BotManagementOperations.UpdateEmojiAsync();
+            _updateEmojiTask = BotManagementOperations.UpdateEmojiAsync();
             Console.WriteLine("Emoji updated");
         }
         else
         {
-            await RebuildEmojiCache();
+            _updateEmojiTask = RebuildEmojiCache(); 
         }
+        
+        await _updateEmojiTask;
         
         Console.WriteLine("Ready to go. Let's play some SpaceWar!");
         
@@ -169,6 +173,7 @@ static class Program
 
     private static async Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs arg)
     {
+        await _updateEmojiTask;
         foreach (var guild in arg.Guilds.Values)
         {
             await GuildOperations.UpdateServerTechListingAsync(guild);
