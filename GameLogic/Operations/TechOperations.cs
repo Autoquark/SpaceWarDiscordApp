@@ -197,26 +197,57 @@ public static class TechOperations
     public static async Task UpdatePinnedTechMessage(Game game)
     {
         var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
-        var message = game.PinnedTechMessageId == 0
-            ? await gameChannel.SendMessageAsync(x => x.EnableV2Components().AppendContentNewline("Watch this space!"))
-            : await gameChannel.GetMessageAsync(game.PinnedTechMessageId);
+        var rootMessage = await gameChannel.TryGetMessageAsync(game.PinnedTechMessageId)
+            ?? await gameChannel.SendMessageAsync(x =>
+                x.EnableV2Components().AppendContentNewline("This pinned thread will always be updated with descriptions of all the techs currently relevant to this game"));
+        
+        // A thread started from a message has the same ID as that message
+        var thread = gameChannel.Threads.FirstOrDefault(x => x.Id == rootMessage.Id);
+        if (thread! == null!)
+        {
+            thread = await rootMessage.CreateThreadAsync("Game Techs", DiscordAutoArchiveDuration.Week);
+        }
 
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline("This pinned message will always be updated with descriptions of all the techs currently relevant to this game");
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        //builder.AppendContentNewline("This pinned thread will always be updated with descriptions of all the techs currently relevant to this game");
+        //builder.NewMessage();
         var allTechs = game.UniversalTechs
             .Concat(game.TechMarket.WhereNonNull())
             .Concat(game.Players.SelectMany(x => x.Techs.Select(y => y.TechId)))
             .Distinct()
+            .OrderBy(x => Tech.TechsById[x].DisplayName)
             .ToList();
 
         foreach (var tech in allTechs)
         {
             ShowTechDetails(builder, tech);
         }
+
+        // Skip first thread message as it has weird behaviour and we can't edit components into it
+        // Reverse order because discord returns most recent first
+        var threadMessages = await thread.GetMessagesAsync().Reverse().Skip(1).ToListAsync();
+        foreach (var (discordMessageBuilder, message) in builder.Builders.Cast<DiscordMessageBuilder>()
+                     .ZipLongest(threadMessages))
+        {
+            // We need fewer messages now, delete this one
+            if (discordMessageBuilder == null)
+            {
+                await message!.DeleteAsync();
+                continue;
+            }
+            
+            // There's a corresponding old message we can edit
+            if (message! != null!)
+            {
+                await message.ModifyAsync(discordMessageBuilder);
+                continue;
+            }
+            
+            var newMessage = await thread.SendMessageAsync(discordMessageBuilder);
+        }
         
-        await message.ModifyAsync(builder);
-        await message.PinAsync();
-        game.PinnedTechMessageId = message.Id;
+        await rootMessage.PinAsync();
+        game.PinnedTechMessageId = rootMessage.Id;
     }
 
     public static Tech? DrawTechFromDeckSilent(Game game) => TryDrawTechFromDeck(null, game);

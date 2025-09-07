@@ -42,6 +42,7 @@ namespace SpaceWarDiscordApp
         public static IEnumerable<T> Except<T>(this IEnumerable<T> enumerable, T item) => enumerable.Where(x => !EqualityComparer<T>.Default.Equals(x, item));
         
         public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> enumerable) => enumerable.Where(x => x != null)!;
+        public static IAsyncEnumerable<T> WhereNonNull<T>(this IAsyncEnumerable<T?> enumerable) => enumerable.Where(x => x != null)!;
         public static IEnumerable<T1> WhereNonNull<T1, T2>(this IEnumerable<T1> enumerable, Func<T1, T2?> extractor) => enumerable.Where(x => extractor(x) != null);
 
         /// <summary>

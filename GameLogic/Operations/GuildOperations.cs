@@ -46,22 +46,26 @@ public static class GuildOperations
             TechOperations.ShowTechDetails(builder, techId);
         }
 
-        foreach (var (discordMessageBuilder, messageId) in builder.Builders.Cast<DiscordMessageBuilder>()
-                     .ZipLongest(guildData.TechListingMessageIds.ToList()))
+        var messages = await guildData.TechListingMessageIds.ToAsyncEnumerable()
+            .SelectAwait(async x => await channel.TryGetMessageAsync(x))
+            .WhereNonNull()
+            .ToListAsync();
+        
+        foreach (var (discordMessageBuilder, message) in builder.Builders.Cast<DiscordMessageBuilder>()
+                     .ZipLongest(messages))
         {
             // We need fewer messages now, delete this one
             if (discordMessageBuilder == null)
             {
-                var message = await channel.GetMessageAsync(messageId);
-                await message.DeleteAsync();
-                guildData.TechListingMessageIds.Remove(messageId);
+                await message!.DeleteAsync();
+                guildData.TechListingMessageIds.Remove(message.Id);
                 continue;
             }
             
             // There's a corresponding old message we can edit
-            if (messageId != 0)
+            if (message! != null!)
             {
-                var message = await (await channel.GetMessageAsync(messageId)).ModifyAsync(discordMessageBuilder);
+                await message.ModifyAsync(discordMessageBuilder);
                 continue;
             }
             
