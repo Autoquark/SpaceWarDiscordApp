@@ -30,12 +30,11 @@ public static class GuildOperations
         
         if(channel! == null!)
         {
-            var role = await guild.GetRoleAsync(guild.Id);
             channel = await guild.CreateChannelAsync(TechListingChannelName,
                 DiscordChannelType.Text,
                 overwrites:
                 [
-                    new DiscordOverwriteBuilder(role).Deny(DiscordPermission.SendMessages),
+                    new DiscordOverwriteBuilder(guild.EveryoneRole).Deny(DiscordPermission.SendMessages),
                     new DiscordOverwriteBuilder(guild.CurrentMember).Allow(DiscordPermission.SendMessages)
                 ]);
         }
