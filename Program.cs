@@ -173,6 +173,11 @@ static class Program
 
     private static async Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs arg)
     {
+        // There's probably a better way to do this
+        while (_updateEmojiTask == null)
+        {
+            await Task.Delay(100);
+        }
         await _updateEmojiTask;
         foreach (var guild in arg.Guilds.Values)
         {
