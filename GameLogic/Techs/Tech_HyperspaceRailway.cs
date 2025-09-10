@@ -10,9 +10,10 @@ public class Tech_HyperspaceRailway : Tech
         "Hyperspace Railway",
         "Move any number of forces from one planet you control to another planet you control.",
         "The 7.15 service to Alpha Centauri has been delayed due to leaves on the toroidal manifold.",
-        ["Action"])
+        ["Free Action, Exhaust"])
     {
         HasSimpleAction = true;
+        SimpleActionType = ActionType.Free;
         _movementFlowHandler = new HyperspaceRailway_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];
     }
@@ -34,5 +35,7 @@ public class HyperspaceRailway_MovementFlowHandler : MovementFlowHandler<Tech_Hy
         AllowManyToOne = false;
         RequireAdjacency = false;
         DestinationRestriction = MoveDestinationRestriction.MustAlreadyControl;
+        ExhaustTechId = tech.Id;
+        ActionType = tech.SimpleActionType;
     }
 }

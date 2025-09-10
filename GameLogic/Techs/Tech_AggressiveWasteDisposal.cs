@@ -2,18 +2,21 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggressiveWasteDisposalInteraction>
+public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggressiveWasteDisposalInteraction>,
+    IInteractionHandler<RefreshAggressiveWasteDisposalInteraction>
 {
     public Tech_AggressiveWasteDisposal() : base("aggressiveWasteDisposal",
         "Aggressive Waste Disposal",
-        "Destroy 1 forces on a planet adjacent to one you control.",
+        "Destroy 1 forces on a planet adjacent to one you control.\nRefresh this whenever you take the produce action",
         "A primitive civilisation like theirs will probably appreciate these thousand ton containers of miscellaneous industrial refuse!",
         ["Free Action", "Exhaust"])
     {
@@ -67,7 +70,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         tech.IsExhausted = true;
         
         var name = await player.GetNameAsync(false);
-        builder?.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal");
+        builder?.AppendContentNewline($"{name} removed 1 forces from {hex.Coordinates} using Aggressive Waste Disposal.");
         
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
         {
@@ -79,5 +82,38 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
+    }
+
+    public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+    {
+        if (gameEvent is GameEvent_PostProduce postProduce && postProduce.PlayerGameId == player.GamePlayerId)
+        {
+            return
+            [
+                new TriggeredEffect
+                {
+                    AlwaysAutoResolve = true,
+                    IsMandatory = true,
+                    DisplayName = DisplayName,
+                    ResolveInteractionData = new RefreshAggressiveWasteDisposalInteraction()
+                    {
+                        Game = game.DocumentId,
+                        ForGamePlayerId = player.GamePlayerId,
+                    }
+                }
+            ];
+        }
+        
+        return [];
+    }
+    
+    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        RefreshAggressiveWasteDisposalInteraction interactionData, Game game, IServiceProvider serviceProvider)
+    {
+        game.GetGamePlayerForInteraction(interactionData).GetPlayerTechById(Id).IsExhausted = false;
+        builder?.AppendContentNewline($"{DisplayName} has been refreshed!");
+        
+        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
     }
 }

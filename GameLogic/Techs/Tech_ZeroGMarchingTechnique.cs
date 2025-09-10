@@ -8,7 +8,7 @@ public class Tech_ZeroGMarchingTechnique : Tech
 {
     public Tech_ZeroGMarchingTechnique() : base(StaticId,
         "Zero G Marching Technique",
-        "Perform a Move action.",
+        "Perform a Move action. Exhaust the destination planet.",
         "Left! Right! Left! Right! Hey, you! Stop floating!",
         ["Free Action", "Exhaust"])
     {
@@ -33,4 +33,6 @@ class ZeroGMarchingTechnique_MovementFlowHandler : MovementFlowHandler<Tech_Zero
         ActionType = GameLogic.ActionType.Free;
         ExhaustTechId = Tech_ZeroGMarchingTechnique.StaticId;
     }
+    
+    
 }
