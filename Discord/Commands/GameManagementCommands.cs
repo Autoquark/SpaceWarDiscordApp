@@ -240,6 +240,12 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         }
 
         await TechOperations.UpdatePinnedTechMessage(game);
+
+        if (game.Players.Count == 2)
+        {
+            builder.AppendContentNewline(
+                "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
+        }
         
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
         

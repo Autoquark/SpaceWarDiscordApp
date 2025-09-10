@@ -333,10 +333,15 @@ public static class BoardImageGenerator
         {
             // Scoring token column
             //infoTable.DrawTextInCell(context, 0, 0, textOptions, "SCORING", InfoTextBrush);
-            
-            var iconCentre = summaryTable.GetCellInternalRect((int)SummaryTableColumn.ScoringToken, game.ScoringTokenPlayerIndex + 1).GetCentre();
-            context.DrawImageCentred(ScoringTokenIcon, iconCentre);
-            
+
+            if (game.Players.Count != 2)
+            {
+                var iconCentre = summaryTable
+                    .GetCellInternalRect((int)SummaryTableColumn.ScoringToken, game.ScoringTokenPlayerIndex + 1)
+                    .GetCentre();
+                context.DrawImageCentred(ScoringTokenIcon, iconCentre);
+            }
+
             // Player name column
             summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, 0, textOptions, "PLAYER", InfoTextBrush);
             

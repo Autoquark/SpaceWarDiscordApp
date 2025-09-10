@@ -185,20 +185,38 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         
         if (game.IsScoringTurn)
         {
-            List<(GamePlayer player, int)> playerScores = game.Players.Where(x => !x.IsEliminated)
+            List<(GamePlayer player, int score)> playerScores = game.Players.Where(x => !x.IsEliminated)
                 .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
                 .OrderByDescending(x => x.Item2)
                 .ToList();
 
-            if (playerScores[1].Item2 < playerScores[0].Item2)
+            if (playerScores[1].score < playerScores[0].score)
             {
                 var scoringPlayer = playerScores[0].player;
-                scoringPlayer.VictoryPoints++;
-                var name = await scoringPlayer.GetNameAsync(true);
-                builder?.AppendContentNewline($"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
-                    .WithAllowedMentions(scoringPlayer);
 
-                await CheckForVictoryAsync(builder, game);
+                // In a 2 player game, you can only score at the end of your opponent's turn
+                if (game.Players.Count > 2 || scoringPlayer != endingTurnPlayer)
+                {
+                    scoringPlayer.VictoryPoints++;
+                    var name = await scoringPlayer.GetNameAsync(true);
+                    builder?.AppendContentNewline(
+                            $"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
+                        .WithAllowedMentions(scoringPlayer);
+
+                    await CheckForVictoryAsync(builder, game);
+                }
+                else
+                {
+                    builder?.AppendContentNewline("Nobody scores this turn (in a 2 player game, you can only score at the end of your opponent's turn)");
+                }
+            }
+            else
+            {
+                var drawnPlayerNames = await playerScores.TakeWhile(x => x.score == playerScores[0].score)
+                    .ToAsyncEnumerable()
+                    .SelectAwait(async x => await x.player.GetNameAsync(false))
+                    .ToListAsync();
+                builder?.AppendContentNewline($"Nobody scores this turn (draw between {string.Join(", ", drawnPlayerNames)})");
             }
 
             // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)

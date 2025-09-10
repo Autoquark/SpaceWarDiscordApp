@@ -88,7 +88,7 @@ public class Game : FirestoreModel
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     
     public GamePlayer ScoringTokenPlayer => Players[ScoringTokenPlayerIndex];
-    public bool IsScoringTurn => CurrentTurnPlayerIndex == ScoringTokenPlayerIndex;
+    public bool IsScoringTurn => Players.Count == 2 || CurrentTurnPlayerIndex == ScoringTokenPlayerIndex;
 
     public GamePlayer GetGamePlayerByGameId(int id) => Players.First(x => x.GamePlayerId == id);
     public GamePlayer GetGamePlayerForInteraction(InteractionData.InteractionData interaction) => GetGamePlayerByGameId(interaction.ForGamePlayerId);
