@@ -12,7 +12,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
 {
     public Tech_IntensiveTraining() : base("intensive-training",
         "Intensive Training",
-        "Action, Exhaust: While this tech is exhausted, gain +1 Combat Strength when attacking.",
+        "Action, Exhaust: While this tech is exhausted, gain +1 Combat Strength.",
         "I'll teach you how to fire your guns when you've mastered standing in a straight line. Which may take some time, at this rate.")
     {
         HasSimpleAction = true;
