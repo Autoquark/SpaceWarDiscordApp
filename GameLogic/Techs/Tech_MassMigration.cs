@@ -12,6 +12,7 @@ public class Tech_MassMigration : Tech
         ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
+        SimpleActionType = ActionType.Free;
         _movementFlowHandler = new MassMigrationMovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];
     }

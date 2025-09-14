@@ -203,6 +203,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
+        // Shuffle turn order - this is also the map slice order
+        game.Players = game.Players.Shuffled().ToList();
+        
         MapGenerator.GenerateMap(game);
 
         game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
@@ -221,8 +224,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         
         game.TechMarket.Add(null);
         
-        // Shuffle turn order
-        game.Players = game.Players.Shuffled().ToList();
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
         

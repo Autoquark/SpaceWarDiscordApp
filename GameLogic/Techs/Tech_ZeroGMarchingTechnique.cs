@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -34,5 +35,11 @@ class ZeroGMarchingTechnique_MovementFlowHandler : MovementFlowHandler<Tech_Zero
         ExhaustTechId = Tech_ZeroGMarchingTechnique.StaticId;
     }
     
-    
+    public override Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<Tech_ZeroGMarchingTechnique> gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        game.GetHexAt(gameEvent.Destination).Planet!.IsExhausted = true;
+        builder?.AppendContentNewline($"{gameEvent.Destination} has been exhausted");
+        return base.HandleEventResolvedAsync(builder, gameEvent, game, serviceProvider);
+    }
 }

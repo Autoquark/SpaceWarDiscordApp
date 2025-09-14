@@ -40,12 +40,4 @@ public class SolarTricycle_MovementFlowHandler : MovementFlowHandler<Tech_SolarT
         StaticMaxAmountPerSource = 1;
         ActionType = tech.SimpleActionType;
     }
-
-    public override Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<Tech_SolarTricycle> gameEvent, Game game,
-        IServiceProvider serviceProvider)
-    {
-        game.GetHexAt(gameEvent.Destination).Planet!.IsExhausted = true;
-        builder?.AppendContentNewline($"{gameEvent.Destination} has been exhausted");
-        return base.HandleEventResolvedAsync(builder, gameEvent, game, serviceProvider);
-    }
 }
