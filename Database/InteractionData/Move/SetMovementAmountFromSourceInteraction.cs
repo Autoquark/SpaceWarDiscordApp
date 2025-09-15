@@ -16,8 +16,14 @@ public class SetMovementAmountFromSourceInteraction<T> : InteractionData
     public required int Amount { get; set; }
     
     [FirestoreProperty]
+    public required int? MinAmountPerSource { get; set; }
+    
+    [FirestoreProperty]
     public required int? MaxAmountPerSource { get; set; }
     
     [FirestoreProperty]
     public required string? TriggerToMarkResolvedId { get; set; }
+    
+    [FirestoreProperty]
+    public required bool IsFixedSource { get; set; }
 }

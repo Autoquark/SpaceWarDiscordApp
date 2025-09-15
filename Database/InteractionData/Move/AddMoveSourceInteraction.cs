@@ -16,5 +16,8 @@ public class AddMoveSourceInteraction<T> : InteractionData
     public required int? MaxAmountPerSource { get; set; }
     
     [FirestoreProperty]
+    public required int? MinAmountPerSource { get; set; }
+    
+    [FirestoreProperty]
     public required string? TriggerToMarkResolvedId { get; set; }
 }

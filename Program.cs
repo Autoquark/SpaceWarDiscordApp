@@ -41,7 +41,7 @@ static class Program
 
     public static bool IsTestEnvironment { get; private set; } = false;
 
-    private static Task _updateEmojiTask;
+    private static Task? _updateEmojiTask;
     
     static async Task Main()
     {
@@ -120,6 +120,7 @@ static class Program
         RegisterEverything(new RefreshCommands());
         RegisterEverything(new TechCommands());
         RegisterEverything(new GameplayCommands());
+        RegisterEverything(new FixupCommands());
         
         RegisterEverything(new GameFlowOperations());
         RegisterEverything(new ProduceOperations());

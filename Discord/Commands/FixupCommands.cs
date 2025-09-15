@@ -17,8 +17,14 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 /// </summary>
 [Command("fixup")]
 [RequireGameChannel(RequireGameChannelMode.RequiresSave)]
-public class FixupCommands
+public class FixupCommands : MovementFlowHandler<FixupCommands>
 {
+    public FixupCommands() : base(null)
+    {
+        ActionType = GameLogic.ActionType.Free;
+        RequireAdjacency = false;
+    }
+    
     /// <summary>
     /// Set the number and/or owner of forces on a planet
     /// </summary>
@@ -59,11 +65,15 @@ public class FixupCommands
             }
         }
 
+        var previous = hex.Planet.ForcesPresent;
+        var previousOwner = game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId);
         hex.Planet.SetForces(newAmount, newOwner?.GamePlayerId ?? GamePlayer.GamePlayerIdNone);
+        
+        var previousString = previous == 0 ? "(was empty)" : $"(was {previousOwner!.PlayerColourInfo.GetDieEmoji(previous)})";
 
         outcome.SetSimpleReply(newOwner != null
-            ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)}"
-            : $"Removed all forces from {coordinates}");
+            ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)} {previousString}"
+            : $"Removed all forces from {coordinates} {previousString}");
     }
     
     [Command("grantTech")]
@@ -468,6 +478,64 @@ public class FixupCommands
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         await TechOperations.CycleTechMarketAsync(builder, game);
         
+        outcome.ReplyBuilder = builder;
+    }
+
+    [Command("MoveForces")]
+    [Description("Move forces between planets")]
+    public async Task MoveForces(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1,
+        [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates? from = null,
+        [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates? to = null,
+        int? amount = null)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+
+        var gamePlayer = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByDiscordId(context.User.Id);
+        if (from.HasValue)
+        {
+            var fromHex = game.TryGetHexAt(from.Value);
+            if (fromHex == null)
+            {
+                builder.AppendContentNewline($"Invalid from coordinates {from.Value}");
+                outcome.RequiresSave = false;
+                outcome.ReplyBuilder = builder;
+                return;
+            }
+
+            if (fromHex.Planet == null)
+            {
+                builder.AppendContentNewline($"Can't move from {from.Value}, no planet");
+                outcome.RequiresSave = false;
+                outcome.ReplyBuilder = builder;
+                return;
+            }
+
+            if (fromHex.ForcesPresent == 0)
+            {
+                builder.AppendContentNewline($"Can't move from {from.Value}, no forces present");
+                outcome.RequiresSave = false;
+                outcome.ReplyBuilder = builder;
+                return;
+            }
+
+            gamePlayer = game.GetGamePlayerByGameId(fromHex.Planet.OwningPlayerId);
+        }
+
+        if (gamePlayer == null)
+        {
+            builder.AppendContentNewline("Must specify either the movement source or player to move forces for");
+            outcome.RequiresSave = false;
+            outcome.ReplyBuilder = builder;
+            return;
+        }
+        
+        await BeginPlanningMoveAsync(builder, game, gamePlayer, context.ServiceProvider, from, to, amount, amount);
+        
+        outcome.RequiresSave = true;
         outcome.ReplyBuilder = builder;
     }
 }

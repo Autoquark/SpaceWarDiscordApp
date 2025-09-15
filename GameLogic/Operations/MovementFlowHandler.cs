@@ -74,6 +74,12 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected int StaticMaxAmountPerSource { get; init; } = 99;
     
     /// <summary>
+    /// Minimum amount of forces that may be moved from each source. This can also be limited dynamically when calling
+    /// BeginPlanningMoveAsync
+    /// </summary>
+    protected int StaticMinAmountPerSource { get; init; } = 0;
+    
+    /// <summary>
     /// Whether to call GameFlowOperations.ContinueResolvingEventStackAsync after the move is complete
     /// </summary>
     protected bool ContinueResolvingStackAfterMove { get; init; } = false;
@@ -103,6 +109,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         IServiceProvider serviceProvider,
         HexCoordinates? fixedSource = null,
         HexCoordinates? fixedDestination = null,
+        int? dynamicMinAmountPerSource = null,
         int? dynamicMaxAmountPerSource = null,
         string? triggerToMarkResolved = null)
     {
@@ -115,14 +122,27 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
             if (fixedSource.HasValue)
             {
-                return await ShowSpecifyMovementAmountButtonsAsync(builder,
+                var amount = await GetOrPromptMovementAmountAsync(builder,
                     game,
                     player,
                     game.GetHexAt(fixedSource.Value),
                     game.GetHexAt(fixedDestination.Value),
+                    dynamicMinAmountPerSource ?? StaticMinAmountPerSource,
                     dynamicMaxAmountPerSource ?? StaticMaxAmountPerSource,
+                    isOnlySource: true,
                     triggerToMarkResolved,
                     serviceProvider);
+
+                if (amount.HasValue)
+                {
+                    player.PlannedMove.Sources.Add(new SourceAndAmount
+                    {
+                        Source = fixedSource.Value,
+                        Amount = amount.Value
+                    });
+                    await PerformMoveAsync(builder, game, player, triggerToMarkResolved, serviceProvider);
+                    return builder;
+                }
             }
             else
             {
@@ -130,6 +150,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                     game,
                     player,
                     game.GetHexAt(fixedDestination.Value),
+                    dynamicMinAmountPerSource ?? StaticMinAmountPerSource,
                     dynamicMaxAmountPerSource ?? StaticMaxAmountPerSource,
                     triggerToMarkResolved);
                 await InteractionsHelper.SetUpInteractionsAsync(interactions,
@@ -188,6 +209,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 EditOriginalMessage = true,
                 FixedSource = fixedSource,
                 MaxAmountPerSource = dynamicMaxAmountPerSource,
+                MinAmountPerSource = dynamicMinAmountPerSource,
                 TriggerToMarkResolvedId = triggerToMarkResolved
             }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         
@@ -227,28 +249,23 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         if (sources.Count == 1)
         {
             var onlySource = sources.Single();
-            // Only one planet we can move from and amount is fixed, perform move
-            if (MustMoveAll)
+            // Only one planet we can move from, skip straight to specifying amount
+            var amount = await GetOrPromptMovementAmountAsync(builder,
+                game,
+                player,
+                sources.Single(),
+                destination,
+                interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
+                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                isOnlySource: true,
+                interactionData.TriggerToMarkResolvedId,
+                serviceProvider);
+
+            // If the amount can be automatically determined, the move is now fully specified
+            if (amount != null)
             {
-                player.PlannedMove.Sources =
-                [
-                    new SourceAndAmount { Source = onlySource.Coordinates, Amount = onlySource.Planet!.ForcesPresent }
-                ];
+                player.PlannedMove.Sources = [new SourceAndAmount { Source = onlySource.Coordinates, Amount = amount.Value }];
                 await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
-            }
-            else
-            {
-                await MovementOperations.ShowPlannedMoveAsync(builder, player);
-                
-                // Only one planet we can move from, skip straight to specifying amount
-                await ShowSpecifyMovementAmountButtonsAsync(builder,
-                    game,
-                    player,
-                    sources.Single(),
-                    destination,
-                    interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
-                    interactionData.TriggerToMarkResolvedId,
-                    serviceProvider);
             }
             
             return new SpaceWarInteractionOutcome(true, builder);
@@ -261,6 +278,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             game,
             player, 
             destination,
+            interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
             interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
             interactionData.TriggerToMarkResolvedId);
         
@@ -308,6 +326,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 game,
                 player,
                 game.GetHexAt(player.PlannedMove.Destination),
+                interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
                 interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                 interactionData.TriggerToMarkResolvedId));
             
@@ -318,15 +337,38 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             return new SpaceWarInteractionOutcome(true, builder);
         }
 
-        await ShowSpecifyMovementAmountButtonsAsync(
+        var amount = await GetOrPromptMovementAmountAsync(
             builder,
             game,
             player,
             game.GetHexAt(interactionData.Source),
             game.GetHexAt(player.PlannedMove.Destination),
+            interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
             interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+            false,
             interactionData.TriggerToMarkResolvedId,
             serviceProvider);
+
+        if (amount.HasValue)
+        {
+            player.PlannedMove.Sources.Add(new SourceAndAmount
+            {
+                Source = interactionData.Source,
+                Amount = amount.Value
+            });
+            
+            // There must be other possible sources, or we would not be specifying source via buttons, so go back to
+            // source selection
+            await ShowSpecifyMovementSourceButtonsAsync(builder,
+                game,
+                player,
+                game.GetHexAt(player.PlannedMove.Destination),
+                interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
+                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                interactionData.TriggerToMarkResolvedId);
+            
+            return new SpaceWarInteractionOutcome(true, builder);
+        }
         
         return new SpaceWarInteractionOutcome(false, builder);
     }
@@ -367,7 +409,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         var interactions = new List<InteractionData>();
         // If this was the only place we could move from, and a nonzero amount was specified, perform the move now
         var sources = GetAllowedMoveSources(game, player, destinationHex);
-        if ((sources.Count == 1 || !AllowManyToOne) && entry != null)
+        if ((sources.Count == 1 || !AllowManyToOne || interactionData.IsFixedSource) && entry != null)
         {
             await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
         }
@@ -379,6 +421,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 game,
                 player,
                 destinationHex,
+                interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
                 interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                 interactionData.TriggerToMarkResolvedId));
             
@@ -404,18 +447,32 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return new SpaceWarInteractionOutcome(true, builder);
     }
 
-    protected async Task<DiscordMultiMessageBuilder> ShowSpecifyMovementAmountButtonsAsync(DiscordMultiMessageBuilder builder, Game game,
-        GamePlayer player, BoardHex source, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId, IServiceProvider serviceProvider) 
+    protected async Task<int?> GetOrPromptMovementAmountAsync(DiscordMultiMessageBuilder builder,
+        Game game,
+        GamePlayer player,
+        BoardHex source,
+        BoardHex destination,
+        int dynamicMinAmountPerSource,
+        int dynamicMaxAmountPerSource,
+        bool isOnlySource,
+        string? triggerToMarkResolvedId,
+        IServiceProvider serviceProvider) 
     {
-        builder.AppendContentNewline($"{GetMoveName()}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
-
         if (source.Planet == null)
         {
             throw new Exception();
         }
         
         var max = Math.Min(source.Planet.ForcesPresent, dynamicMaxAmountPerSource);
-        var options = MustMoveAll ? [0, source.Planet.ForcesPresent] : Enumerable.Range(0, max + 1).ToArray();
+        
+        var options = MustMoveAll ? [0, source.Planet.ForcesPresent] : Enumerable.Range(dynamicMinAmountPerSource, max + 1 - dynamicMinAmountPerSource).ToArray();
+        var existing = player.PlannedMove?.Sources.FirstOrDefault(x => x.Source == source.Coordinates);
+
+        // If the options are (zero and) one value and we don't already have an amount for this source, assume the (non-zero) value
+        if ((options.Length <= 2 && existing == null) || options.Length == 1)
+        {
+            return options.Last();
+        }
 
         var interactionIds = await Program.FirestoreDb.RunTransactionAsync(transaction
             => options.Select(x => InteractionsHelper.SetUpInteraction(
@@ -426,19 +483,29 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
                         EditOriginalMessage = true,
+                        MinAmountPerSource = dynamicMinAmountPerSource,
                         MaxAmountPerSource = dynamicMaxAmountPerSource,
-                        TriggerToMarkResolvedId = triggerToMarkResolvedId
+                        TriggerToMarkResolvedId = triggerToMarkResolvedId,
+                        IsFixedSource = isOnlySource,
                     }, transaction, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId))
                 .ToList());
 
+        await MovementOperations.ShowPlannedMoveAsync(builder, player);
+        builder.AppendContentNewline($"{GetMoveName()}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
         builder.AppendButtonRows(Enumerable.Range(0, max + 1).Select(x =>
             new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
 
-        return builder;
+        return null;
     }
 
     protected async Task<List<AddMoveSourceInteraction<T>>> ShowSpecifyMovementSourceButtonsAsync(
-        DiscordMultiMessageBuilder builder, Game game, GamePlayer player, BoardHex destination, int dynamicMaxAmountPerSource, string? triggerToMarkResolvedId)
+        DiscordMultiMessageBuilder builder,
+        Game game,
+        GamePlayer player,
+        BoardHex destination,
+        int dynamicMinAmountPerSource,
+        int dynamicMaxAmountPerSource,
+        string? triggerToMarkResolvedId)
     {
         var sources = GetAllowedMoveSources(game, player, destination);
         sources.Remove(destination);
@@ -460,6 +527,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = true,
                 MaxAmountPerSource = dynamicMaxAmountPerSource,
+                MinAmountPerSource = dynamicMinAmountPerSource,
                 TriggerToMarkResolvedId = triggerToMarkResolvedId
             })
             .ToList();
