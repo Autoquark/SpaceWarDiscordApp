@@ -4,6 +4,7 @@ using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
@@ -500,7 +501,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             var fromHex = game.TryGetHexAt(from.Value);
             if (fromHex == null)
             {
-                builder.AppendContentNewline($"Invalid from coordinates {from.Value}");
+                builder.AppendContentNewline($"Invalid 'from' coordinates {from.Value}");
                 outcome.RequiresSave = false;
                 outcome.ReplyBuilder = builder;
                 return;
@@ -534,6 +535,52 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         
         await BeginPlanningMoveAsync(builder, game, gamePlayer, context.ServiceProvider, from, to, amount, amount);
+        
+        outcome.RequiresSave = true;
+        outcome.ReplyBuilder = builder;
+    }
+
+    [Command("Produce")]
+    [Description("Produce on a planet")]
+    public async Task Produce(CommandContext context,
+        [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates location)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        
+        var hex = game.TryGetHexAt(location);
+        if (hex == null)
+        {
+            builder.AppendContentNewline($"Invalid coordinates {location}");
+            outcome.RequiresSave = false;
+            outcome.ReplyBuilder = builder;
+            return;
+        }
+
+        if (hex.Planet == null)
+        {
+            builder.AppendContentNewline($"Can't produce at {location}, no planet");
+            outcome.RequiresSave = false;
+            outcome.ReplyBuilder = builder;
+            return;
+        }
+
+        if (hex.IsNeutral)
+        {
+            builder.AppendContentNewline($"Can't produce at {location}, planet is unowned");
+            outcome.RequiresSave = false;
+            outcome.ReplyBuilder = builder;
+            return;
+        }
+
+        await GameFlowOperations.PushGameEventsAsync(builder, game, context.ServiceProvider, new GameEvent_BeginProduce
+        {
+            Location = location
+        });
+        
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
         
         outcome.RequiresSave = true;
         outcome.ReplyBuilder = builder;
