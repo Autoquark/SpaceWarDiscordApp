@@ -65,12 +65,11 @@ public class Tech_WarpNodes : Tech,
         var playerTech = player.GetPlayerTechById<PlayerTech_WarpNodes>(Id);
         playerTech.Source = interactionData.Source;
 
-        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, new GameEvent_ChooseWarpNodesDestination
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_ChooseWarpNodesDestination
         {
             PlayerGameId = player.GamePlayerId,
             Source = interactionData.Source
         });
-        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
@@ -116,8 +115,7 @@ public class Tech_WarpNodes : Tech,
             });
         }
         
-        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, events);
-        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, events);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

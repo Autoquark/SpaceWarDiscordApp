@@ -551,9 +551,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return confirmInteraction;
     }
 
-    protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
-    {
-        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, 
+    protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider) =>
+        (await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, 
             (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider, Tech))
             .Append(new GameEvent_MovementFlowComplete<T>
             {
@@ -561,10 +560,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 TriggerToMarkResolved = triggerToMarkResolved,
                 Sources = player.PlannedMove!.Sources.ToList(),
                 Destination = player.PlannedMove!.Destination
-            }));
-        return (await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
-    }
-    
+            })))!;
+
     protected virtual List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
         => (RequireAdjacency
                 ? BoardUtils.GetStandardMoveSources(game, destination, player)

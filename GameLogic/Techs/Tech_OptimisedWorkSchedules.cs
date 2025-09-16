@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.OptimisedWorkSchedules;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -48,12 +49,17 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         TargetOptimisedWorkSchedulesInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
-        await ProduceOperations.PushProduceOnPlanetAsync(builder, game, game.GetHexAt(interactionData.Target), serviceProvider);
-        
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
-        
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_BeginProduce
+            {
+                Location = interactionData.Target,
+            },
+            new GameEvent_ActionComplete
+            {
+                ActionType = ActionType.Main
+            });
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

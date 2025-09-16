@@ -575,12 +575,10 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
 
-        await GameFlowOperations.PushGameEventsAsync(builder, game, context.ServiceProvider, new GameEvent_BeginProduce
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, context.ServiceProvider, new GameEvent_BeginProduce
         {
             Location = location
         });
-        
-        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
         
         outcome.RequiresSave = true;
         outcome.ReplyBuilder = builder;

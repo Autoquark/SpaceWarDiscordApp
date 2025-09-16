@@ -302,6 +302,12 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         return builder;
     }
 
+    public static async Task<DiscordMultiMessageBuilder?> PushGameEventsAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
+        IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
+    {
+        await PushGameEventsAsync(builder, game, serviceProvider, gameEvents);
+        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+    }
     public static async Task PushGameEventsAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {

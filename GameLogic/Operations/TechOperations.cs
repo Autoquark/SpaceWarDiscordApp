@@ -208,9 +208,12 @@ public static class TechOperations
             thread = await rootMessage.CreateThreadAsync("Game Techs", DiscordAutoArchiveDuration.Week);
         }
 
+        var rootBuilder = new DiscordMessageBuilder().EnableV2Components()
+            .AppendContentNewline(
+            "This pinned thread will always be updated with descriptions of all the techs currently relevant to this game");
+        await rootMessage.ModifyAsync(rootBuilder);
+
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        //builder.AppendContentNewline("This pinned thread will always be updated with descriptions of all the techs currently relevant to this game");
-        //builder.NewMessage();
         var allTechs = game.UniversalTechs
             .Concat(game.TechMarket.WhereNonNull())
             .Concat(game.Players.SelectMany(x => x.Techs.Select(y => y.TechId)))

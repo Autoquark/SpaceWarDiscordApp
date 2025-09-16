@@ -51,16 +51,13 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
             throw new Exception();
         }
 
-        await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, new GameEvent_BeginProduce
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_BeginProduce
         {
             Location = interactionData.Hex
         }, new GameEvent_ActionComplete
         {
             ActionType = ActionType.Main
         });
-        //await ProduceOperations.ProduceOnPlanetAsync(builder, game, hex, serviceProvider);
-        //await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
-        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

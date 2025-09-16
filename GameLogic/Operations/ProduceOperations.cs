@@ -8,8 +8,10 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, IEventResolvedHandler<GameEvent_PostProduce>
 {
-    public static async Task<DiscordMultiMessageBuilder?> PushProduceOnPlanetAsync(DiscordMultiMessageBuilder? builder, Game game, BoardHex hex, IServiceProvider serviceProvider) 
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
+        IServiceProvider serviceProvider)
     {
+        var hex = game.GetHexAt(gameEvent.Location);
         if (hex.Planet == null)
         {
             throw new Exception();
@@ -79,8 +81,4 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
 
         return builder;
     }
-
-    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
-        IServiceProvider serviceProvider)
-        => await PushProduceOnPlanetAsync(builder, game, game.GetHexAt(gameEvent.Location), serviceProvider);
 }
