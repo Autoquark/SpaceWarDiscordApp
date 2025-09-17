@@ -102,6 +102,8 @@ public static class BoardImageGenerator
     private static readonly Dictionary<PlayerColour, Image> ProduceRecapIcons = new();
     private static readonly Dictionary<PlayerColour, Image> TechRecapIcons = new();
     private const int PlanetRecapIconSize = 48;
+    private static readonly Pen SolidLinePen = new SolidPen(Color.Black, PreviousMoveThickness);
+    private static readonly Pen DottedLinePen = new PatternPen(Color.Black, PreviousMoveThickness, [2.0f, 2.0f]);
     
     // Info tables (general)
     private const int InfoTableRowHeight = 76;
@@ -791,24 +793,20 @@ public static class BoardImageGenerator
                                 PreviousMoveArrowOffset);
                             var end = destinationHexCentre.LerpTowardsDistance(sourceHexCentre,
                                 PreviousMoveArrowOffset);
-                            
-                            var bezier = new Path(new CubicBezierLineSegment(start, controlPoint, controlPoint, end))
-                                .GenerateOutline(PreviousMoveThickness);
+
+                            var bezier = new Path(new CubicBezierLineSegment(start, controlPoint, controlPoint, end));
 
                             var arrowhead = new Path(new LinearLineSegment(end + (end - controlPoint).Normalised().Rotate(135) * 30.0f,
                                     end,
                                     end + (end - controlPoint).Normalised().Rotate(-135) * 30.0f))
                                 .GenerateOutline(PreviousMoveThickness);
-
                             
                             image.Mutate(x =>
                             {
-                                x.Fill(colour, bezier).Fill(colour, arrowhead);
-
-                                if (movement.IsTechMove)
-                                {
-                                    x.DrawImageCentred(TechRecapIcons[player.PlayerColour], techIconLocation);
-                                }
+                                Pen pen = movement.IsTechMove
+                                    ? Pens.Dash(player.PlayerColourInfo.ImageSharpColor, PreviousMoveThickness)
+                                    : new SolidPen(player.PlayerColourInfo.ImageSharpColor, PreviousMoveThickness);
+                                x.Draw(pen, bezier).Fill(colour, arrowhead);
                             });
                         }
                         break;
