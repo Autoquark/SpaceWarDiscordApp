@@ -356,17 +356,28 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Source = interactionData.Source,
                 Amount = amount.Value
             });
+
+            // If there are any other possible sources, go back to source selection
+            if (AllowManyToOne && GetAllowedMoveSources(game, player, game.GetHexAt(player.PlannedMove.Destination))
+                .ExceptBy(player.PlannedMove.Sources.Select(x => x.Source), x => x.Coordinates).Any())
+            {
+                // There must be other possible sources, or we would not be specifying source via buttons, so go back to
+                // source selection
+                var interactions = await ShowSpecifyMovementSourceButtonsAsync(builder,
+                    game,
+                    player,
+                    game.GetHexAt(player.PlannedMove.Destination),
+                    interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
+                    interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
+                    interactionData.TriggerToMarkResolvedId);
+                await InteractionsHelper.SetUpInteractionsAsync(interactions, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }
+            else
+            {
+                await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
+            }
             
-            // There must be other possible sources, or we would not be specifying source via buttons, so go back to
-            // source selection
-            await ShowSpecifyMovementSourceButtonsAsync(builder,
-                game,
-                player,
-                game.GetHexAt(player.PlannedMove.Destination),
-                interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
-                interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
-                interactionData.TriggerToMarkResolvedId);
-            
+            // Require save because of planned move data change
             return new SpaceWarInteractionOutcome(true, builder);
         }
         
@@ -428,6 +439,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             interactions.Add(ShowConfirmMoveButtonAsync(builder, game, player, interactionData.TriggerToMarkResolvedId));
         }
         
+        // Save the game manually as we're setting up interactions anyway
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
             transaction.Set(game);
@@ -515,6 +527,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var name = await player.GetNameAsync(true);
+        await MovementOperations.ShowPlannedMoveAsync(builder, player);
         builder.AppendContentNewline($"{GetMoveName()}: {name}, choose a planet to move forces from: ")
             .WithAllowedMentions(player);
         builder.AddActionRowComponent();
