@@ -82,13 +82,20 @@ public static class InteractionDispatcher
         {
             await args.Interaction.DeferAsync(interactionData.EphemeralResponse);
         }
-        
-        var game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameAsync(interactionData.Game!));
+
+        var cache = client.ServiceProvider.GetRequiredService<GameCache>();
+        var game = cache.GetGame(interactionData.Game!);
+        if (game == null)
+        {
+            game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameAsync(interactionData.Game!));
+        }
 
         if (game == null)
         {
             throw new Exception("Game not found");
         }
+        
+        cache.AddOrUpdateGame(game);
 
         if (!interactionData.UserAllowedToTrigger(game, args.Interaction.User))
         {
@@ -104,6 +111,10 @@ public static class InteractionDispatcher
         contextData.User = args.Interaction.User;
         
         var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
+        
+        // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
+        // over to subsequent commands
+        contextData.Game.HavePrintedSelectActionThisInteraction = false;
 
         if (outcome.RequiresSave)
         {

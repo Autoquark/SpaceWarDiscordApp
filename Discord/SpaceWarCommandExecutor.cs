@@ -34,13 +34,20 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         var requiresGame = requiresGameAttribute != null && requiresGameAttribute.Mode != RequireGameChannelMode.DoNotRequire;
         if (requiresGame)
         {
+            var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
             // Attempt to find the relevant game for this channel and store it in the context data
-            contextData.Game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel.Id), cancellationToken: cancellationToken);
+            contextData.Game = cache.GetGame(context.Channel.Id) 
+                ?? await Program.FirestoreDb.RunTransactionAsync(
+                    transaction => transaction.GetGameForChannelAsync(context.Channel.Id),
+                    cancellationToken: cancellationToken);
+
             if (contextData.Game == null)
             {
                 await context.EditResponseAsync("This command can only be used from a game channel");
                 return;
             }
+            
+            cache.AddOrUpdateGame(contextData.Game!);
             
             // Set the default value in the outcome from any attribute that exists. Command code can override by setting
             // this value dynamically if necessary.
@@ -56,6 +63,10 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         // via SpaceWarCommandOutcome
         if (requiresGame)
         {
+            // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
+            // over to subsequent commands
+            contextData.Game.HavePrintedSelectActionThisInteraction = false;
+            
             if (!outcome.RequiresSave.HasValue)
             {
                 outcome.SetSimpleReply("ERROR: Command failed to set RequiresSave. Please report this to the developer.");

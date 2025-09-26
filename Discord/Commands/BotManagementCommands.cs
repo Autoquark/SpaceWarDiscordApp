@@ -42,23 +42,51 @@ public class BotManagementCommands
     [Command("NewChannelForGame")]
     public static async Task NewChannelForGame(CommandContext context, string gameId)
     {
-        var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
-            transaction.GetGameAsync(transaction.Database.Games().Document(gameId)));
-
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
+
         outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        if (game == null)
+
+        var channel = await context.Guild!.CreateChannelAsync(game.Name, DiscordChannelType.Text);
+        game.GameChannelId = channel.Id;
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+
+        outcome.ReplyBuilder.AppendContentNewline($"Created channel {channel.Mention}");
+    }
+
+    [Command("ClearGameCache")]
+    public static async Task ClearGameCache(CommandContext context, string? gameId = null)
+    {
+        var cache = context.ServiceProvider.GetRequiredService<GameCache>();
+        var outcome = context.Outcome();
+        
+        if (gameId != null)
         {
-            outcome.ReplyBuilder.AppendContentNewline($"Game not found");
+            var documentReference = Program.FirestoreDb.Games().Document(gameId);
+            cache.Clear(documentReference);
+            outcome.SetSimpleReply($"Cache cleared for {documentReference}");
         }
         else
         {
-            var channel = await context.Guild!.CreateChannelAsync(game.Name, DiscordChannelType.Text);
-            game.GameChannelId = channel.Id;
-            await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+            var channelGame = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel.Id));
+            if (channelGame == null)
+            {
+                outcome.SetSimpleReply("No game id given or game found for this channel");
+                return;
+            }
             
-            outcome.ReplyBuilder.AppendContentNewline($"Created channel {channel.Mention}");
+            cache.Clear(channelGame);
+            outcome.SetSimpleReply($"Cache cleared for {channelGame.DocumentId}");
         }
     }
-    
+
+    [Command("ClearAllGameCache")]
+    public static async Task ClearAllGameCache(CommandContext context)
+    {
+        var cache = context.ServiceProvider.GetRequiredService<GameCache>();
+        var outcome = context.Outcome();
+        cache.ClearAll();
+        
+        outcome.SetSimpleReply("Cache cleared for all games");
+    }
 }

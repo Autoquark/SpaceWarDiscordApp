@@ -12,6 +12,7 @@ using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SpaceWarDiscordApp.AI.Services;
+using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -85,6 +86,7 @@ static class Program
                 var httpClient = serviceProvider.GetRequiredService<HttpClient>();
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
+            x.AddSingleton<GameCache>();
         });
         discordBuilder.UseCommands((_, extension) =>
         {
