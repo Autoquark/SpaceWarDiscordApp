@@ -1,12 +1,15 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord;
 
-public static class DiscordHelpers
+public static partial class DiscordHelpers
 {
+    private static Regex emojiReplacementRegex = MyRegex();
+    
     public static DiscordButtonComponent CreateButtonForHex(Game game, BoardHex hex, string interactionId, DiscordButtonStyle style = DiscordButtonStyle.Primary)
     {
         var emoji = hex.GetDieEmoji(game);
@@ -24,7 +27,11 @@ public static class DiscordHelpers
     public static string ReplaceIconTokens(this string text)
     {
         StringBuilder stringBuilder = new(text);
-        return stringBuilder.Replace("$science$", Program.AppEmojisByName["science"].ToString()).ToString();
+        foreach (Match match in emojiReplacementRegex.Matches(text))
+        {
+            stringBuilder.Replace(match.Value, Program.AppEmojisByName[match.Value.Substring(1, match.Value.Length - 2)].ToString());
+        }
+        return stringBuilder.ToString();
     }
 
     public static string FormatToDiscordMarkdown(IEnumerable<FormattedTextRun> formattedTextRuns)
@@ -73,4 +80,7 @@ public static class DiscordHelpers
     public static StringBuilder DiscordHeading3(this StringBuilder message) => new($"### {message}");
     public static string DiscordSubtext(this string message) => $"-# {message}";
     public static StringBuilder DiscordSubtext(this StringBuilder message) => new($"-# {message}");
+    
+    [GeneratedRegex(@"\$[^$]+\$")]
+    private static partial Regex MyRegex();
 }
