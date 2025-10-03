@@ -48,11 +48,19 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             }
             
             cache.AddOrUpdateGame(contextData.Game!);
+
+            if (requiresGameAttribute!.RequiredPhase != null &&
+                contextData.Game.Phase != requiresGameAttribute.RequiredPhase)
+            {
+                await context.EditResponseAsync($"This command can only be used in the {requiresGameAttribute.RequiredPhase} phase of the game.");
+                return;
+            }
             
             // Set the default value in the outcome from any attribute that exists. Command code can override by setting
             // this value dynamically if necessary.
             outcome.RequiresSave = requiresGameAttribute!.Mode == RequireGameChannelMode.RequiresSave;
         }
+        
         
         contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
         contextData.User = context.User;

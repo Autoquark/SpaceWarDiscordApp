@@ -40,6 +40,9 @@ public class GamePlayer
 
     [FirestoreProperty]
     public bool IsEliminated { get; set; }
+    
+    [FirestoreProperty]
+    public string StartingTechId { get; set; } = "";
 
     [FirestoreProperty]
     private IList<DocumentReference> TechsDocuments { get; set; } = [];

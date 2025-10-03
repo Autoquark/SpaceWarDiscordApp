@@ -61,6 +61,12 @@ public class Game : FirestoreModel
 
     [FirestoreProperty]
     public List<string> UniversalTechs { get; set; } = [];
+
+    [FirestoreProperty]
+    public ulong SetupMessageId { get; set; } = 0;
+    
+    [FirestoreProperty]
+    public GameRules Rules { get; set; } = new();
     
     /// <summary>
     /// Market techs, with the first being the most expensive.
@@ -68,6 +74,15 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public List<string?> TechMarket { get; set; } = [];
     
+    /// <summary>
+    /// Whether the current player has taken any action (main or free) this turn
+    /// </summary>
+    [FirestoreProperty]
+    public bool AnyActionTakenThisTurn { get; set; }
+    
+    /// <summary>
+    /// Whether the current player has taken their main action for this turn
+    /// </summary>
     [FirestoreProperty]
     public bool ActionTakenThisTurn { get; set; }
     
@@ -76,6 +91,7 @@ public class Game : FirestoreModel
 
     [FirestoreProperty]
     private IList<DocumentReference> EventsDocuments { get; set; } = [];
+
     
     /// <summary>
     /// Stack of events currently being resolved

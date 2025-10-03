@@ -471,6 +471,29 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 break;
             }
         }
+
+        // Check if any players still need to select starting tech
+        if (game.Rules.StartingTechRule == StartingTechRule.OneUniversal)
+        {
+            var notChosen = game.Players.Where(x => string.IsNullOrEmpty(x.StartingTechId))
+                .ToList();
+
+            if (notChosen.Count != 0)
+            {
+                builder?.AppendContentNewline(string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) + ", please choose a starting tech.");
+
+                var interactions = await InteractionsHelper.SetUpInteractionsAsync(game.UniversalTechs.Select(x =>
+                    new SetPlayerStartingTechInteraction
+                    {
+                        ForGamePlayerId = -1,
+                        Game = game.DocumentId,
+                        TechId = x
+                    }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                
+                builder?.AppendButtonRows(game.UniversalTechs.Zip(interactions, (techId, interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionId, Tech.TechsById[techId].DisplayName)));
+                return builder;
+            }
+        }
         
         return (await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider))!;
     }
@@ -574,5 +597,27 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         }
         
         triggerList!.Remove(triggeredEffect);
+    }
+    
+    public static async Task<DiscordMultiMessageBuilder?> SetPlayerStartingTechAsync(DiscordMultiMessageBuilder? builder, Game game, GamePlayer player, string techId, IServiceProvider serviceProvider)
+    {
+        player.StartingTechId = techId;
+        
+        var notChosenCount = game.Players.Count(x => string.IsNullOrEmpty(x.StartingTechId));
+        if (notChosenCount == 0)
+        {
+            foreach (var eachPlayer in game.Players)
+            {
+                var tech = Tech.TechsById[eachPlayer.StartingTechId];
+                eachPlayer.Techs.Add(tech.CreatePlayerTech(game, eachPlayer));
+            }
+            await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        }
+        else
+        {
+            builder?.AppendContentNewline(await player.GetNameAsync(false) + $" has chosen their starting tech (waiting for {notChosenCount} more players)");
+        }
+
+        return builder;
     }
 }

@@ -22,7 +22,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 {
     public FixupCommands() : base(null)
     {
-        ActionType = GameLogic.ActionType.Free;
+        ActionType = null;
         RequireAdjacency = false;
     }
     
@@ -315,6 +315,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         game.ActionTakenThisTurn = false;
+        game.AnyActionTakenThisTurn = false;
         game.IsWaitingForTechPurchaseDecision = false;
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
@@ -582,5 +583,38 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         outcome.RequiresSave = true;
         outcome.ReplyBuilder = builder;
+    }
+
+    [Command("RefreshSettingsMessage")]
+    public async Task RefreshSettingsMessage(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
+        
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+            .AppendContentNewline($"Updated pinned tech message");
+        
+        outcome.ReplyBuilder = builder;
+        outcome.RequiresSave = false;
+    }
+
+    [Command("SetPlayerStartingTech")]
+    public async Task SetStartingTech(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var gamePlayer = game.GetGamePlayerByGameId(player);
+        
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        
+        await GameFlowOperations.SetPlayerStartingTechAsync(builder, game, gamePlayer, techId, context.ServiceProvider);
+        
+        outcome.ReplyBuilder = builder;
+        outcome.RequiresSave = true;
     }
 }

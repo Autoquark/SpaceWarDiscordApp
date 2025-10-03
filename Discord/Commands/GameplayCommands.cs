@@ -4,12 +4,15 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ContextChecks;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>
+public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>, IInteractionHandler<SetPlayerStartingTechInteraction>
 {
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
@@ -58,6 +61,22 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         IServiceProvider serviceProvider)
     {
         await GameFlowOperations.DeclineOptionalTriggersAsync(builder, game, serviceProvider);
+        return new SpaceWarInteractionOutcome(true, builder);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetPlayerStartingTechInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        var discordUser = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().User;
+        var gamePlayer = game.TryGetGamePlayerByDiscordId(discordUser.Id);
+
+        if (gamePlayer == null)
+        {
+            return new SpaceWarInteractionOutcome(false, builder);
+        }
+        
+        await GameFlowOperations.SetPlayerStartingTechAsync(builder, game, gamePlayer, interactionData.TechId, serviceProvider);
+        
         return new SpaceWarInteractionOutcome(true, builder);
     }
 }

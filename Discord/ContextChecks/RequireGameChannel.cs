@@ -1,4 +1,5 @@
 using DSharpPlus.Commands.ContextChecks;
+using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.Discord.ContextChecks;
 
@@ -30,5 +31,12 @@ public enum RequireGameChannelMode
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public class RequireGameChannelAttribute(RequireGameChannelMode mode) : Attribute
 {
+    public RequireGameChannelAttribute(RequireGameChannelMode mode, GamePhase requiredPhase) : this(mode)
+    {
+        RequiredPhase = requiredPhase;
+    }
+    
     public RequireGameChannelMode Mode { get; } = mode;
+    
+    public GamePhase? RequiredPhase { get; } = null;
 }

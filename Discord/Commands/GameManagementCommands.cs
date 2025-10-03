@@ -6,6 +6,8 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.Database.InteractionData.GameRules;
+using SpaceWarDiscordApp.Database.InteractionData.Tech.DimensionalOrigami;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -13,8 +15,8 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-[RequireGameChannel(RequireGameChannelMode.RequiresSave)]
-public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
+[RequireGameChannel(RequireGameChannelMode.RequiresSave, GamePhase.Setup)]
+public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>
 {
     private class NounProjectImageCredit
     {
@@ -84,9 +86,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
                        ?? await context.Guild.CreateChannelCategoryAsync(GameChannelCategoryName);
         var gameChannel = await context.Guild.CreateTextChannelAsync(channelName, category);
         
-        var gameRef = Program.FirestoreDb.Games().Document();
         var game = new Game
         {
+            DocumentId = Program.FirestoreDb.Games().Document(),
             Name = name,
             Players =
             [
@@ -97,10 +99,10 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
                     PlayerColour = PlayerColours[0]
                 }
             ],
-            GameChannelId = gameChannel.Id,
+            GameChannelId = gameChannel.Id
         };
 
-        for (int i = 0; i < dummyPlayers; i++)
+        for (var i = 0; i < dummyPlayers; i++)
         {
             game.Players.Add(new GamePlayer
             {
@@ -112,7 +114,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
 
         var interactionId = await InteractionsHelper.SetUpInteractionAsync(new JoinGameInteraction
         {
-            Game = gameRef,
+            Game = game.DocumentId,
             ForGamePlayerId = -1,
             EphemeralResponse = true
         }, context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
@@ -125,8 +127,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         await context.RespondAsync(builder);
         await gameChannel.SendMessageAsync($"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To invite specific players use /invite from this channel.");
         game.PinnedTechMessageId = (await gameChannel.SendMessageAsync(x => x.EnableV2Components().AppendContentNewline("(This message reserved for future use)"))).Id;
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Create(gameRef, game));
+        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Create(game.DocumentId, game));
     }
 
     [Command("Invite")]
@@ -248,7 +251,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
                 "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
         }
         
-        await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }
@@ -306,5 +309,17 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>
         await Program.DiscordClient.SendMessageAsync(await Program.DiscordClient.GetChannelAsync(game.GameChannelId), replyBuilder);
         
         return new SpaceWarInteractionOutcome(true, builder);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetStartingTechRuleInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        game.Rules.StartingTechRule = interactionData.Value;
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true, builder)
+        {
+            DeleteOriginalMessage = true
+        };
     }
 }

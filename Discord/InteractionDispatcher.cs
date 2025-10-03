@@ -137,36 +137,42 @@ public static class InteractionDispatcher
         if (outcome.ReplyBuilder != null)
         {
             var firstBuilder = outcome.ReplyBuilder.Builders.First();
-            if (outcome.DeleteOriginalMessage)
+            if (firstBuilder.Components.Count > 0)
             {
-                if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                if (outcome.DeleteOriginalMessage)
                 {
-                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                    if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                    }
+                    else
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(
+                            new DiscordFollowupMessageBuilder()
+                                .EnableV2Components()
+                                .AppendContentNewline(
+                                    $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                    }
                 }
                 else
                 {
-                    await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder()
-                            .EnableV2Components()
-                            .AppendContentNewline($"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                    if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
+                    {
+                        await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+                    }
+                    else if (outcome.ReplyBuilder is not null)
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(
+                            new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
+                                $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
+                    }
                 }
-            }
-            else
-            {
-                if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
-                {
-                    await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
-                }
-                else if(outcome.ReplyBuilder is not null)
-                {
-                    await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline($"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
-                }
-            }
 
-            foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1).Cast<DiscordFollowupMessageBuilder>())
-            {
-                await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
+                             .Cast<DiscordFollowupMessageBuilder>())
+                {
+                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                }
             }
         }
     }
