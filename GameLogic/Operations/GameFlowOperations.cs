@@ -135,6 +135,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             Debug.Assert(!game.ActionTakenThisTurn);
             game.ActionTakenThisTurn = true;
         }
+        
+        game.AnyActionTakenThisTurn = true;
 
         return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
     }

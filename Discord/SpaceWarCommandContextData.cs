@@ -13,4 +13,6 @@ public class SpaceWarCommandContextData
     public required GlobalData GlobalData { get; set; }
     
     public required DiscordUser User { get; set; }
+    
+    public required DiscordMessage? InteractionMessage { get; set; }
 }

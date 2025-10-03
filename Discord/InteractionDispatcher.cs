@@ -109,6 +109,7 @@ public static class InteractionDispatcher
         contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
         contextData.Game = game;
         contextData.User = args.Interaction.User;
+        contextData.InteractionMessage = args.Interaction.Message;
         
         var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
         

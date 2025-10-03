@@ -50,7 +50,17 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
+        // Make sure there's some record of this turn if they did nothing for some reason
+        if (!game.AnyActionTakenThisTurn)
+        {
+            builder?.AppendContentNewline($"{await game.CurrentTurnPlayer.GetNameAsync(false)} ends their turn without taking any actions");
+            builder?.NewMessage();
+        }
+        
         await GameFlowOperations.NextTurnAsync(builder, game, serviceProvider);
+        
+        // If we're ending the turn, delete the original turn action prompt message to condense the game history
+        await (serviceProvider.GetRequiredService<SpaceWarCommandContextData>().InteractionMessage?.DeleteAsync() ?? Task.CompletedTask);
 
         return new SpaceWarInteractionOutcome(true, builder);
     }
