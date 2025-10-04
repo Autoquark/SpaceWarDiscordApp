@@ -1,11 +1,12 @@
+using System.Collections.Concurrent;
 using Google.Cloud.Firestore;
 
 namespace SpaceWarDiscordApp.Database;
 
 public class GameCache
 {
-    private readonly Dictionary<DocumentReference, Game> _gamesByDocumentRef = new();
-    private readonly Dictionary<ulong, Game> _gamesByChannelId = new();
+    private readonly ConcurrentDictionary<DocumentReference, Game> _gamesByDocumentRef = new();
+    private readonly ConcurrentDictionary<ulong, Game> _gamesByChannelId = new();
     
     public Game? GetGame(DocumentReference documentRef) => _gamesByDocumentRef.GetValueOrDefault(documentRef);
     public Game? GetGame(ulong channelId) => _gamesByChannelId.GetValueOrDefault(channelId);
@@ -18,8 +19,8 @@ public class GameCache
 
     public void Clear(Game game)
     {
-        _gamesByDocumentRef.Remove(game.DocumentId!);
-        _gamesByChannelId.Remove(game.GameChannelId);
+        _gamesByDocumentRef.Remove(game.DocumentId!, out _);
+        _gamesByChannelId.Remove(game.GameChannelId, out _);
     }
 
     public void Clear(DocumentReference documentRef)

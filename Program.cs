@@ -87,6 +87,7 @@ static class Program
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
             x.AddSingleton<GameCache>();
+            x.AddSingleton<GameSyncManager>();
         });
         discordBuilder.UseCommands((_, extension) =>
         {

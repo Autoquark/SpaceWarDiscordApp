@@ -95,86 +95,110 @@ public static class InteractionDispatcher
             throw new Exception("Game not found");
         }
         
-        cache.AddOrUpdateGame(game);
-
         if (!interactionData.UserAllowedToTrigger(game, args.Interaction.User))
         {
             await args.Interaction.CreateFollowupMessageAsync(
-                new DiscordFollowupMessageBuilder().WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!").AsEphemeral());
+                new DiscordFollowupMessageBuilder()
+                    .WithContent($"{args.Interaction.User.Mention} you can't click this, it not for you!")
+                    .AsEphemeral());
             return;
         }
-
-        var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
-        var contextData = serviceProvider.GetRequiredService<SpaceWarCommandContextData>();
-        contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
-        contextData.Game = game;
-        contextData.User = args.Interaction.User;
-        contextData.InteractionMessage = args.Interaction.Message;
         
-        var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
-        
-        // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
-        // over to subsequent commands
-        contextData.Game.HavePrintedSelectActionThisInteraction = false;
-
-        if (outcome.RequiresSave)
+        var syncManager = client.ServiceProvider.GetRequiredService<GameSyncManager>();
+        SemaphoreSlim? semaphore = null;
+        try
         {
-            try
+            semaphore = syncManager.GetSemaphoreForGame(game);
+            if (!semaphore.Wait(0))
             {
-                await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+                // Prevents trying to release the semaphore, since we did not acquire it
+                semaphore = null;
+                await args.Interaction.CreateFollowupMessageAsync(
+                    new DiscordFollowupMessageBuilder()
+                        .WithContent(
+                            "An operation is already in progress for this game. Please wait for it to finish before trying again.")
+                        .AsEphemeral());
+                return;
             }
-            catch (RpcException)
-            {
-                outcome.SetSimpleReply("ERROR: Failed to save game state. Please report this to the developer.");
-                throw;
-            }
-        }
 
-        if (outcome.DeleteOriginalMessage)
-        {
-            await args.Interaction.DeleteOriginalResponseAsync();
-        }
+            cache.AddOrUpdateGame(game);
 
-        if (outcome.ReplyBuilder != null)
-        {
-            var firstBuilder = outcome.ReplyBuilder.Builders.First();
-            if (firstBuilder.Components.Count > 0)
+            var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
+            var contextData = serviceProvider.GetRequiredService<SpaceWarCommandContextData>();
+            contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+            contextData.Game = game;
+            contextData.User = args.Interaction.User;
+            contextData.InteractionMessage = args.Interaction.Message;
+
+            var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
+
+            // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
+            // over to subsequent commands
+            contextData.Game.HavePrintedSelectActionThisInteraction = false;
+
+            if (outcome.RequiresSave)
             {
-                if (outcome.DeleteOriginalMessage)
+                try
                 {
-                    if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                    await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+                }
+                catch (RpcException)
+                {
+                    outcome.SetSimpleReply("ERROR: Failed to save game state. Please report this to the developer.");
+                    throw;
+                }
+            }
+
+            if (outcome.DeleteOriginalMessage)
+            {
+                await args.Interaction.DeleteOriginalResponseAsync();
+            }
+
+            if (outcome.ReplyBuilder != null)
+            {
+                var firstBuilder = outcome.ReplyBuilder.Builders.First();
+                if (firstBuilder.Components.Count > 0)
+                {
+                    if (outcome.DeleteOriginalMessage)
                     {
-                        await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                        if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                        {
+                            await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                        }
+                        else
+                        {
+                            await args.Interaction.CreateFollowupMessageAsync(
+                                new DiscordFollowupMessageBuilder()
+                                    .EnableV2Components()
+                                    .AppendContentNewline(
+                                        $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                        }
                     }
                     else
                     {
-                        await args.Interaction.CreateFollowupMessageAsync(
-                            new DiscordFollowupMessageBuilder()
-                                .EnableV2Components()
-                                .AppendContentNewline(
-                                    $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                        if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
+                        {
+                            await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+                        }
+                        else if (outcome.ReplyBuilder is not null)
+                        {
+                            await args.Interaction.CreateFollowupMessageAsync(
+                                new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
+                                    $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
+                        }
                     }
-                }
-                else
-                {
-                    if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
-                    {
-                        await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
-                    }
-                    else if (outcome.ReplyBuilder is not null)
-                    {
-                        await args.Interaction.CreateFollowupMessageAsync(
-                            new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
-                                $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
-                    }
-                }
 
-                foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
-                             .Cast<DiscordFollowupMessageBuilder>())
-                {
-                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                    foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
+                                 .Cast<DiscordFollowupMessageBuilder>())
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                    }
                 }
             }
+        }
+        finally
+        {
+            semaphore?.Release();
         }
     }
     

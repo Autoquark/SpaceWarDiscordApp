@@ -50,6 +50,11 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
+        if (game.CurrentTurnPlayer.GamePlayerId != interactionData.ForGamePlayerId)
+        {
+            builder?.AppendContentNewline("It looks like you are clicking an old end turn button. If you have lost the current buttons, try /reprompt");
+        }
+        
         // Make sure there's some record of this turn if they did nothing for some reason
         if (!game.AnyActionTakenThisTurn)
         {
