@@ -400,6 +400,16 @@ public static class BoardImageGenerator
                     summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Stars, row,
                         starsTied ? TopStarsTiedIcon : TopStarsIcon, HorizontalAlignment.Center, 1, 0.666f);
                 }
+
+                // If player is eliminated, strikethrough entire row in their colour
+                if (player.IsEliminated)
+                {
+                    brush = new SolidBrush(player.PlayerColourInfo.ImageSharpColor.WithAlpha(0.5f));
+                    var y = summaryTable.GetCellInternalTopLeft(0, row).Y + InfoTableRowHeight / 2;
+                    context.DrawLine(brush, 4.0f,
+                        new PointF(summaryTable.GetCellInternalLeft(0) + summaryTable.CellDrawingMargin, y),
+                        new PointF(summaryTable.GetCellInternalRight(summaryTable.ColumnInternalWidths.Count - 1) - summaryTable.CellDrawingMargin, y));
+                }
             }
         });
         

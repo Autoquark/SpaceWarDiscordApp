@@ -238,6 +238,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         
         game.TurnNumber++;
         game.ActionTakenThisTurn = false;
+        game.AnyActionTakenThisTurn = false;
         
         if (builder == null)
         {

@@ -23,6 +23,9 @@ public class Table
 
     public int CellDrawingMargin { get; set; } = 6;
 
+    /// <summary>
+    /// Get the internal rectangle of a cell (that is, the area inside of and excluding the border lines)
+    /// </summary>
     public Rectangle GetCellInternalRect(int column, int row)
     {
         if (column >= ColumnInternalWidths.Count || row >= RowInternalHeights.Count)
@@ -62,6 +65,8 @@ public class Table
     }
 
     public int GetCellInternalLeft(int column) => (int)(GetCellExternalLeft(column) + LineThickness);
+    
+    public float GetCellInternalRight(int column) => (int)(GetCellExternalRight(column) - LineThickness);
 
     public int GetCellExternalTop(int row)
     {
