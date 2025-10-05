@@ -22,6 +22,9 @@ public class Tech_ExplosivePropulsion : Tech
     
     private readonly ExplosivePropulsionMovementFlowHandler _movementFlowHandler;
 
+    protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
+        => base.IsSimpleActionAvailable(game, player) && game.Hexes.WhereOwnedBy(player).Any(x => x.Planet?.IsExhausted == false);
+
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
         => await _movementFlowHandler.BeginPlanningMoveAsync(builder, game, player, serviceProvider);
@@ -36,7 +39,7 @@ class ExplosivePropulsionMovementFlowHandler : MovementFlowHandler<Tech_Explosiv
         MarkUsedTechId = tech.Id;
     }
 
-    protected override List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
+    protected override List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex? destination)
         => base.GetAllowedMoveSources(game, player, destination).Where(x => !x.Planet!.IsExhausted).ToList();
 
     public override Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder,

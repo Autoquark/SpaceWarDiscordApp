@@ -164,7 +164,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         if (RequireAdjacency)
         {
             var destinationsSet = new HashSet<BoardHex>();
-            var allowedSources = fixedSource.HasValue ? [game.GetHexAt(fixedSource.Value)] : game.Hexes.WhereOwnedBy(player);
+            var allowedSources = fixedSource.HasValue
+                ? [game.GetHexAt(fixedSource.Value)]
+                : GetAllowedMoveSources(game, player, null);
             foreach (var sourceHex in allowedSources)
             {
                 destinationsSet.UnionWith(BoardUtils.GetNeighbouringHexes(game, sourceHex));
@@ -575,11 +577,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Destination = player.PlannedMove!.Destination
             })))!;
 
-    protected virtual List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex destination)
-        => (RequireAdjacency
+    protected virtual List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex? destination)
+        => ((RequireAdjacency && destination != null)
                 ? BoardUtils.GetStandardMoveSources(game, destination, player)
                 : game.Hexes.WhereOwnedBy(player))
-            .Except(destination).ToList();
+            .Except(destination)!.ToList<BoardHex>();
 
     public virtual async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
         IServiceProvider serviceProvider)
