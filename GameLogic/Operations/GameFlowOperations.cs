@@ -483,6 +483,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
 
             if (notChosen.Count != 0)
             {
+                if (builder != null)
+                {
+                    await ShowBoardStateMessageAsync(builder, game);
+                }
+
                 builder?.AppendContentNewline(string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) + ", please choose a starting tech.");
 
                 var interactions = await InteractionsHelper.SetUpInteractionsAsync(game.UniversalTechs.Select(x =>
