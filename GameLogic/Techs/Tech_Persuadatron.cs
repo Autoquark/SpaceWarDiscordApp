@@ -9,9 +9,9 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class PersuadatronTech : Tech, IInteractionHandler<UsePersuadatronInteraction>
+public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronInteraction>
 {
-    public PersuadatronTech(): base("persuadatron", "Persuadatron 3000", 
+    public Tech_Persuadatron(): base("persuadatron", "Persuadatron 3000", 
     "Single Use, Action: Choose a planet adjacent to one you control. Replace all forces on it with the same quantity of your forces.",
     "Activate brain scanner... find all instances of 'blue'... replace with 'red'... and we're done!",
     ["Single Use", "Action"])
@@ -62,22 +62,20 @@ public class PersuadatronTech : Tech, IInteractionHandler<UsePersuadatronInterac
         {
             throw new Exception();
         }
-
-        // Subtract current forces, then add current players with new ownership
-        // Do two steps to maintain game integrity
-        var forcesNumber = hex.Planet!.ForcesPresent;
-        hex.Planet!.SubtractForces(forcesNumber);
-        hex.Planet!.SetForces(forcesNumber, player.GamePlayerId);
-
-        player.Techs.Remove(GetThisTech(player));
         
-        var name = await player.GetNameAsync(false);
+        // Replace all forces on the hex with the same number of our forces
+        hex.Planet!.SetForces(hex.Planet!.ForcesPresent, player.GamePlayerId);
+        
+        // Single use tech
+        player.Techs.Remove(GetThisTech(player));
         
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
         {
-            Coordinates = hex.Coordinates
+            Coordinates = interactionData.Target
         });
         
+        var name = await player.GetNameAsync(false);
+
         builder?.AppendContentNewline($"{name} took over {hex.Coordinates} using Persuadatron 3000.");
 
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
