@@ -256,10 +256,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
             var name = await winner.GetNameAsync(true);
             builder?.NewMessage()
                 .AppendContentNewline($"{name} has won the game!".DiscordHeading1())
-                .WithAllowedMentions(winner)
-                .WithAllowedMentions(EveryoneMention.All)
-                .AppendContentNewline("(@everyone)")
-                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /reprompt to continue playing");
+                .AppendContentNewline($"({string.Join(", ", await Task.WhenAll(game.Players.Select(x => x.GetNameAsync(true))))})")
+                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /reprompt to continue playing")
+                .WithAllowedMentions(game.Players);
             game.Phase = GamePhase.Finished;
         }
 
