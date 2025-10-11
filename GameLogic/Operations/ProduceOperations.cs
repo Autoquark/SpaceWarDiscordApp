@@ -8,6 +8,22 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, IEventResolvedHandler<GameEvent_PostProduce>
 {
+    public static GameEvent_BeginProduce CreateProduceEvent(Game game, HexCoordinates location, bool allowExhausted = false)
+    {
+        var hex = game.GetHexAt(location);
+        if (hex.Planet == null || hex.Planet.IsExhausted && !allowExhausted)
+        {
+            throw new Exception();
+        }
+
+        return new GameEvent_BeginProduce
+        {
+            Location = location,
+            EffectiveProductionValue = hex.Planet.Production,
+            EffectiveScienceProduction = hex.Planet.Science
+        };
+    }
+
     public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_BeginProduce gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
@@ -20,10 +36,10 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         var player = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
         var name = await player.GetNameAsync(false);
         
-        hex.Planet.AddForces(hex.Planet.Production);
+        hex.Planet.AddForces(gameEvent.EffectiveProductionValue);
         hex.Planet.IsExhausted = true;
-        player.Science += hex.Planet.Science;
-        var producedScience = hex.Planet.Science > 0;
+        player.Science += gameEvent.EffectiveScienceProduction;
+        var producedScience = gameEvent.EffectiveScienceProduction > 0;
 
         if (game.CurrentTurnPlayer == player)
         {

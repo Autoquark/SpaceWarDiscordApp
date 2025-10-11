@@ -84,6 +84,13 @@ public static class MessageBuilderExtensions
         params IEnumerable<GamePlayer> players)
     {
         players = players.Append(first);
+        builder.AllowMentions(players);
+        return builder;
+    }
+
+    public static IDiscordMessageBuilder AllowMentions(this IDiscordMessageBuilder builder,
+        IEnumerable<GamePlayer> players)
+    {
         foreach (var player in players.Where(x => !x.IsDummyPlayer))
         {
             if (builder.Mentions.OfType<UserMention>().Any(x => x.Id == player.DiscordUserId))

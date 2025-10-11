@@ -52,10 +52,8 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
 
-        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_BeginProduce
-            {
-                Location = interactionData.Target,
-            },
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            ProduceOperations.CreateProduceEvent(game, interactionData.Target, true),
             new GameEvent_ActionComplete
             {
                 ActionType = ActionType.Main

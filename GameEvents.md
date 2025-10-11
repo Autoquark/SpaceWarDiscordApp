@@ -2,9 +2,10 @@
 ### Production
 
 - **GameEvent_BeginProduce**
-- Forces & science are added
+- Techs may manipulate amount of forces/science produced
+- On Resolve: Forces & science are added
 - **GameEvent_PostProduce**
-- Forces capacity is checked and excess removed
+- OnResolve: Forces capacity is checked and excess removed
 
 ### Movement
 

@@ -576,10 +576,13 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
 
-        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, context.ServiceProvider, new GameEvent_BeginProduce
+        if (hex.Planet.IsExhausted)
         {
-            Location = location
-        });
+            builder.AppendContentNewline("Note: Planet is already exhausted");
+        }
+
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, context.ServiceProvider,
+            ProduceOperations.CreateProduceEvent(game, hex.Coordinates, true));
         
         outcome.RequiresSave = true;
         outcome.ReplyBuilder = builder;

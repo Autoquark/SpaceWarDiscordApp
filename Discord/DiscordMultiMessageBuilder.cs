@@ -117,6 +117,12 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         return this;
     }
 
+    public DiscordMultiMessageBuilder WithAllowedMentions(IEnumerable<GamePlayer> players)
+    {
+        CurrentBuilder.AllowMentions(players);
+        return this;
+    }
+    
     public DiscordMultiMessageBuilder WithAllowedMentions(GamePlayer first, params IEnumerable<GamePlayer> players)
     {
         CurrentBuilder.AllowMentions(first, players);
