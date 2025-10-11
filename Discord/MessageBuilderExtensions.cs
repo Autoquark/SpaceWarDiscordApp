@@ -38,7 +38,7 @@ public static class MessageBuilderExtensions
     /// Appends the given buttons to the builder, split across as many action rows as needed
     /// </summary>
     public static TBuilder AppendButtonRows<TBuilder>(this TBuilder builder,
-        IEnumerable<DiscordButtonComponent> buttons)
+        params IEnumerable<DiscordButtonComponent> buttons)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
         ((IDiscordMessageBuilder)builder).AppendButtonRows(buttons);
@@ -46,7 +46,7 @@ public static class MessageBuilderExtensions
     }
 
     public static IDiscordMessageBuilder AppendButtonRows(this IDiscordMessageBuilder builder,
-        IEnumerable<DiscordButtonComponent> buttons)
+        params IEnumerable<DiscordButtonComponent> buttons)
     {
         foreach (var group in buttons.ZipWithIndices().GroupBy(x => x.index / 5))
         {

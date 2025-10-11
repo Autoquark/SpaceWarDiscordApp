@@ -42,8 +42,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
 
     private static readonly IReadOnlyList<string> DummyPlayerNames =
         new List<string>(["Lorelentenei", "Gerg", "Goodcoe", "Neutralcoe", "Zogak", "Benjermy", "Georgery"]);
-    
-    private static readonly MapGenerator MapGenerator = new MapGenerator();
 
     private static readonly IReadOnlyList<NounProjectImageCredit> NounProjectImageCredits =
     [
@@ -121,15 +119,37 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline($"Game created. Game channel is {gameChannel.Mention}.")
-            .AppendContentNewline("Anyone can join the game by clicking this button: ")
+            .AppendContentNewline("Anyone can join the game by clicking 'join game'. When all players have joined, click 'start game' to begin: ")
             .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
+
+        var startGameInteraction = new StartGameInteraction
+        {
+            ForGamePlayerId = -1,
+            Game = game.DocumentId
+        };
+
+        var joinGameInteraction = new JoinGameInteraction
+        {
+            ForGamePlayerId = -1,
+            Game = game.DocumentId
+        };
         
         await context.RespondAsync(builder);
         await gameChannel.SendMessageAsync($"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To invite specific players use /invite from this channel.");
+        await gameChannel.SendMessageAsync(x => x.AppendContentNewline("Anyone can join by clicking this button:")
+            .AppendButtonRows(new DiscordButtonComponent(DiscordButtonStyle.Success, startGameInteraction.InteractionId, "Start Game")
+            , new DiscordButtonComponent(DiscordButtonStyle.Primary, joinGameInteraction.InteractionId, "Join Game")));
+        
         game.PinnedTechMessageId = (await gameChannel.SendMessageAsync(x => x.EnableV2Components().AppendContentNewline("(This message reserved for future use)"))).Id;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
         
-        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Create(game.DocumentId, game));
+        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        {
+            transaction.Create(game.DocumentId, game);
+            InteractionsHelper.SetUpInteractions([startGameInteraction, joinGameInteraction],
+                transaction,
+                context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        });
     }
 
     [Command("Invite")]
@@ -192,66 +212,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
-        
-        if (game.Players.Count <= 1)
-        {
-            await context.RespondAsync("Not enough players");
-        }
-
-        if (game.Phase != GamePhase.Setup)
-        {
-            await context.RespondAsync("Game has already started");
-            return;
-        }
-        
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         
-        // Shuffle turn order - this is also the map slice order
-        game.Players = game.Players.Shuffled().ToList();
-        
-        MapGenerator.GenerateMap(game);
-
-        game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
-        game.TechDeck.Shuffle();
-
-        // Select universal techs at random
-        for (var i = 0; i < GameConstants.UniversalTechCount; i++)
-        {
-            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
-        }
-
-        for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
-        {
-            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
-        }
-        
-        game.TechMarket.Add(null);
-        
-        game.ScoringTokenPlayerIndex = game.Players.Count - 1;
-        game.Phase = GamePhase.Play;
-        
-        builder.AppendContentNewline("The game has started.");
-        builder.AppendContentNewline("Universal Techs:".DiscordHeading2());
-        foreach (var tech in game.UniversalTechs)
-        {
-            TechOperations.ShowTechDetails(builder, tech);
-        }
-        
-        builder.AppendContentNewline("Tech Market:".DiscordHeading2());
-        foreach (var tech in game.TechMarket.WhereNonNull())
-        {
-            TechOperations.ShowTechDetails(builder, tech);
-        }
-
-        await TechOperations.UpdatePinnedTechMessage(game);
-
-        if (game.Players.Count == 2)
-        {
-            builder.AppendContentNewline(
-                "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
-        }
-        
-        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
+        await GameFlowOperations.StartGameAsync(builder, game, context.ServiceProvider);
         
         outcome.ReplyBuilder = builder;
     }
