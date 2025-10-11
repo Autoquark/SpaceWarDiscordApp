@@ -13,7 +13,7 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
     public Tech_FlagOptimisation() : base(
         "flagOptimisation",
         "Flag Optimisation",
-        "When fighting on a planet with $victory$, +1 Combat Strength.",
+        "When fighting on a planet with $star$, +1 Combat Strength.",
         "The actuators ensure satisfactory billowing even in zero gravity, non-atmospheric environments.")
     {
     }
@@ -24,7 +24,7 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
         {
             var destination = game.GetHexAt(preMove.Destination);
 
-            if (destination.Planet != null && destination.Planet.Stars > 0)
+            if (destination.Planet is { Stars: > 0 })
             {
                 bool? isAttacker = null;
 
