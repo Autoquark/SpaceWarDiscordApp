@@ -113,7 +113,7 @@ static class Program
         }, new CommandsConfiguration()
         {
             // The default value is true, however it's shown here for clarity
-            RegisterDefaultCommandProcessors = true,
+            RegisterDefaultCommandProcessors = false,
             CommandExecutor = new SpaceWarCommandExecutor()
         });
         
