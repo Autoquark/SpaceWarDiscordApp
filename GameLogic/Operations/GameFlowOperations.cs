@@ -254,9 +254,12 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         if (winner != null)
         {
             var name = await winner.GetNameAsync(true);
-            builder?.AppendContentNewline($"{name} has won the game!".DiscordHeading1())
+            builder?.NewMessage()
+                .AppendContentNewline($"{name} has won the game!".DiscordHeading1())
                 .WithAllowedMentions(winner)
-                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /turn_message to continue playing");
+                .WithAllowedMentions(EveryoneMention.All)
+                .AppendContentNewline("(@everyone)")
+                .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /reprompt to continue playing");
             game.Phase = GamePhase.Finished;
         }
 
@@ -483,6 +486,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
 
             if (notChosen.Count != 0)
             {
+                if (builder != null)
+                {
+                    await ShowBoardStateMessageAsync(builder, game);
+                }
+
                 builder?.AppendContentNewline(string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) + ", please choose a starting tech.");
 
                 var interactions = await InteractionsHelper.SetUpInteractionsAsync(game.UniversalTechs.Select(x =>
