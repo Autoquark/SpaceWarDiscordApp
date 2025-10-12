@@ -248,6 +248,12 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             builder.AppendContentNewline("You are already in this game!");
             return new SpaceWarInteractionOutcome(false, builder);
         }
+
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder.AppendContentNewline("You can't join this game because it has already started");
+            return new SpaceWarInteractionOutcome(false, builder);
+        }
         
         game.Players.Add(new GamePlayer
         {
