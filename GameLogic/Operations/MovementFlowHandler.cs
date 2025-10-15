@@ -272,8 +272,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             
             return new SpaceWarInteractionOutcome(true, builder);
         }
-        
-        await MovementOperations.ShowPlannedMoveAsync(builder, player);
 
         // Let player specify a source
         var interactionsToSetUp = await ShowSpecifyMovementSourceButtonsAsync(builder,
@@ -429,7 +427,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         else
         {
             // Otherwise, go back to showing possible sources
-            await MovementOperations.ShowPlannedMoveAsync(builder, player);
             interactions.AddRange(await ShowSpecifyMovementSourceButtonsAsync(builder,
                 game,
                 player,
@@ -547,7 +544,24 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             })
             .ToList();
 
-        builder.AppendHexButtons(game, sources, interactions.Select(x => x.InteractionId));
+        //builder.AppendHexButtons(game, sources, interactions.Select(x => x.InteractionId));
+        builder.AppendButtonRows(sources.Zip(interactions).Select(x =>
+        {
+            var hex = x.First;
+            var interaction = x.Second;
+
+            var emoji = hex.GetDieEmoji(game);
+            var existingSourceData = player.PlannedMove?.Sources.FirstOrDefault(y => y.Source == hex.Coordinates);
+
+            return new DiscordButtonComponent(
+                existingSourceData != null
+                    ? DiscordButtonStyle.Secondary
+                    : DiscordButtonStyle.Primary,
+                interaction.InteractionId,
+                hex.Coordinates + (existingSourceData != null ? $" [moving {existingSourceData.Amount}]" : ""),
+                emoji: (emoji! == null! ? null : new DiscordComponentEmoji(emoji))!
+            );
+        }));
         
         return interactions;
     }
