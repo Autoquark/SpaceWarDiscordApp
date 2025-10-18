@@ -10,6 +10,7 @@ using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.GameEvents;
@@ -236,9 +237,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         }
         while (game.CurrentTurnPlayer.IsEliminated);
         
-        game.TurnNumber++;
-        game.ActionTakenThisTurn = false;
-        game.AnyActionTakenThisTurn = false;
+        // New turn start
+        await GameEvent_TurnBegin(game, serviceProvider);
         
         if (builder == null)
         {
@@ -246,6 +246,25 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         }
         
         await ShowSelectActionMessageAsync(builder, game, serviceProvider);
+    }
+
+    static async Task GameEvent_TurnBegin(Game game, IServiceProvider serviceProvider)
+    {
+        game.TurnNumber++;
+        
+        // Cleanup actions taken last turn
+        game.ActionTakenThisTurn = false;
+        game.AnyActionTakenThisTurn = false;
+        
+        // Check and decrement techs that have time-limited active effects
+        var currentPlayer = game.CurrentTurnPlayer;
+        foreach (var playerTechTurnBased in currentPlayer.Techs.OfType<PlayerTech_TurnBased>())
+        {
+            if (playerTechTurnBased.TurnsActiveRemaining > 0)
+            {
+                playerTechTurnBased.TurnsActiveRemaining--;
+            }
+        }
     }
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
