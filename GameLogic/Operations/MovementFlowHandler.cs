@@ -543,8 +543,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 TriggerToMarkResolvedId = triggerToMarkResolvedId
             })
             .ToList();
-
-        //builder.AppendHexButtons(game, sources, interactions.Select(x => x.InteractionId));
+        
         builder.AppendButtonRows(sources.Zip(interactions).Select(x =>
         {
             var hex = x.First;
@@ -620,14 +619,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             GameFlowOperations.TriggerResolved(game, gameEvent.TriggerToMarkResolved);
         }
-        
-        // Prompt player to choose another action, if possible. If MarkActionTakenForTurn already moved the turn on and 
-        // printed the turn message for the new player, this will bail out on printing it again
-        //await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, serviceProvider);
-        /*if (ContinueResolvingStackAfterMove)
-        {
-            await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-        }*/
 
         return builder;
     }

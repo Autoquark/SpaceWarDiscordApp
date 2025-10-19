@@ -174,7 +174,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         if (game.UniversalTechs.Remove(techId))
         {
-            game.TechDiscards.Add(techId);
+            TechOperations.AddTechToDiscards(game, techId);
             builder.AppendContentNewline($"Removed {techName} from universal techs");
             outcome.RequiresSave = true;
         }
@@ -212,7 +212,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         if (index == -1)
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync("That tech is not in the market");
+            outcome.SetSimpleReply("That tech is not in the market");
             return;
         }
         
@@ -221,7 +221,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         if (putInDiscard)
         {
-            game.TechDiscards.Add(techId);
+            TechOperations.AddTechToDiscards(game, techId);
         }
         
         outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
@@ -269,6 +269,46 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);;
+    }
+
+    [Command("regressTechMarket")]
+    [Description("Undo cycling the tech market")]
+    public static async Task RegressTechMarket(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        if (game.TechMarket.Count == 0)
+        {
+            outcome.SetSimpleReply("This game appears to have no tech market (0 slots)");
+            outcome.RequiresSave = false;
+            return;
+        }
+        
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        outcome.ReplyBuilder = builder;
+
+        // Put first card in market back on the tech deck
+        var first = game.TechMarket[0];
+        if (first != null)
+        {
+            game.TechDeck.Insert(0, first);
+            builder.AppendContentNewline($"Returned {Tech.TechsById[first].DisplayName} to the top of the tech deck");
+        }
+        
+        for(var i = 0; i < game.TechMarket.Count - 1; i++)
+        {
+            game.TechMarket[i] = game.TechMarket[i + 1];
+        }
+        
+        // Put top card in tech discards back into the last market slot
+        var topDiscard = game.TechDiscards.DefaultIfEmpty().First();
+        if (topDiscard != null)
+        {
+            game.TechDiscards.RemoveAt(0);
+            game.TechMarket[^1] = topDiscard;
+            builder.AppendContentNewline($"Returned {Tech.TechsById[topDiscard].DisplayName} from the tech discards to the market");
+        }
     }
 
     [Command("setPlanetExhausted")]
@@ -465,7 +505,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
         
-        game.TechDiscards.Insert(0, techId);
+        TechOperations.AddTechToDiscards(game, techId);
         
         outcome.SetSimpleReply($"Put {techName} into the tech discards");
     }
