@@ -53,9 +53,15 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public int ScoringTokenPlayerIndex { get; set; } = 0;
 
+    /// <summary>
+    /// Deck of techs which will be used to populate the market. Slot 0 is the 'top' from which cards are drawn.
+    /// </summary>
     [FirestoreProperty]
     public List<string> TechDeck { get; set; } = [];
     
+    /// <summary>
+    /// Discarded tech cards. Slot 0 is the most recently discarded card.
+    /// </summary>
     [FirestoreProperty]
     public List<string> TechDiscards { get; set; } = [];
 

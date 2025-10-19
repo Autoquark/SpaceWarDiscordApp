@@ -184,7 +184,7 @@ public static class TechOperations
         game.TechMarket.RemoveAt(game.TechMarket.Count - 1);
         if (removed != null)
         {
-            game.TechDiscards.Add(removed);
+            AddTechToDiscards(game, removed);
             var tech = Tech.TechsById[removed];
             builder.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
         }
@@ -273,6 +273,8 @@ public static class TechOperations
         game.TechDeck.RemoveAt(0);
         return Tech.TechsById[tech];
     }
+    
+    public static void AddTechToDiscards(Game game, string techId) => game.TechDiscards.Insert(0, techId);
 
     public static int GetMarketSlotCost(int slotNumber) => slotNumber == 0 ? 3 : 2;
 }
