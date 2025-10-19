@@ -265,6 +265,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 playerTechTurnBased.TurnsActiveRemaining--;
             }
         }
+
+        return;
     }
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
