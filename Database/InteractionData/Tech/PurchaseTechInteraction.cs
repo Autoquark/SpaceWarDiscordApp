@@ -3,7 +3,8 @@ using Google.Cloud.Firestore;
 namespace SpaceWarDiscordApp.Database.InteractionData.Tech;
 
 [FirestoreData]
-public class PurchaseTechInteraction : InteractionData
+public class 
+    PurchaseTechInteraction : InteractionData
 {
     [FirestoreProperty]
     public required string TechId { get; set; }
