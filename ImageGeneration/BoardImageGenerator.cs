@@ -77,6 +77,11 @@ public static class BoardImageGenerator
     private static readonly Image CurrentTurnPlayerIcon;
     private static readonly Image ScienceCostIcon;
 
+    private static readonly IDictionary<string, Image> IconSubstitutions;
+    
+    private static readonly int InlineIconSize = 42;
+    private static readonly Size InlineIconOffset = new(-4, 0);
+
     // Fonts
     private static readonly FontCollection FontCollection = new();
     private static readonly Font ProductionNumberFont;
@@ -213,6 +218,12 @@ public static class BoardImageGenerator
                 ProduceRecapIcons.Add(colour, produceIcon.Clone(x => x.Fill(recolorBrush)));
                 TechRecapIcons.Add(colour, techIcon.Clone(x => x.Fill(recolorBrush)));
             }
+
+            IconSubstitutions = new Dictionary<string, Image>
+            {
+                { "star", StarIcon.Clone(x => x.Resize(InlineIconSize, 0)) },
+                { "science", ScienceIcon.Clone(x => x.Resize(InlineIconSize, 0)) }
+            };
         }
         catch (Exception e)
         {
@@ -329,7 +340,8 @@ public static class BoardImageGenerator
         var textOptions = new RichTextOptions(InfoTableFont)
         {
             VerticalAlignment = VerticalAlignment.Center,
-            Font = InfoTableFont
+            Font = InfoTableFont,
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
         image.Mutate(context =>
         {
@@ -379,7 +391,7 @@ public static class BoardImageGenerator
                     offset = new Size(CurrentTurnPlayerIcon.Width + 12, 0);
                 }
                 
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, row, textOptions, playerNames[player], brush, offset, InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, row, textOptions, playerNames[player], brush: brush, offset: offset, outlinePen: InfoTextOutlinePen);
                 
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
                 textOptions.Font = InfoTableFont;
@@ -422,11 +434,13 @@ public static class BoardImageGenerator
 
         var playerNameTextOptions = new RichTextOptions(PlayerAreaNameFont)
         {
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
 
         var techTableTextOptions = new RichTextOptions(InfoTableFont)
         {
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
         // Draw player tech tables
         foreach (var pairing in game.Players.ZipWithIndices()
@@ -493,7 +507,8 @@ public static class BoardImageGenerator
         var textOptions = new RichTextOptions(SectionHeaderFont)
         {
             HorizontalAlignment = HorizontalAlignment.Center,
-            Origin = new Point(image.Width / 2, topLeft.Y)
+            Origin = new Point(image.Width / 2, topLeft.Y),
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
         image.Mutate(x => x.DrawText(textOptions, text, Color.Black));
         return topLeft + new Size(0, SectionHeaderHeight + SpacingBelowSectionHeader);
@@ -604,7 +619,8 @@ public static class BoardImageGenerator
         var textOptions = new RichTextOptions(InfoTableFontBold)
         {
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
         
         if (tech != null)
@@ -618,7 +634,7 @@ public static class BoardImageGenerator
             textOptions.TextRuns = runs;
 
             table.DrawTextInCell(context, 0, 1, textOptions, text,
-                InfoTextBrush); //TODO: Inline icons (e.g. science), somehow?
+                InfoTextBrush, iconSubstitutions: IconSubstitutions, iconOffset: InlineIconOffset);
         }
 
         // Draw cost beneath table
@@ -714,7 +730,8 @@ public static class BoardImageGenerator
                             TextAlignment = TextAlignment.Center,
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            Origin = circleCentre
+                            Origin = circleCentre,
+                            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
                         },
                         hex.Planet.Production.ToString(),
                         Color.Black));
@@ -762,7 +779,8 @@ public static class BoardImageGenerator
                     TextAlignment = TextAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Origin = textOrigin
+                    Origin = textOrigin,
+                    TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
                 },
                 hex.Coordinates.ToString(),
                 Color.Black));

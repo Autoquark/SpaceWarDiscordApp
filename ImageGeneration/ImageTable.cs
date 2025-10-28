@@ -119,9 +119,21 @@ public class Table
     }
     
     public IImageProcessingContext DrawTextInCell(IImageProcessingContext imageProcessingContext, int column, int row,
-        RichTextOptions options, string text, Brush brush, Pen? outlinePen = null, float? xPositionOverride = null,
-        float? yPositionOverride = null)
-        => DrawTextInCell(imageProcessingContext, column, row, options, text, brush, Size.Empty, outlinePen, xPositionOverride, yPositionOverride);
+        RichTextOptions options, string text, Brush brush,
+        Pen? outlinePen = null, float? xPositionOverride = null,
+        float? yPositionOverride = null, IDictionary<string, Image>? iconSubstitutions = null, Size iconOffset = default)
+        => DrawTextInCell(imageProcessingContext,
+            column,
+            row,
+            options,
+            text,
+            brush,
+            Size.Empty,
+            outlinePen,
+            xPositionOverride,
+            yPositionOverride,
+            iconSubstitutions,
+            iconOffset);
 
     /// <summary>
     /// 
@@ -143,12 +155,16 @@ public class Table
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public IImageProcessingContext DrawTextInCell(IImageProcessingContext imageProcessingContext, int column, int row,
-        RichTextOptions options, string text, Brush brush, Size offset, Pen? outlinePen = null, float? xAlignmentOverride = null,
-        float? yAlignmentOverride = null)
+        RichTextOptions options, string text, Brush brush, Size offset,
+        Pen? outlinePen = null, float? xAlignmentOverride = null,
+        float? yAlignmentOverride = null, IDictionary<string, Image>? iconSubstitutions = null, Size iconOffset = default)
     {
+        iconSubstitutions ??= new Dictionary<string, Image>();
+        
         var optionsCopy = new RichTextOptions(options)
         {
-            WrappingLength = GetCellInternalRect(column, row).Width - 2 * CellDrawingMargin
+            WrappingLength = GetCellInternalRect(column, row).Width - 2 * CellDrawingMargin,
+            TextRuns = options.TextRuns.ToList() // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
         };
 
         var left = GetCellInternalLeft(column);
@@ -170,7 +186,7 @@ public class Table
         });
 
         optionsCopy.Origin = new Point(x, y) + offset;
-        imageProcessingContext.DrawText(optionsCopy, text, brush, outlinePen);
+        imageProcessingContext.DrawTextWithInlineIcons(optionsCopy, text, brush, outlinePen, iconSubstitutions, iconOffset);
         
         return imageProcessingContext;
     }
