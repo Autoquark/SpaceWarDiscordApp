@@ -50,7 +50,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         }
 
         builder?.AppendContentNewline(
-            $"{name} is producing on {hex.Coordinates}. Produced {hex.Planet.Production} forces" + (producedScience ? $" and {hex.Planet.Science} science" : ""));
+            $"{name} is producing on {hex.Coordinates}. Produced {gameEvent.EffectiveProductionValue} forces" + (producedScience ? $" and {gameEvent.EffectiveScienceProduction} science" : ""));
 
         await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, new GameEvent_PostProduce
         {
