@@ -160,6 +160,57 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         outcome.ReplyBuilder = builder;
     }
 
+    [Command("AddUniversalTech")]
+    [Description("Adds a universal tech.")]
+    public static async Task AddUniversalTech(CommandContext context,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        string techId,
+        bool removeFromOtherPlaces = true)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+
+        var techName = Tech.TechsById[techId].DisplayName;
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        outcome.ReplyBuilder = builder;
+        
+        if(game.UniversalTechs.Count >= GameConstants.UniversalTechCount)
+        {
+            outcome.SetSimpleReply("This game already has the maximum number of universal techs");
+            outcome.RequiresSave = false;
+            return;
+        }
+
+        if (game.UniversalTechs.Contains(techId))
+        {
+            outcome.SetSimpleReply($"{techName} is already a universal tech");
+            outcome.RequiresSave = false;
+            return;
+        }
+        
+        game.UniversalTechs.Add(techId);
+        
+        builder.AppendContentNewline($"Added {techName} to universal techs");
+        
+        if (removeFromOtherPlaces)
+        {
+            if (game.TechMarket.RemoveAll(x => x == techId) > 0)
+            {
+                builder.AppendContentNewline($"Removed {techName} from the tech market");
+            }
+            
+            if(game.TechDeck.RemoveAll(x => x == techId) > 0)
+            {
+                builder.AppendContentNewline($"Removed {techName} from the tech deck");
+            }
+            
+            if(game.TechDiscards.RemoveAll(x => x == techId) > 0)
+            {
+                builder.AppendContentNewline($"Removed {techName} from the tech discards");
+            }
+        }
+    }
+
     [Command("DiscardUniversalTech")]
     [Description("Puts a universal tech into the tech discards.")]
     public static async Task DiscardUniversalTech(CommandContext context,
