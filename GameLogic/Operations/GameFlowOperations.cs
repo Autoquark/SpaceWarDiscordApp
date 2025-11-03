@@ -19,7 +19,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>, IEventResolvedHandler<GameEvent_ActionComplete>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
     {
@@ -636,4 +636,78 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
         return builder;
     }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, StartGameInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        
+        await StartGameAsync(builder, game, serviceProvider);
+        
+        return new SpaceWarInteractionOutcome(true, builder);
+    }
+
+    public async static Task<DiscordMultiMessageBuilder> StartGameAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        
+        if (game.Players.Count <= 1)
+        {
+            return builder.AppendContentNewline("Not enough players");
+        }
+
+        if (game.Phase != GamePhase.Setup)
+        {
+            return builder.AppendContentNewline("Game has already started");
+        }
+        
+        // Shuffle turn order - this is also the map slice order
+        game.Players = game.Players.Shuffled().ToList();
+        
+        MapGenerator.GenerateMap(game);
+
+        game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
+        game.TechDeck.Shuffle();
+
+        // Select universal techs at random
+        for (var i = 0; i < GameConstants.UniversalTechCount; i++)
+        {
+            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
+        }
+
+        for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
+        {
+            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
+        }
+        
+        game.TechMarket.Add(null);
+        
+        game.ScoringTokenPlayerIndex = game.Players.Count - 1;
+        game.Phase = GamePhase.Play;
+        
+        builder.AppendContentNewline("The game has started.");
+        builder.AppendContentNewline("Universal Techs:".DiscordHeading2());
+        foreach (var tech in game.UniversalTechs)
+        {
+            TechOperations.ShowTechDetails(builder, tech);
+        }
+        
+        builder.AppendContentNewline("Tech Market:".DiscordHeading2());
+        foreach (var tech in game.TechMarket.WhereNonNull())
+        {
+            TechOperations.ShowTechDetails(builder, tech);
+        }
+
+        await TechOperations.UpdatePinnedTechMessage(game);
+
+        if (game.Players.Count == 2)
+        {
+            builder.AppendContentNewline(
+                "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
+        }
+        
+        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+    }
+    
+    private static readonly MapGenerator MapGenerator = new();
 }
