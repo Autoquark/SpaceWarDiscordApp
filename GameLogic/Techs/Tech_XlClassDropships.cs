@@ -44,7 +44,7 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         interactionData.Event.AttackerCombatStrengthSources.Add(new CombatStrengthSource
@@ -53,8 +53,8 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
             Amount = 1
         });
 
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

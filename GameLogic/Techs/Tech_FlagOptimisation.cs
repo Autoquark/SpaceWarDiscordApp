@@ -62,7 +62,7 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(
         DiscordMultiMessageBuilder? builder,
         ApplyFlagOptimisationBonusInteraction interactionData,
         Game game,
@@ -85,8 +85,8 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
             });
         }
 
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
 
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

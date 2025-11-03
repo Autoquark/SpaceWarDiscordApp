@@ -120,7 +120,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
             });
         }
         
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

@@ -47,15 +47,15 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
     }
 
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ApplyEfficientManufacturingBonusInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.EffectiveProductionValue++;
         
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
         builder?.AppendContentNewline($"Produced 1 additional forces due to {DisplayName}");
         
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

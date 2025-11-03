@@ -57,7 +57,7 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyGorillaWarfareBonusInteraction interactionData,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyGorillaWarfareBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -77,8 +77,8 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
             });
         }
         
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

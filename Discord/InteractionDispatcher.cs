@@ -134,10 +134,6 @@ public static class InteractionDispatcher
 
             var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
 
-            // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
-            // over to subsequent commands
-            contextData.Game.HavePrintedSelectActionThisInteraction = false;
-
             if (outcome.RequiresSave || interactionsToSetUp.Any())
             {
                 try

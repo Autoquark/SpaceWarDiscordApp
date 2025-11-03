@@ -94,6 +94,11 @@ public class Game : FirestoreModel
     
     [FirestoreProperty]
     public bool IsWaitingForTechPurchaseDecision { get; set; }
+    
+    // ID of the last action selection message. Used to edit the buttons away when another one is posted, to avoid
+    // clicking old buttons
+    [FirestoreProperty]
+    public ulong LastSelectActionMessageId { get; set; }
 
     [FirestoreProperty]
     private IList<DocumentReference> EventsDocuments { get; set; } = [];
@@ -103,9 +108,6 @@ public class Game : FirestoreModel
     /// Stack of events currently being resolved
     /// </summary>
     public LinkedDocumentCollection<GameEvent> EventStack { get; set; }
-
-    // Intentionally not saved to Firestore
-    public bool HavePrintedSelectActionThisInteraction { get; set; } = false;
     
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     

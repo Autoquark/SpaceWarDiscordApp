@@ -90,11 +90,6 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             // via SpaceWarCommandOutcome
             if (requiresGame)
             {
-                // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
-                // over to subsequent commands
-                // TODO: Maybe have a scoped object in the service provider for this, along with interactions to set up?
-                contextData.Game!.HavePrintedSelectActionThisInteraction = false;
-
                 if (!outcome.RequiresSave.HasValue)
                 {
                     outcome.SetSimpleReply(

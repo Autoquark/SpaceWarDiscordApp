@@ -45,7 +45,7 @@ public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacti
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyFlankingTacticsBonusInteraction interactionData,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyFlankingTacticsBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.AttackerCombatStrengthSources.Add(new CombatStrengthSource
@@ -54,8 +54,8 @@ public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacti
             Amount = interactionData.Event.Sources.Count - 1
         });
         
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

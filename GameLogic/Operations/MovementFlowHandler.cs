@@ -607,7 +607,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
         if (!string.IsNullOrEmpty(gameEvent.TriggerToMarkResolved))
         {
-            GameFlowOperations.TriggerResolved(game, gameEvent.TriggerToMarkResolved);
+            await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, gameEvent.TriggerToMarkResolved);
         }
 
         return builder;

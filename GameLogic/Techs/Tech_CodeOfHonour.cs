@@ -58,7 +58,7 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
         return [];
     }
 
-    public Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyCodeOfHonourBonusInteraction interactionData,
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyCodeOfHonourBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -78,8 +78,8 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
             });
         }
         
-        GameFlowOperations.TriggerResolved(game, interactionData.InteractionId);
+        await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return Task.FromResult(new SpaceWarInteractionOutcome(true, builder));
+        return new SpaceWarInteractionOutcome(true, builder);
     }
 }

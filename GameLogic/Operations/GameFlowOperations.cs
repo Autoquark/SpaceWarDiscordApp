@@ -40,12 +40,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
-        if (game.HavePrintedSelectActionThisInteraction || game.Phase == GamePhase.Finished)
+        var transientState = serviceProvider.GetRequiredService<TransientGameState>(); 
+        if (transientState.HavePrintedSelectActionMessage || game.Phase == GamePhase.Finished)
         {
             return builder;
         }
         
-        game.HavePrintedSelectActionThisInteraction = true;
+        transientState.HavePrintedSelectActionMessage = true;
         
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
         
@@ -328,7 +329,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
     }
 
-    public static void TriggerResolved(Game game, string interactionId)
+    public static async Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string interactionId)
     {
         var triggerList = game.EventStack.LastOrDefault()?.RemainingTriggersToResolve;
         var triggeredEffect = triggerList?.Find(x => x.ResolveInteractionId == interactionId);
@@ -338,10 +339,22 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         triggerList!.Remove(triggeredEffect);
+        
+        //TODO: Check if we are inside ContinueResolving, if not call it?
+        // Maybe a use case for a non-DB game data object
+        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
 
     public static async Task<DiscordMultiMessageBuilder?> ContinueResolvingEventStackAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
+        var transientState = serviceProvider.GetRequiredService<TransientGameState>();
+        if (transientState.IsResolvingStack)
+        {
+            return builder;
+        }
+        
+        transientState.IsResolvingStack = true;
+        
         while (game.EventStack.Items.Count > 0)
         {
             var resolvingEvent = game.EventStack.Last();
@@ -478,6 +491,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 break;
             }
         }
+        
+        transientState.IsResolvingStack = false;
 
         // Check if any players still need to select starting tech
         if (game.Rules.StartingTechRule == StartingTechRule.OneUniversal)
