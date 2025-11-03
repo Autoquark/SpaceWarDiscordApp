@@ -10,6 +10,7 @@ using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.GameEvents;
@@ -18,7 +19,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
     {
@@ -233,17 +234,22 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         }
         while (game.CurrentTurnPlayer.IsEliminated);
         
+        // New turn start
         game.TurnNumber++;
+        
+        // Cleanup actions taken last turn
         game.ActionTakenThisTurn = false;
         game.AnyActionTakenThisTurn = false;
         
-        if (builder == null)
+        // Issue Turn Begin event
+        await PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_TurnBegin
         {
-            return;
-        }
-        
-        await ShowSelectActionMessageAsync(builder, game, serviceProvider);
+            PlayerGameId = game.CurrentTurnPlayer.GamePlayerId,
+        });
     }
+    
+    public async Task<DiscordMultiMessageBuilder> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TurnBegin gameEvent, Game game,
+        IServiceProvider serviceProvider) => await ShowSelectActionMessageAsync(builder, game, serviceProvider);
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
