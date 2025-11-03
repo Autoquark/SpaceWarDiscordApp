@@ -6,6 +6,7 @@ using DSharpPlus.Entities;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 
 namespace SpaceWarDiscordApp.Discord;
@@ -80,6 +81,8 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
 
             contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
             contextData.User = context.User;
+            
+            var interactionsToSetUp = context.ServiceProvider.GetInteractionsToSetUp();
 
             await base.ExecuteAsync(context, cancellationToken);
 
@@ -89,18 +92,29 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             {
                 // This is not persisted to the DB, but we need to explicitly reset it on the cached object or it will carry
                 // over to subsequent commands
-                contextData.Game.HavePrintedSelectActionThisInteraction = false;
+                // TODO: Maybe have a scoped object in the service provider for this, along with interactions to set up?
+                contextData.Game!.HavePrintedSelectActionThisInteraction = false;
 
                 if (!outcome.RequiresSave.HasValue)
                 {
                     outcome.SetSimpleReply(
                         "ERROR: Command failed to set RequiresSave. Please report this to the developer.");
                 }
-                else if (outcome.RequiresSave == true)
+                else if (outcome.RequiresSave == true || interactionsToSetUp.Any())
                 {
                     try
                     {
-                        await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(contextData.Game!),
+                        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+                            {
+                                if (outcome.RequiresSave == true)
+                                {
+                                    transaction.Set(contextData.Game!);
+                                }
+                                
+                                InteractionsHelper.SetUpInteractions(interactionsToSetUp,
+                                    transaction,
+                                    contextData.GlobalData.InteractionGroupId);
+                            },
                             cancellationToken: cancellationToken);
                     }
                     catch (RpcException)
@@ -110,6 +124,12 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                         throw;
                     }
                 }
+            }
+            else if (interactionsToSetUp.Count != 0)
+            {
+                await Program.FirestoreDb.RunTransactionAsync(transaction =>
+                    InteractionsHelper.SetUpInteractions(interactionsToSetUp, transaction,
+                        contextData.GlobalData.InteractionGroupId), cancellationToken: cancellationToken);
             }
 
             if (outcome.ReplyBuilder != null)

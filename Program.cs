@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using SpaceWarDiscordApp.AI.Services;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
+using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic;
@@ -80,6 +81,10 @@ static class Program
         {
             x.AddScoped<SpaceWarCommandContextData>();
             x.AddScoped<SpaceWarCommandOutcome>();
+            
+            // List of interactions to set up
+            x.AddScoped<List<InteractionData>>();
+            
             x.AddHttpClient();
             x.AddScoped<OpenRouterService>(serviceProvider =>
             {

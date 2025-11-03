@@ -46,13 +46,13 @@ public class Tech_WarpNodes : Tech,
         var sources = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId && x.Planet.ForcesPresent > 0)
             .ToList();
 
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(sources.Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(sources.Select(x =>
             new WarpNodes_ChooseSourceInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Source = x.Coordinates,
                 Game = game.DocumentId
-            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
         
         return builder.AppendHexButtons(game, sources, interactionIds);
     }
@@ -134,8 +134,8 @@ public class Tech_WarpNodes : Tech,
             .Where(x => !playerTech.MovedTo.Contains(x.Coordinates))
             .ToList();
         
-        var interactionIds =
-            await InteractionsHelper.SetUpInteractionsAsync(destinations.Select<BoardHex, HexCoordinates?>(x => x.Coordinates)
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(
+            destinations.Select<BoardHex, HexCoordinates?>(x => x.Coordinates)
                 // Add null for declining further moves
                 .Append(null)
                 .Select(x => new WarpNodes_ChooseDestinationInteraction
@@ -144,7 +144,7 @@ public class Tech_WarpNodes : Tech,
                     Game = game.DocumentId,
                     Destination = x,
                     ResolvesChoiceEvent = gameEvent.DocumentId
-                }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                })).ToList();
         
         return builder.AppendContentNewline($"{name}, choose a planet to move to:")
             .WithAllowedMentions(player)
@@ -172,13 +172,13 @@ public class Tech_WarpNodes : Tech,
         }
 
         var maxAmount = game.GetHexAt(playerTech.Source).Planet!.ForcesPresent;
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(Enumerable.Range(0, maxAmount + 1).Select(x => new WarpNodes_ChooseAmountInteraction
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(Enumerable.Range(0, maxAmount + 1).Select(x => new WarpNodes_ChooseAmountInteraction
         {
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Amount = x,
             Destination = choice.Destination.Value
-        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        }));
         
         return builder?.AppendContentNewline($"{name}, choose amount of forces to move:")
             .WithAllowedMentions(player)

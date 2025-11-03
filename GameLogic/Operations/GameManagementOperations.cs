@@ -21,12 +21,12 @@ public class GameManagementOperations
             .AppendContentNewline("Game Setup".DiscordHeading1())
             .AppendContentNewline("Starting Tech:".DiscordHeading2());
         
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(Enum.GetValues<StartingTechRule>().Select(x => new SetStartingTechRuleInteraction
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<StartingTechRule>().Select(x => new SetStartingTechRuleInteraction
         {
             ForGamePlayerId = -1,
             Game = game.DocumentId,
             Value = x,
-        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        }));
 
         builder.AppendButtonRows(
             Enum.GetValues<StartingTechRule>()

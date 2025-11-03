@@ -35,12 +35,12 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         
         builder.AppendContentNewline("Choose an exhausted planet to produce from:");
 
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x => new TargetOptimisedWorkSchedulesInteraction
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x => new TargetOptimisedWorkSchedulesInteraction
         {
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Target = x.Coordinates
-        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        }));
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }

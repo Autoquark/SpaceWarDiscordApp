@@ -47,38 +47,35 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         game.HavePrintedSelectActionThisInteraction = true;
         
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
-
-        var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
-            .InteractionGroupId;
         
-        var moveInteractionId = await InteractionsHelper.SetUpInteractionAsync(new BeginPlanningMoveInteraction<MoveActionCommands>()
+        var moveInteractionId = serviceProvider.AddInteractionToSetUp(new BeginPlanningMoveInteraction<MoveActionCommands>()
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        }, interactionGroupId);
+        });
 
-        var produceInteractionId = await InteractionsHelper.SetUpInteractionAsync(new ShowProduceOptionsInteraction
+        var produceInteractionId = serviceProvider.AddInteractionToSetUp(new ShowProduceOptionsInteraction
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        }, interactionGroupId);
+        });
 
-        var refreshInteractionId = await InteractionsHelper.SetUpInteractionAsync(new RefreshActionInteraction
+        var refreshInteractionId = serviceProvider.AddInteractionToSetUp(new RefreshActionInteraction
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
-        }, interactionGroupId);
+        });
 
-        var endTurnInteractionId = await InteractionsHelper.SetUpInteractionAsync(new EndTurnInteraction
+        var endTurnInteractionId = serviceProvider.AddInteractionToSetUp(new EndTurnInteraction
         {
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
             Game = game.DocumentId,
             EditOriginalMessage = false
-        }, interactionGroupId);
+        });
 
         var techActions = GetPlayerTechActions(game, game.CurrentTurnPlayer).ToList();
 
-        var techInteractionIds = await InteractionsHelper.SetUpInteractionsAsync(
+        var techInteractionIds = serviceProvider.AddInteractionsToSetUp(
             techActions.Select(x => new UseTechActionInteraction
             {
                 Game = game.DocumentId,
@@ -86,7 +83,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 TechId = x.Tech.Id,
                 ActionId = x.Id,
                 UsingPlayerId = game.CurrentTurnPlayer.GamePlayerId
-            }), interactionGroupId);
+            })).ToList();
         
         await ShowBoardStateMessageAsync(builder, game);
         builder.AppendContentNewline("Your Turn".DiscordHeading2())
@@ -427,11 +424,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                 // If there are no mandatory triggers left, the player can decline remaining optional triggers
                 if (resolvingEvent.RemainingTriggersToResolve.All(x => !x.IsMandatory))
                 {
-                    var interactionId = await InteractionsHelper.SetUpInteractionAsync(new DeclineOptionalTriggersInteraction
+                    var interactionId = serviceProvider.AddInteractionToSetUp(new DeclineOptionalTriggersInteraction
                     {
                         Game = game.DocumentId,
                         ForGamePlayerId = resolvingEvent.ResolvingTriggersForPlayerId
-                    }, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                    });
                     builder?.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
                 }
 
@@ -448,9 +445,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
                     resolvingEvent.ResolvingTriggersForPlayerId = player.GamePlayerId;
                     resolvingEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, resolvingEvent, player).ToList();
 
-                    await InteractionsHelper.SetUpInteractionsAsync(resolvingEvent.RemainingTriggersToResolve
-                        .Select(x => x.ResolveInteractionData).WhereNonNull(),
-                        serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                    serviceProvider.AddInteractionsToSetUp(resolvingEvent.RemainingTriggersToResolve
+                        .Select(x => x.ResolveInteractionData).WhereNonNull());
                     
                     continue;
                 }
@@ -492,13 +488,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
 
                 builder?.AppendContentNewline(string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) + ", please choose a starting tech.");
 
-                var interactions = await InteractionsHelper.SetUpInteractionsAsync(game.UniversalTechs.Select(x =>
+                var interactions = serviceProvider.AddInteractionsToSetUp(game.UniversalTechs.Select(x =>
                     new SetPlayerStartingTechInteraction
                     {
                         ForGamePlayerId = -1,
                         Game = game.DocumentId,
                         TechId = x
-                    }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                    }));
                 
                 builder?.AppendButtonRows(game.UniversalTechs.Zip(interactions, (techId, interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionId, Tech.TechsById[techId].DisplayName)));
                 return builder;

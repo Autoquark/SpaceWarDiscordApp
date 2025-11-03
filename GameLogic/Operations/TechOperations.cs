@@ -29,42 +29,33 @@ public static class TechOperations
         var name = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{name}, you may purchase a tech:")
             .WithAllowedMentions(player);
-
-        var (universalIds, marketIds, declineId) = await Program.FirestoreDb.RunTransactionAsync(transaction =>
-        {
-            var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
-                .InteractionGroupId;
-            var universalIds = InteractionsHelper.SetUpInteractions(availableUniversal.Select(x => new PurchaseTechInteraction
+        
+        var universalIds = serviceProvider.AddInteractionsToSetUp(availableUniversal.Select(x =>
+            new PurchaseTechInteraction
             {
                 Game = game.DocumentId,
                 TechId = x,
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = false,
                 Cost = GameConstants.UniversalTechCost
-            }),
-            transaction, interactionGroupId);
+            }));
             
-            var marketIds = InteractionsHelper.SetUpInteractions(availableMarket
-                    .Select(x => new PurchaseTechInteraction
+        var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket 
+            .Select(x => new PurchaseTechInteraction
                 {
                     Game = game.DocumentId,
                     TechId = x.techId,
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = false,
                     Cost = x.cost
-                }),
-                transaction, interactionGroupId);
+                }));
 
-            var declineId = InteractionsHelper.SetUpInteraction(new DeclineTechPurchaseInteraction
+        var declineId = serviceProvider.AddInteractionToSetUp(new DeclineTechPurchaseInteraction
             {
                 Game = game.DocumentId,
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = false
-            },
-            transaction, interactionGroupId);
-            
-            return (universalIds, marketIds, declineId);
-        });
+            });
 
         if (availableUniversal.Count > 0)
         {
