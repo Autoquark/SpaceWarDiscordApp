@@ -19,7 +19,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>, IEventResolvedHandler<GameEvent_ActionComplete>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
     {
