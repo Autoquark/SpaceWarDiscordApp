@@ -22,7 +22,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         SimpleActionType = ActionType.Free;
     }
     
-    public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_TurnBased()
+    public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech()
     {
         TechId = Id,
         Game = game.DocumentId!
@@ -32,8 +32,8 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
-        var thisTech = GetThisTech(player) as PlayerTech_TurnBased;
-        thisTech!.IsExhausted = true;
+        var thisTech = GetThisTech<PlayerTech_RousingSpeech>(player);
+        thisTech.IsExhausted = true;
         
         // Lasts until the start of the next turn
         thisTech.TurnsActiveRemaining = 1;
@@ -48,7 +48,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
 
     public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
     {
-        var playerTech = GetThisTech(player) as PlayerTech_TurnBased;
+        var playerTech = GetThisTech(player) as PlayerTech_RousingSpeech;
 
         if (playerTech == null || playerTech.TurnsActiveRemaining <= 0)
         {
