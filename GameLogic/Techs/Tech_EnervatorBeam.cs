@@ -30,14 +30,14 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         var targets = game.Hexes.Where(x => x.Planet?.IsExhausted == false)
             .ToList();
 
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new UseEnervatorBeamInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 Target = x.Coordinates,
                 EditOriginalMessage = true
-            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
 
         builder.AppendContentNewline("Enervator Beam: Choose a planet to exhaust:");
         

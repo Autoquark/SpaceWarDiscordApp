@@ -129,6 +129,8 @@ public static class InteractionDispatcher
             contextData.Game = game;
             contextData.User = args.Interaction.User;
             contextData.InteractionMessage = args.Interaction.Message;
+            
+            var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
 
             var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
 
@@ -136,11 +138,21 @@ public static class InteractionDispatcher
             // over to subsequent commands
             contextData.Game.HavePrintedSelectActionThisInteraction = false;
 
-            if (outcome.RequiresSave)
+            if (outcome.RequiresSave || interactionsToSetUp.Any())
             {
                 try
                 {
-                    await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
+                    await Program.FirestoreDb.RunTransactionAsync(transaction =>
+                    {
+                        if (outcome.RequiresSave)
+                        {
+                            transaction.Set(game);
+                        }
+
+                        InteractionsHelper.SetUpInteractions(interactionsToSetUp,
+                            transaction,
+                            contextData.GlobalData.InteractionGroupId);
+                    });
                 }
                 catch (RpcException)
                 {

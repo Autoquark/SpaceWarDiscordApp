@@ -31,13 +31,13 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
             return builder;
         }
             
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new UseFreezeDriedForcesInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 Target = x.Coordinates
-            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }

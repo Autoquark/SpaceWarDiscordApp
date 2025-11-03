@@ -33,14 +33,14 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
         {
             builder.AppendContentNewline("No targets available");
         }
-        var interactionIds = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new UsePersuadatronInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 EditOriginalMessage = true,
                 Target = x.Coordinates
-            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
         
         return builder.AppendHexButtons(game, targets, interactionIds);
     }

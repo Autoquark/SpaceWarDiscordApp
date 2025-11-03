@@ -31,12 +31,12 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         
         builder.AppendContentNewline($"{name}, choose a planet to target:");
         
-        var interactions = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x => new SetVolunteerTestersTargetInteraction
+        var interactions = serviceProvider.AddInteractionsToSetUp(targets.Select(x => new SetVolunteerTestersTargetInteraction
         {
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Target = x.Coordinates
-        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        }));
         
         return builder.AppendHexButtons(game, targets, interactions);
     }
@@ -48,14 +48,14 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         ArgumentNullException.ThrowIfNull(builder);
         var player = game.GetGamePlayerForInteraction(interactionData);
         var hex = game.GetHexAt(interactionData.Target);
-        var interactions = await InteractionsHelper.SetUpInteractionsAsync(Enumerable.Range(1, hex.Planet!.ForcesPresent)
+        var interactions = serviceProvider.AddInteractionsToSetUp(Enumerable.Range(1, hex.Planet!.ForcesPresent)
             .Select(x => new UseVolunteerTestersInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
                 Target = interactionData.Target,
                 Amount = x
-            }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
 
         var name = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{name}, choose how many forces will 'volunteer'")

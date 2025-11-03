@@ -20,16 +20,9 @@ public static class InteractionsHelper
             return globalData;
         });
 
-    public static async Task<List<string>> SetUpInteractionsAsync(IEnumerable<InteractionData.InteractionData> interactions, ulong interactionGroupId) =>
-        await Program.FirestoreDb.RunTransactionAsync(transaction => SetUpInteractions(interactions, transaction, interactionGroupId));
-    
     public static List<string> SetUpInteractions(IEnumerable<InteractionData.InteractionData> interactions,
         Transaction transaction, ulong interactionGroupId) =>
         interactions.Select(x => SetUpInteraction(x, transaction, interactionGroupId)).ToList();
-
-    public static async Task<string> SetUpInteractionAsync(InteractionData.InteractionData data, ulong interactionGroupId)
-        => await Program.FirestoreDb.RunTransactionAsync(transaction =>
-            Task.FromResult(SetUpInteraction(data, transaction, interactionGroupId)));
 
     public static string SetUpInteraction(InteractionData.InteractionData data,
         Transaction transaction, ulong interactionGroupId)

@@ -110,25 +110,19 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             });
         }
 
-        var interactionId = await InteractionsHelper.SetUpInteractionAsync(new JoinGameInteraction
+        var joinGameInteraction = (new JoinGameInteraction
         {
             Game = game.DocumentId,
             ForGamePlayerId = -1,
             EphemeralResponse = true
-        }, context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        });
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline($"Game created. Game channel is {gameChannel.Mention}.")
             .AppendContentNewline("Anyone can join the game by clicking 'join game'. When all players have joined, click 'start game' to begin: ")
-            .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
+            .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, joinGameInteraction.InteractionId, "Join Game"));
 
         var startGameInteraction = new StartGameInteraction
-        {
-            ForGamePlayerId = -1,
-            Game = game.DocumentId
-        };
-
-        var joinGameInteraction = new JoinGameInteraction
         {
             ForGamePlayerId = -1,
             Game = game.DocumentId
@@ -170,12 +164,12 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             return;
         }
 
-        var interactionId = await InteractionsHelper.SetUpInteractionAsync(new JoinGameInteraction
+        var interactionId = context.ServiceProvider.AddInteractionToSetUp(new JoinGameInteraction
         {
             Game = game.DocumentId,
             ForDiscordUserId = user.Id,
             ForGamePlayerId = -1
-        }, context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        });
         
         var builder = new DiscordMessageBuilder().EnableV2Components();
         builder.AppendContentNewline($"{user.Mention}, you have been invited to join this game. To accept, click this button:")

@@ -25,14 +25,13 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
     {
         var targets = game.Hexes.Where(x => x.Planet != null).ToList();
 
-        var interactions = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x =>
+        var interactions = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new ChooseFirstDimensionalOrigamiSystemInteraction
             {
                 Game = game.DocumentId,
                 ForGamePlayerId = player.GamePlayerId,
                 Target = x.Coordinates
-            }),
-            serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+            }));
         
         var name = await player.GetNameAsync(true);
         builder.NewMessage();
@@ -52,17 +51,15 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         
         var player = game.GetGamePlayerForInteraction(interactionData);
         
-        var interactions = await InteractionsHelper.SetUpInteractionsAsync(targets.Select(x =>
+        var interactions = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
                 new UseDimensionalOrigamiInteraction
                 {
                     Game = game.DocumentId,
                     ForGamePlayerId = player.GamePlayerId,
                     Target1 = interactionData.Target,
                     Target2 = x.Coordinates,
-                    EditOriginalMessage = true,
-                    
-                }),
-            serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+                    EditOriginalMessage = true
+                }));
         
         var name = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{DisplayName}: {name}, choose the second system to swap:");

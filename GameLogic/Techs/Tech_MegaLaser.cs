@@ -44,12 +44,12 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         
         builder.AppendContentNewline("Choose a planet to target:");
 
-        var interactions = await InteractionsHelper.SetUpInteractionsAsync(planets.Select(x => new FireMegaLaserInteraction
+        var interactions = serviceProvider.AddInteractionsToSetUp(planets.Select(x => new FireMegaLaserInteraction
         {
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Target = x.Coordinates
-        }), serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
+        }));
         
         return builder.AppendHexButtons(game, planets, interactions);
     }
