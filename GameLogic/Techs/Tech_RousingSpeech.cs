@@ -49,7 +49,19 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
     public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
     {
         var playerTech = GetThisTech(player) as PlayerTech_TurnBased;
-        if (playerTech!.TurnsActiveRemaining > 0 && gameEvent is GameEvent_PreMove preMove)
+
+        if (playerTech == null || playerTech.TurnsActiveRemaining <= 0)
+        {
+            // Only decrement or utilise tech if turns remaining at least 1
+            return [];
+        }
+
+        if (gameEvent is GameEvent_TurnBegin turnBegin && turnBegin.PlayerGameId == player.GamePlayerId)
+        { 
+            playerTech.TurnsActiveRemaining--;
+        }
+        
+        else if (gameEvent is GameEvent_PreMove preMove)
         {
             var destination = game.GetHexAt(preMove.Destination);
             bool? isAttacker = null;

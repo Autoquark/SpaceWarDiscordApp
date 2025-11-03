@@ -19,7 +19,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
     {
@@ -238,36 +238,21 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_ActionComplete
         while (game.CurrentTurnPlayer.IsEliminated);
         
         // New turn start
-        await GameEvent_TurnBegin(game, serviceProvider);
-        
-        if (builder == null)
-        {
-            return;
-        }
-        
-        await ShowSelectActionMessageAsync(builder, game, serviceProvider);
-    }
-
-    static async Task GameEvent_TurnBegin(Game game, IServiceProvider serviceProvider)
-    {
         game.TurnNumber++;
         
         // Cleanup actions taken last turn
         game.ActionTakenThisTurn = false;
         game.AnyActionTakenThisTurn = false;
         
-        // Check and decrement techs that have time-limited active effects
-        var currentPlayer = game.CurrentTurnPlayer;
-        foreach (var playerTechTurnBased in currentPlayer.Techs.OfType<PlayerTech_TurnBased>())
+        // Issue Turn Begin event
+        await PushGameEventsAndResolveAsync(builder, game, serviceProvider, new GameEvent_TurnBegin
         {
-            if (playerTechTurnBased.TurnsActiveRemaining > 0)
-            {
-                playerTechTurnBased.TurnsActiveRemaining--;
-            }
-        }
-
-        return;
+            PlayerGameId = game.CurrentTurnPlayer.GamePlayerId,
+        });
     }
+    
+    public async Task<DiscordMultiMessageBuilder> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TurnBegin gameEvent, Game game,
+        IServiceProvider serviceProvider) => await ShowSelectActionMessageAsync(builder, game, serviceProvider);
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
