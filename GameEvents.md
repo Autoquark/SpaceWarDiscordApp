@@ -15,4 +15,7 @@
     - Subtract moving forces from source planet(s)
     - Resolve combat if necessary
     - Add new forces to destination
-- **GameEvent_MovementFlowComplete**
+- **GameEvent_MovementFlowComplete<T>**
+  - T is the MovementFlowHandler<T> type parameter
+- **GameEvent_CapturePlanet**
+  - Only if the destination was captured by a player (changed owner)

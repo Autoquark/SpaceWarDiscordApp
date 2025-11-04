@@ -311,12 +311,19 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return builder;
     }
 
+    /// <summary>
+    /// Pushes a sequence of game events onto the stack and continue resolving. Events will resolve in the order they were supplied
+    /// </summary>
     public static async Task<DiscordMultiMessageBuilder?> PushGameEventsAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {
         await PushGameEventsAsync(builder, game, serviceProvider, gameEvents);
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
+    
+    /// <summary>
+    /// Pushes a sequence of game events onto the stack. Events will resolve in the order they were supplied
+    /// </summary>
     public static async Task PushGameEventsAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {

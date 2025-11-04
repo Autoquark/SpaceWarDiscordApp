@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
+public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEventResolvedHandler<GameEvent_CapturePlanet>
 {
     public const string DefaultMoveName = "Move Action";
     
@@ -89,7 +89,8 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
 
         // Stage 2: Resolve combat or merging with allied forces
         var totalPreCapacityLimit = totalMoving;
-        if (destinationHex.Planet.OwningPlayerId == movingPlayer.GamePlayerId || destinationHex.IsNeutral)
+        var oldOwner = destinationHex.Planet.OwningPlayerId; 
+        if (oldOwner == movingPlayer.GamePlayerId || destinationHex.IsNeutral)
         {
             totalPreCapacityLimit += destinationHex.ForcesPresent;
         }
@@ -167,7 +168,22 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>
             newOwner != null
                 ? $"{await newOwner.GetNameAsync(true)} now has {newOwner.PlayerColourInfo.GetDieEmoji(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
                 : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
-        
+
+        if (newOwner != null && newOwner.GamePlayerId != oldOwner)
+        {
+            await GameFlowOperations.PushGameEventsAsync(builder, game, serviceProvider, new GameEvent_CapturePlanet
+            {
+                FormerOwnerGameId = oldOwner,
+                Location = destinationHex.Coordinates
+            });
+        }
         return await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
+    }
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_CapturePlanet gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        // Doesn't need to do anything, this is just for techs to hook into
+        return Task.FromResult(builder);
     }
 }
