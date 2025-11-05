@@ -117,13 +117,13 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
             if (attackerCombatStrength > defenderCombatStrength)
             {
                 var difference = attackerCombatStrength - defenderCombatStrength;
-                destinationHex.Planet.SubtractForces(difference);
+                destinationHex.Planet.SubtractForces(Math.Min(difference, destinationHex.Planet.ForcesPresent));
                 builder?.AppendContentNewline($"{defenderName} loses {difference} forces before combat due to {moverName}'s superior Combat Strength");
             }
             else if (defenderCombatStrength > attackerCombatStrength)
             {
                 var difference = defenderCombatStrength - attackerCombatStrength;
-                totalPreCapacityLimit -= difference;
+                totalPreCapacityLimit -= Math.Min(difference, totalPreCapacityLimit);
                 builder?.AppendContentNewline($"{moverName} loses {difference} forces before combat due to {defenderName}'s superior Combat Strength");
             }
             
