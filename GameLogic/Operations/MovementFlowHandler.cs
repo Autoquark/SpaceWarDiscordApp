@@ -328,7 +328,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                 interactionData.TriggerToMarkResolvedId);
             
-            ShowConfirmMoveButtonAsync(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
+            ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
             
             return new SpaceWarInteractionOutcome(true, builder);
         }
@@ -367,6 +367,8 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                     interactionData.MinAmountPerSource ?? StaticMinAmountPerSource,
                     interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                     interactionData.TriggerToMarkResolvedId);
+                
+                ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
             }
             else
             {
@@ -432,7 +434,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
                 interactionData.TriggerToMarkResolvedId);
             
-            ShowConfirmMoveButtonAsync(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
+            ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
         }
         
         return new SpaceWarInteractionOutcome(true, builder);
@@ -554,7 +556,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return builder;
     }
 
-    protected DiscordMultiMessageBuilder ShowConfirmMoveButtonAsync(DiscordMultiMessageBuilder builder,
+    protected DiscordMultiMessageBuilder ShowConfirmMoveButton(DiscordMultiMessageBuilder builder,
         Game game, IServiceProvider serviceProvider, GamePlayer player, string? triggerToMarkResolvedId)
     {
         var confirmInteractionId = serviceProvider.AddInteractionToSetUp(new PerformPlannedMoveInteraction<T>()

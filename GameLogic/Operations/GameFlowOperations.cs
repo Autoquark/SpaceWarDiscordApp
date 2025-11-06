@@ -317,15 +317,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public static async Task<DiscordMultiMessageBuilder?> PushGameEventsAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {
-        await PushGameEventsAsync(builder, game, serviceProvider, gameEvents);
+        await PushGameEventsAsync(game, gameEvents);
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
     
     /// <summary>
     /// Pushes a sequence of game events onto the stack. Events will resolve in the order they were supplied
     /// </summary>
-    public static async Task PushGameEventsAsync(DiscordMultiMessageBuilder? builder, Game game,
-        IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
+    public static async Task PushGameEventsAsync(Game game, params IEnumerable<GameEvent> gameEvents)
     {
         foreach (var gameEvent in gameEvents.Reverse())
         {
@@ -338,7 +337,10 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string interactionId)
     {
-        var triggerList = game.EventStack.LastOrDefault()?.RemainingTriggersToResolve;
+        // The interaction might not be for the top event on the stack if, in the process of resolving it, we pushed events onto the stack
+        var triggerList = game.EventStack.Select(x => x.RemainingTriggersToResolve)
+            .FirstOrDefault(x => x.Any(y => y.ResolveInteractionId == interactionId));
+        
         var triggeredEffect = triggerList?.Find(x => x.ResolveInteractionId == interactionId);
         if (triggeredEffect == null)
         {
