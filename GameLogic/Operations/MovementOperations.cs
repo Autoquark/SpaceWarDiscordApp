@@ -15,7 +15,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
     /// <summary>
     /// Display a summary of the given player's current planned move
     /// </summary>
-    public static async Task<DiscordMultiMessageBuilder> ShowPlannedMoveAsync(DiscordMultiMessageBuilder builder, GamePlayer player)
+    public static async Task<DiscordMultiMessageBuilder> ShowPlannedMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player)
     {
         var plannedMove = player.PlannedMove;
         if (plannedMove == null)
@@ -23,8 +23,9 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
             throw new Exception();
         }
         
+        var destination = game.GetHexAt(plannedMove.Destination);
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} is moving to {plannedMove.Destination}");
+        builder.AppendContentNewline($"{name} is moving to {destination.ToCoordsWithDieEmoji(game)}");
         
         foreach (var source in plannedMove.Sources)
         {

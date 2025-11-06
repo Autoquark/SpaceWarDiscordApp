@@ -61,7 +61,9 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
                     EditOriginalMessage = true
                 }));
         
+        var first = game.GetHexAt(interactionData.Target);
         var name = await player.GetNameAsync(true);
+        builder.AppendContentNewline($"Swapping with {first.ToCoordsWithDieEmoji(game)}");
         builder.AppendContentNewline($"{DisplayName}: {name}, choose the second system to swap:");
         builder.AppendHexButtons(game, targets, interactions);
         
@@ -73,8 +75,11 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
     {
         ArgumentNullException.ThrowIfNull(builder);
         
-        game.GetHexAt(interactionData.Target1).Coordinates = interactionData.Target2;
-        game.GetHexAt(interactionData.Target2).Coordinates = interactionData.Target1;
+        // Need to make sure we look these up by coordinates BEFORE we change their coordinates
+        var first = game.GetHexAt(interactionData.Target1);
+        var second = game.GetHexAt(interactionData.Target2);
+        first.Coordinates = interactionData.Target2;
+        second.Coordinates = interactionData.Target1;
 
         var player = game.GetGamePlayerForInteraction(interactionData);
         var name = await player.GetNameAsync(false);

@@ -492,7 +492,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                     })
                 ).ToList();
 
-        await MovementOperations.ShowPlannedMoveAsync(builder, player);
+        await MovementOperations.ShowPlannedMoveAsync(builder, game, player);
         builder.AppendContentNewline($"{GetMoveName()}: How many forces do you wish to move from {source.Coordinates} to {destination.Coordinates}?");
         builder.AppendButtonRows(Enumerable.Range(0, max + 1).Select(x =>
             new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionIds[x], x.ToString())));
@@ -518,7 +518,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         }
         
         var name = await player.GetNameAsync(true);
-        await MovementOperations.ShowPlannedMoveAsync(builder, player);
+        await MovementOperations.ShowPlannedMoveAsync(builder, game, player);
         builder.AppendContentNewline($"{GetMoveName()}: {name}, choose a planet to move forces from: ")
             .WithAllowedMentions(player);
         builder.AddActionRowComponent();
