@@ -483,12 +483,7 @@ public static class BoardImageGenerator
                             playerTech.GetTech().DisplayName, InfoTextBrush);
                         
                         playerTechTable.DrawTextInCell(context, 1, index + 1, techTableTextOptions,
-                            playerTech switch
-                            {
-                                { IsExhausted: true } => "Exhausted",
-                                { UsedThisTurn: true } => "Used",
-                                _ => "Ready"
-                            }, InfoTextBrush);
+                            playerTech.GetTech().GetTechStatusLine(game, player), InfoTextBrush);
                     }
                 });
                 

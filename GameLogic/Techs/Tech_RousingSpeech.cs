@@ -11,13 +11,10 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 
 public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBonusInteraction>
 {
-
-    
     public Tech_RousingSpeech (): base("rousing-speech", "Rousing Speech", 
         "Gain +1 Combat Strength until the start of your next turn.",
-        "Flavour: Some of you may die. Many of you, in fact. " +
-        "We must seriously consider the possibility that all of you will die. Nevertheless...",
-        ["Free Action", "Exhaust: "])
+        "Some of you may die. Many of you, in fact. We must seriously consider the possibility that all of you will die. Nevertheless...",
+        ["Free Action", "Exhaust"])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
@@ -29,7 +26,12 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         Game = game.DocumentId!
     };
 
-    
+    public override string GetTechStatusLine(Game game, GamePlayer player)
+    {
+        var playerTech = GetThisTech<PlayerTech_RousingSpeech>(player);
+        return base.GetTechStatusLine(game, player) + (playerTech.TurnsActiveRemaining > 0 ? " [Active]" : " [Inactive]");
+    }
+
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {

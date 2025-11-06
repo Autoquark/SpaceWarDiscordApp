@@ -77,6 +77,24 @@ public abstract class Tech
         return [result];
     }
 
+    public virtual string GetTechStatusLine(Game game, GamePlayer player)
+    {
+        // If tech is limited use, show whether it is available
+        if (DescriptionKeywords.Intersect(["Exhaust", "Once per turn"]).Any())
+        {
+            var playerTech = player.GetPlayerTechById(Id);
+            return playerTech switch
+            {
+                { IsExhausted: true } => "Exhausted",
+                { UsedThisTurn: true } => "Used",
+                _ => "Ready"
+            };
+        }
+
+        // If tech is entirely passive, status line is blank
+        return "";
+    }
+
     /// <summary>
     /// Get triggered effects from this tech in response to the given GameEvent
     /// </summary>
