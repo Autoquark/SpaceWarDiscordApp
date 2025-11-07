@@ -63,7 +63,7 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         
         var first = game.GetHexAt(interactionData.Target);
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"Swapping with {first.ToCoordsWithDieEmoji(game)}");
+        builder.AppendContentNewline($"Swapping with {first.ToHexNumberWithDieEmoji(game)}");
         builder.AppendContentNewline($"{DisplayName}: {name}, choose the second system to swap:");
         builder.AppendHexButtons(game, targets, interactions);
         

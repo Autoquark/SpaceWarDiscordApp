@@ -25,7 +25,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
         
         var destination = game.GetHexAt(plannedMove.Destination);
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} is moving to {destination.ToCoordsWithDieEmoji(game)}");
+        builder.AppendContentNewline($"{name} is moving to {destination.ToHexNumberWithDieEmoji(game)}");
         
         foreach (var source in plannedMove.Sources)
         {

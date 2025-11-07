@@ -55,7 +55,7 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         {
             var player = game.GetGamePlayerForInteraction(interactionData);
             GetThisTech(player).IsExhausted = true;
-            builder?.AppendContentNewline($"{await player.GetNameAsync(false)} is using {DisplayName} to produce on {hex.ToCoordsWithDieEmoji(game)}");
+            builder?.AppendContentNewline($"{await player.GetNameAsync(false)} is using {DisplayName} to produce on {hex.ToHexNumberWithDieEmoji(game)}");
             await GameFlowOperations.PushGameEventsAsync(game,
                 ProduceOperations.CreateProduceEvent(game, hex.Coordinates));
         }

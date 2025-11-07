@@ -36,7 +36,7 @@ public class Tech_SabotageSupplyLines : Tech
         }
 
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} used {DisplayName} to remove 1 forces from: " + string.Join(", ", targets.Select(x => x.ToCoordsWithDieEmoji(game))));
+        builder.AppendContentNewline($"{name} used {DisplayName} to remove 1 forces from: " + string.Join(", ", targets.Select(x => x.ToHexNumberWithDieEmoji(game))));
         
         tech.UsedThisTurn = true;
 

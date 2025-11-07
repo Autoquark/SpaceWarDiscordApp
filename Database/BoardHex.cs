@@ -55,9 +55,9 @@ public class BoardHex
     /// Returns a string with this planet's coordinates plus an emoji representing the amount and player affiliation of
     /// any forces present. NB This will not work as a button label!
     /// </summary>
-    public string ToCoordsWithDieEmoji(Game game)
+    public string ToHexNumberWithDieEmoji(Game game)
     {
-        var result = Coordinates.ToString();
+        var result = Coordinates.ToHexNumberString();
         var dieEmoji = GetDieEmoji(game);
         if (dieEmoji! != null!)
         {

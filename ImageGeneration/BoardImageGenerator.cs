@@ -664,7 +664,7 @@ public static class BoardImageGenerator
         var boardOffset = (PointF)topLeft + new SizeF(HexOuterDiameter / 2.0f - minBoardX, HexInnerDiameter / 2.0f - minBoardY);
         
         // Draw hexes
-        foreach(var hex in game.Hexes)
+        foreach (var hex in game.Hexes)
         {
             var hexOffset = HexToPixelOffset(hex.Coordinates);
             var hexCentre = hexOffset + boardOffset;
@@ -680,6 +680,7 @@ public static class BoardImageGenerator
                     .GenerateOutline(2.0f);
                 image.Mutate(x => x.Fill(Color.Black, planetCircle));
                 
+
                 // Draw inner circle for home planet
                 if (hex.Planet.IsHomeSystem)
                 {
@@ -701,7 +702,7 @@ public static class BoardImageGenerator
                 }
 
                 // Draw science icons
-                var angle = 30 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Science - 1));
+                var angle = 30 - (PlanetIconSpacingDegrees / 2 * (hex.Planet.Science - 1));
                 for (var i = 0; i < hex.Planet.Science; i++)
                 {
                     var point = GetPointPolar(PlanetIconDistance, -angle);
@@ -709,8 +710,9 @@ public static class BoardImageGenerator
                     angle += PlanetIconSpacingDegrees;
                 }
                 
+
                 // Draw star icons
-                angle = 90 - (PlanetIconSpacingDegrees/2 * (hex.Planet.Stars - 1));
+                angle = 90 - (PlanetIconSpacingDegrees / 2 * (hex.Planet.Stars - 1));
                 for (var i = 0; i < hex.Planet.Stars; i++)
                 {
                     var point = GetPointPolar(PlanetIconDistance, -angle);
@@ -734,12 +736,13 @@ public static class BoardImageGenerator
                         },
                         hex.Planet.Production.ToString(),
                         Color.Black));
-                
+
                 // Draw forces
                 if (hex.ForcesPresent > 0)
                 {
                     //TODO: Cache these
                     var colourInfo = PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColour);
+                        PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColour);
                     var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
                     
                     // Draw die in centre of hex to represent forces
@@ -773,13 +776,35 @@ public static class BoardImageGenerator
                         image.Mutate(x => x.DrawText(
                             new RichTextOptions(StrengthNumberFont)
                             {
-                                Origin = hexCentre + new Size(0, hex.Planet.IsHomeSystem ? DisplayedCombatStrengthOffsetHomeSystem : DisplayedCombatStrengthOffset),
+                                Origin = hexCentre + new Size(0,
+                                    hex.Planet.IsHomeSystem
+                                        ? DisplayedCombatStrengthOffsetHomeSystem
+                                        : DisplayedCombatStrengthOffset),
                                 HorizontalAlignment = HorizontalAlignment.Center
                             },
                             displayedStrength.ToString("+##"),
                             brush));
                     }
                 }
+                
+                var textOrigin = hexCentre + new PointF(0, HexInnerDiameter * 0.4f);
+                SizeF textAreaSize = new SizeF(100, 50);
+                image.Mutate(x =>
+                    x.Fill(new DrawingOptions() { GraphicsOptions = new GraphicsOptions() { BlendPercentage = 0.5f } },
+                        Color.White, new RectangleF(textOrigin - textAreaSize / 2, textAreaSize)));
+            
+                image.Mutate(x => x.DrawText(new RichTextOptions(CoordinatesFont)
+                    {
+                        TextAlignment = TextAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Origin = textOrigin,
+                        TextRuns =
+                        [
+                        ] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
+                    },
+                    hex.Coordinates.ToHexNumberString(),
+                    Color.Black));
             }
 
             foreach (var connection in hex.HyperlaneConnections)
@@ -804,23 +829,8 @@ public static class BoardImageGenerator
                     image.Mutate(x => x.Fill(Color.Black, triangle));
                 }
             }
-
-            var textOrigin = hexCentre + new PointF(0, HexInnerDiameter * 0.4f);
-            SizeF textAreaSize = new SizeF(100, 50);
-            image.Mutate(x => x.Fill(new DrawingOptions() { GraphicsOptions = new GraphicsOptions() { BlendPercentage = 0.5f } }, Color.White , new RectangleF(textOrigin - textAreaSize/2, textAreaSize)));
-            
-            image.Mutate(x => x.DrawText(new RichTextOptions(CoordinatesFont)
-                {
-                    TextAlignment = TextAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Origin = textOrigin,
-                    TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
-                },
-                hex.Coordinates.ToString(),
-                Color.Black));
         }
-        
+
         // Draw previous turn actions for each player
         foreach (var player in game.Players)
         {

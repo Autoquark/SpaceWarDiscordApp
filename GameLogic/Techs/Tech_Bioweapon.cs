@@ -25,7 +25,7 @@ public class Tech_Bioweapon : Tech
         var stringBuilder = new StringBuilder("Removed 1 forces from: ");
         
         var affected = game.Hexes.WhereForcesPresent().WhereNotOwnedBy(player).ToList();
-        stringBuilder.AppendJoin(", ", affected.Select(x => x.ToCoordsWithDieEmoji(game)));
+        stringBuilder.AppendJoin(", ", affected.Select(x => x.ToHexNumberWithDieEmoji(game)));
         
         foreach (var hex in affected)
         {

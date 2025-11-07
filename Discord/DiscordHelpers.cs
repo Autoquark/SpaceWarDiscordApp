@@ -14,7 +14,7 @@ public static partial class DiscordHelpers
     {
         var emoji = hex.GetDieEmoji(game);
         return new DiscordButtonComponent(style, interactionId,
-            hex.Coordinates.ToString(), emoji: (emoji! == null! ? null : new DiscordComponentEmoji(emoji))!);
+            hex.Coordinates.ToHexNumberString(), emoji: (emoji! == null! ? null : new DiscordComponentEmoji(emoji))!);
     }
 
     public static DiscordButtonComponent CreateButtonForTechAction(TechAction techAction, string interactionId,

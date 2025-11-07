@@ -53,7 +53,7 @@ public class Tech_SmoothTakeover : Tech, IInteractionHandler<SmoothTakeoverRefre
         if (hex.Planet is { IsExhausted: true, OwningPlayerId: not -1})
         {
             var newOwner = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
-            builder?.AppendContentNewline($"{await newOwner.GetNameAsync(false)} performs a smooth takeover and refreshes {hex.ToCoordsWithDieEmoji(game)}");
+            builder?.AppendContentNewline($"{await newOwner.GetNameAsync(false)} performs a smooth takeover and refreshes {hex.ToHexNumberWithDieEmoji(game)}");
 
             hex.Planet.IsExhausted = false;
         }

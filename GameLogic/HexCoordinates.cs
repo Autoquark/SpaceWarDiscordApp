@@ -65,11 +65,53 @@ public readonly partial record struct HexCoordinates
         yield return new HexCoordinates(Q, R + 1);
     }
 
-    public override string ToString()
+    public int ToHexNumber()
     {
-        return $"({Q}, {R})";
+        var radius = new[] {Q, R, S}.Select(Math.Abs).Max();
+        var index = 0;
+        
+        // Top to top right section
+        if (R == -radius)
+        {
+            index = Q;
+        }
+        // Top right to bottom right section
+        else if (Q == radius)
+        {
+            index = 2 * radius + R;
+        }
+        // Bottom right to bottom section
+        else if (S == -radius)
+        {
+            index = 3 * radius - Q;
+        }
+        // Bottom to bottom left section
+        else if (R == radius)
+        {
+            index = 4 * radius + S;
+        }
+        // Bottom left to top left section
+        else if (Q == -radius)
+        {
+            index = 5 * radius - R;
+        }
+        // Top left to top section
+        else if (S == radius)
+        {
+            index = 6 * radius + Q;
+        }
+        else
+        {
+            throw new Exception();
+        }
+
+        return radius * 100 + index;
     }
-    
+
+    public string ToHexNumberString() => ToHexNumber().ToString("000");
+
+    public override string ToString() => ToHexNumberString();
+
     /// <summary>
     /// Returns this position rotated the given number of 60 degree increments clockwise around 0, 0
     /// </summary>
@@ -88,6 +130,9 @@ public readonly partial record struct HexCoordinates
         
         return new HexCoordinates(q, r);
     }
+    
+    public static HexCoordinates operator *(int value, HexCoordinates coordinates)
+        => new(coordinates.Q * value, coordinates.R * value);
 
     public static HexCoordinates operator +(HexCoordinates coordinates, HexDirection direction)
         => coordinates + direction.ToHexOffset();
