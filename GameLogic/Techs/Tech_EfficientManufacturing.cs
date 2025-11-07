@@ -17,6 +17,8 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
     {
     }
 
+    public override int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => hex.Planet!.Production == 1 ? 1 : 0;
+
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_BeginProduce beginProduce)

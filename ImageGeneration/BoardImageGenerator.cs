@@ -741,13 +741,32 @@ public static class BoardImageGenerator
                     //TODO: Cache these
                     var colourInfo = PlayerColourInfo.Get(game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId).PlayerColour);
                     var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
+                    
+                    // Draw die in centre of hex to represent forces
                     using var dieImage = ColourlessDieIcons[hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
                     image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
 
                     var owningPlayer = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
+                    
+                    // Draw any known production bonus from techs
+                    var displayedProductionBonus = owningPlayer.Techs.Sum(x =>
+                        Tech.TechsById[x.TechId].GetDisplayedProductionBonus(game, hex, owningPlayer));
+                    if (displayedProductionBonus != 0)
+                    {
+                        var brush = new SolidBrush(owningPlayer.PlayerColourInfo.ImageSharpColor);
+                        image.Mutate(x => x.DrawText(
+                            new RichTextOptions(StrengthNumberFont)
+                            {
+                                Origin = circleCentre + new Size(30, -50),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            displayedProductionBonus.ToString("+##"),
+                            brush));
+                    }
+                    
+                    // Draw any known defensive strength bonus from techs
                     var displayedStrength = owningPlayer.Techs.Sum(x =>
                         Tech.TechsById[x.TechId].GetDisplayedCombatStrengthBonus(game, hex, owningPlayer));
-
                     if (displayedStrength != 0)
                     {
                         var brush = new SolidBrush(owningPlayer.PlayerColourInfo.ImageSharpColor);
