@@ -17,6 +17,8 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
         
     }
 
+    public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => hex.ForcesPresent >= 5 ? 1 : 0;
+
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         bool? isAttacker = null;

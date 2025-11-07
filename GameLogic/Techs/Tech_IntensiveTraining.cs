@@ -19,6 +19,8 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         SimpleActionType = ActionType.Main;
     }
 
+    public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => GetThisTech(player).IsExhausted ? 1 : 0;
+
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {

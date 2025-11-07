@@ -76,6 +76,12 @@ public abstract class Tech
         
         return [result];
     }
+    
+    /// <summary>
+    /// Called for each planet controlled by each player owning this tech to get any combat strength bonus that
+    /// should be displayed on the map for the planet. 
+    /// </summary>
+    public virtual int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => 0;
 
     public virtual string GetTechStatusLine(Game game, GamePlayer player)
     {

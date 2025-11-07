@@ -63,6 +63,8 @@ public static class BoardImageGenerator
     private const float PreviousMoveThickness = 10;
     private const float AsteroidTriangleSideLength = 40;
     private static readonly float PlanetIconDistance = PlanetCircleRadius + 36;
+    private const int DisplayedCombatStrengthOffset = 52;
+    private const int DisplayedCombatStrengthOffsetHomeSystem = 43;
     
     // Icons
     private static readonly Image ScienceIcon;
@@ -85,6 +87,7 @@ public static class BoardImageGenerator
     // Fonts
     private static readonly FontCollection FontCollection = new();
     private static readonly Font ProductionNumberFont;
+    private static readonly Font StrengthNumberFont;
     private static readonly Font CoordinatesFont;
     private static readonly Font InfoTableFont;
     private static readonly Font InfoTableFontBold;
@@ -163,7 +166,8 @@ public static class BoardImageGenerator
             FontCollection.Add("Fonts/Arial/arialbi.ttf");
             FontCollection.Add("Fonts/Arial/ariali.ttf");
             FontCollection.Add("Fonts/Arial/ariblk.ttf");
-            ProductionNumberFont = family.CreateFont(22);
+            ProductionNumberFont = family.CreateFont(32);
+            StrengthNumberFont = family.CreateFont(32, FontStyle.Bold);
             CoordinatesFont = family.CreateFont(36);
             InfoTableFont = family.CreateFont(42);
             InfoTableFontBold = family.CreateFont(42, FontStyle.Bold);
@@ -739,6 +743,23 @@ public static class BoardImageGenerator
                     var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
                     using var dieImage = ColourlessDieIcons[hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
                     image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
+
+                    var owningPlayer = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
+                    var displayedStrength = owningPlayer.Techs.Sum(x =>
+                        Tech.TechsById[x.TechId].GetDisplayedCombatStrengthBonus(game, hex, owningPlayer));
+
+                    if (displayedStrength != 0)
+                    {
+                        var brush = new SolidBrush(owningPlayer.PlayerColourInfo.ImageSharpColor);
+                        image.Mutate(x => x.DrawText(
+                            new RichTextOptions(StrengthNumberFont)
+                            {
+                                Origin = hexCentre + new Size(0, hex.Planet.IsHomeSystem ? DisplayedCombatStrengthOffsetHomeSystem : DisplayedCombatStrengthOffset),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            displayedStrength.ToString("+##"),
+                            brush));
+                    }
                 }
             }
 

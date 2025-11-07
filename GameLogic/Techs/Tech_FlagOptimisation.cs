@@ -18,6 +18,8 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
     {
     }
 
+    public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => hex.Planet!.Stars > 0 ? 1 : 0;
+
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_PreMove preMove)

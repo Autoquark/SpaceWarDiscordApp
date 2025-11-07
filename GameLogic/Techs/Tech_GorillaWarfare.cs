@@ -17,6 +17,8 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
         
     }
 
+    public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => hex.ForcesPresent == 1 ? 1 : 0;
+
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_PreMove preMove)

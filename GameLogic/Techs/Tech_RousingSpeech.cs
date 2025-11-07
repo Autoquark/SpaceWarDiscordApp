@@ -32,6 +32,9 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         return base.GetTechStatusLine(game, player) + (playerTech.TurnsActiveRemaining > 0 ? " [Active]" : " [Inactive]");
     }
 
+    public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player)
+        => GetThisTech<PlayerTech_RousingSpeech>(player).TurnsActiveRemaining > 0 ? 1 : 0;
+
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
