@@ -1,6 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.EfficientManufacturing;
+using SpaceWarDiscordApp.Database.InteractionData.Tech.JewelOfTheEmpire;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.GameEvents;
@@ -8,23 +8,23 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEfficientManufacturingBonusInteraction>
+public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEmpireBonusInteraction>
 {
-    public Tech_EfficientManufacturing() : base("efficient-manufacturing",
-        "Efficient Manufacturing",
-        "When you produce on a planet with 1 production, produce 1 additional forces.",
-        "Would you believe that this body armour is made out of mud? You would? Well, good! Because it is!")
+    public Tech_JewelOfTheEmpire() : base("jewel-of-the-empire",
+        "Jewel of the Empire",
+        "When you produce on a home planet, produce an additional 2 forces.",
+        "Everybody wants to live in the capital. I hear they have three different flavours of nutrient paste!")
     {
     }
 
-    public override int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => hex.Planet!.Production == 1 ? 1 : 0;
+    public override int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => hex.Planet!.IsHomeSystem ? 2 : 0;
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_BeginProduce beginProduce)
         {
             var hex = game.GetHexAt(beginProduce.Location);
-            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && hex.Planet.Production == 1)
+            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && hex.Planet.IsHomeSystem)
             {
                 return
                 [
@@ -33,7 +33,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
                         AlwaysAutoResolve = true,
                         DisplayName = DisplayName,
                         IsMandatory = true,
-                        ResolveInteractionData = new ApplyEfficientManufacturingBonusInteraction
+                        ResolveInteractionData = new ApplyJewelOfTheEmpireBonusInteraction
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
@@ -48,15 +48,14 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
         return [];
     }
 
-
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
-        ApplyEfficientManufacturingBonusInteraction interactionData, Game game, IServiceProvider serviceProvider)
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyJewelOfTheEmpireBonusInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
     {
-        interactionData.Event.EffectiveProductionValue++;
+        interactionData.Event.EffectiveProductionValue += 2;
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        builder?.AppendContentNewline($"Produced 1 additional forces due to {DisplayName}");
+        builder?.AppendContentNewline($"Produced 2 additional forces due to {DisplayName}");
         
         return new SpaceWarInteractionOutcome(true, builder);
     }
