@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.DimensionalOrigami;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -82,6 +83,14 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         second.Coordinates = interactionData.Target1;
 
         var player = game.GetGamePlayerForInteraction(interactionData);
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = interactionData.Target1
+        });
+        player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
+        {
+            Coordinates = interactionData.Target2
+        });
         var name = await player.GetNameAsync(false);
         builder.AppendContentNewline($"{name} has swapped {interactionData.Target1} and {interactionData.Target2} using {DisplayName}!");
         
