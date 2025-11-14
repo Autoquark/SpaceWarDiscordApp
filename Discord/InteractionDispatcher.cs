@@ -129,7 +129,7 @@ public static class InteractionDispatcher
             contextData.Game = game;
             contextData.User = args.Interaction.User;
             contextData.InteractionMessage = args.Interaction.Message;
-            
+
             var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
 
             var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
@@ -203,6 +203,11 @@ public static class InteractionDispatcher
                     }
                 }
             }
+        }
+        catch (Exception e)
+        {
+            await Program.LogExceptionAsync(e);
+            throw;
         }
         finally
         {

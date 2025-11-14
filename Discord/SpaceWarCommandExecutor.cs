@@ -138,6 +138,11 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 }
             }
         }
+        catch (Exception e)
+        {
+            await Program.LogExceptionAsync(e);
+            throw;
+        }
         finally
         {
             // If we acquired a game access semaphore ensure we release it 

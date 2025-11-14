@@ -44,18 +44,14 @@ static class Program
     public static bool IsTestEnvironment { get; private set; } = false;
 
     private static Task? _updateEmojiTask;
+
+    private static DiscordUser? _userToMessageErrorsTo = null;
     
     static async Task Main()
     {
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
-            Console.WriteLine(args);
-            foreach (var innerException in args.Exception.InnerExceptions)
-            {
-                Console.WriteLine(innerException);
-            }
-            
-            Debugger.Break();
+            LogExceptionAsync(args.Exception).Wait();
         };
         
         var secrets = JsonConvert.DeserializeObject<Secrets>(await File.ReadAllTextAsync("Secrets.json"));
@@ -157,6 +153,10 @@ static class Program
         });
         
         DiscordClient = discordBuilder.Build();
+        if (secrets.UserToMessageErrorsTo != 0)
+        {
+            _userToMessageErrorsTo = await DiscordClient.GetUserAsync(secrets.UserToMessageErrorsTo);
+        }
         
         CommonEmoji = new CommonEmoji(DiscordClient);
         
@@ -193,6 +193,37 @@ static class Program
         foreach (var guild in arg.Guilds.Values)
         {
             await GuildOperations.UpdateServerTechListingAsync(guild);
+        }
+    }
+    
+    public static async Task LogExceptionAsync(Exception exception)
+    {
+        Console.WriteLine(exception);
+        var aggregateException = exception as AggregateException;
+        if (aggregateException != null)
+        {
+            foreach (var innerException in aggregateException.InnerExceptions)
+            {
+                Console.WriteLine(innerException);
+            }
+        }
+
+        Debugger.Break();
+
+        if (!IsTestEnvironment && _userToMessageErrorsTo != null)
+        {
+            var builder = new DiscordMessageBuilder();
+            builder.AppendContentNewline(exception.ToString());
+            
+            if (aggregateException != null)
+            {
+                foreach (var innerException in aggregateException.InnerExceptions)
+                {
+                    builder.AppendContentNewline(innerException.ToString());
+                }
+            }
+
+            await _userToMessageErrorsTo.SendMessageAsync(builder);
         }
     }
 
