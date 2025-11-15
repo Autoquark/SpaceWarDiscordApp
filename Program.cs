@@ -131,6 +131,7 @@ static class Program
         RegisterEverything(new GameFlowOperations());
         RegisterEverything(new ProduceOperations());
         RegisterEverything(new MovementOperations());
+        RegisterEverything(new TechOperations());
         
         // Create tech singletons
         foreach (var techType in Assembly.GetExecutingAssembly()

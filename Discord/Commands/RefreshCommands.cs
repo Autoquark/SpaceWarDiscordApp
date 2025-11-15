@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
@@ -15,7 +16,11 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
     {
         await RefreshOperations.Refresh(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
 
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = ActionType.Main,
+            });
 
         return new SpaceWarInteractionOutcome(true, builder);
     }

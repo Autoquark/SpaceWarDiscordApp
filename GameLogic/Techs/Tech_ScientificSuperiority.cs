@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -26,7 +27,12 @@ public class Tech_ScientificSuperiority : Tech
         player.VictoryPoints++;
         player.GetPlayerTechById(Id).IsExhausted = true;
         await GameFlowOperations.CheckForVictoryAsync(builder, game);
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
 
         return builder;
     }

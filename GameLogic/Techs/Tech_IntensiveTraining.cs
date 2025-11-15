@@ -12,8 +12,9 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
 {
     public Tech_IntensiveTraining() : base("intensive-training",
         "Intensive Training",
-        "Action, Exhaust: While this tech is exhausted, gain +1 Combat Strength.",
-        "I'll teach you how to fire your guns when you've mastered standing in a straight line. Which may take some time, at this rate.")
+        "While this tech is exhausted, gain +1 Combat Strength.",
+        "I'll teach you how to fire your guns when you've mastered standing in a straight line. Which may take some time, at this rate.",
+        ["Action", "Exhaust" ])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;
@@ -28,7 +29,11 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         builder.AppendContentNewline($"{name} intensively trains their troops!");
         GetThisTech(player).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
         
         return builder;
     }

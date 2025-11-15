@@ -1,6 +1,7 @@
 using System.Text;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -42,7 +43,12 @@ public class Tech_Bioweapon : Tech
         
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
+        
         return builder;
     }
 }

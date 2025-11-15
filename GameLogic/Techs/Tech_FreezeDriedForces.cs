@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.FreezeDriedForces;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -52,11 +53,16 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var name = await player.GetNameAsync(false);
         builder?.AppendContentNewline($"{name} added 3 forces to {hex.Coordinates} using {DisplayName}");
-        ProduceOperations.CheckPlanetCapacity(builder, hex);
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        ProduceOperations.CheckPlanetCapacity(game, hex);
+
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

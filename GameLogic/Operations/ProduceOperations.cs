@@ -6,7 +6,9 @@ using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, IEventResolvedHandler<GameEvent_PostProduce>
+public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
+    IEventResolvedHandler<GameEvent_PostProduce>,
+    IEventResolvedHandler<GameEvent_ExceedingPlanetCapacity>
 {
     public static GameEvent_BeginProduce CreateProduceEvent(Game game, HexCoordinates location, bool allowExhausted = false)
     {
@@ -38,7 +40,6 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         
         hex.Planet.AddForces(gameEvent.EffectiveProductionValue);
         hex.Planet.IsExhausted = true;
-        player.Science += gameEvent.EffectiveScienceProduction;
         var producedScience = gameEvent.EffectiveScienceProduction > 0;
 
         if (game.CurrentTurnPlayer == player)
@@ -52,49 +53,59 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>, 
         builder?.AppendContentNewline(
             $"{name} is producing on {hex.Coordinates}. Produced {gameEvent.EffectiveProductionValue} forces" + (producedScience ? $" and {gameEvent.EffectiveScienceProduction} science" : ""));
 
-        await GameFlowOperations.PushGameEventsAsync(game, new GameEvent_PostProduce
-        {
-            PlayerGameId = player.GamePlayerId,
-            ForcesProduced = hex.Planet.Production,
-            ScienceProduced = hex.Planet.Science,
-            Location = hex.Coordinates
-        });
+        GameFlowOperations.PushGameEvents(game, new GameEvent_PlayerGainScience
+            {
+                PlayerGameId = player.GamePlayerId,
+                Amount = gameEvent.EffectiveScienceProduction
+            },
+            new GameEvent_PostProduce
+            {
+                PlayerGameId = player.GamePlayerId,
+                ForcesProduced = hex.Planet.Production,
+                ScienceProduced = hex.Planet.Science,
+                Location = hex.Coordinates
+            });
 
         return builder;
     }
-    
-    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PostProduce gameEvent, Game game,
+
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder,
+        GameEvent_PostProduce gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(gameEvent.Location);
-        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
-        var name = await player.GetNameAsync(false);
-        
-        CheckPlanetCapacity(builder, hex);
 
-        if (gameEvent.ScienceProduced <= 0)
-        {
-            return builder;
-        }
+        CheckPlanetCapacity(game, hex);
         
-        builder?.AppendContentNewline($"{name} now has {player.Science} science");
-        if (builder != null)
-        {
-            await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
-        }
-
         return builder;
     }
 
-    public static DiscordMultiMessageBuilder? CheckPlanetCapacity(DiscordMultiMessageBuilder? builder, BoardHex hex)
+    public static void CheckPlanetCapacity(Game game, BoardHex hex)
     {
         if (hex.ForcesPresent > GameConstants.MaxForcesPerPlanet)
         {
-            var loss = hex.ForcesPresent - GameConstants.MaxForcesPerPlanet;
-            hex.Planet!.SetForces(GameConstants.MaxForcesPerPlanet);
+            GameFlowOperations.PushGameEvents(game, CreateExceedingPlanetCapacityEvent(hex));
+        }
+    }
+
+    private static GameEvent_ExceedingPlanetCapacity CreateExceedingPlanetCapacityEvent(BoardHex hex) =>
+        new()
+        {
+            Location = hex.Coordinates,
+            Capacity = GameConstants.MaxForcesPerPlanet
+        };
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_ExceedingPlanetCapacity gameEvent,
+        Game game, IServiceProvider serviceProvider)
+    {
+        var hex = game.GetHexAt(gameEvent.Location);
+        if (hex.ForcesPresent > gameEvent.Capacity)
+        {
+            var loss = hex.ForcesPresent - gameEvent.Capacity;
+            hex.Planet!.SetForces(gameEvent.Capacity);
             builder?.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space from {hex.Coordinates} due to exceeding the capacity limit");
         }
-
-        return builder;
+        
+        return Task.FromResult(builder);
     }
 }

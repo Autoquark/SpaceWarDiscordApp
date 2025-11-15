@@ -92,9 +92,6 @@ public class Game : FirestoreModel
     [FirestoreProperty]
     public bool ActionTakenThisTurn { get; set; }
     
-    [FirestoreProperty]
-    public bool IsWaitingForTechPurchaseDecision { get; set; }
-    
     // ID of the last action selection message. Used to edit the buttons away when another one is posted, to avoid
     // clicking old buttons
     [FirestoreProperty]

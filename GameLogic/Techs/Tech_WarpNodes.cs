@@ -167,7 +167,11 @@ public class Tech_WarpNodes : Tech,
         // Null value indicates done making moves
         if (!choice.Destination.HasValue)
         {
-            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+            await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+                new GameEvent_ActionComplete
+                {
+                    ActionType = SimpleActionType,
+                });
             return builder;
         }
 

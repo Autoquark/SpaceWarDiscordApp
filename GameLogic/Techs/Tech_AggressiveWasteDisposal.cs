@@ -79,7 +79,11 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
 
         return new SpaceWarInteractionOutcome(true, builder);
     }

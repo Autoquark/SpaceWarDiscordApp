@@ -7,15 +7,12 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
-using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
-    IInteractionHandler<PurchaseTechInteraction>,
-    IInteractionHandler<DeclineTechPurchaseInteraction>
+public class TechCommands : IInteractionHandler<UseTechActionInteraction>
 {
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseTechActionInteraction interactionData,
@@ -26,36 +23,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>,
         var player = game.GetGamePlayerByGameId(interactionData.UsingPlayerId);
         
         await tech.UseTechActionAsync(builder, game, player, serviceProvider);
-        
-        return new SpaceWarInteractionOutcome(true, builder);
-    }
-
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
-        PurchaseTechInteraction interactionData,
-        Game game, IServiceProvider serviceProvider)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-        await TechOperations.PurchaseTechAsync(builder,
-            game,
-            game.GetGamePlayerForInteraction(interactionData),
-            interactionData.TechId,
-            interactionData.Cost,
-            serviceProvider);
-        
-        return new SpaceWarInteractionOutcome(true, builder);
-    }
-
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
-        DeclineTechPurchaseInteraction interactionData,
-        Game game, IServiceProvider serviceProvider)
-    {
-        var player = game.GetGamePlayerForInteraction(interactionData);
-        var name = await player.GetNameAsync(false);
-
-        builder?.AppendContentNewline($"{name} declines to purchase a tech");
-
-        game.IsWaitingForTechPurchaseDecision = false;
-        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

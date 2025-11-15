@@ -127,22 +127,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return builder;
     }
 
-    public static async Task<DiscordMultiMessageBuilder?> OnActionCompletedAsync(DiscordMultiMessageBuilder? builder, Game game, ActionType actionType, IServiceProvider serviceProvider)
-    {
-        if (actionType == ActionType.Main)
-        {
-            Debug.Assert(!game.ActionTakenThisTurn);
-            game.ActionTakenThisTurn = true;
-        }
-        
-        game.AnyActionTakenThisTurn = true;
-
-        return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
-    }
-
     public static async Task<DiscordMultiMessageBuilder?> AdvanceTurnOrPromptNextActionAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
-        if (game.IsWaitingForTechPurchaseDecision || game.EventStack.Items.Count > 0)
+        if (game.EventStack.Items.Count > 0)
         {
             return builder;
         }
@@ -317,14 +304,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public static async Task<DiscordMultiMessageBuilder?> PushGameEventsAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
         IServiceProvider serviceProvider, params IEnumerable<GameEvent> gameEvents)
     {
-        await PushGameEventsAsync(game, gameEvents);
+        PushGameEvents(game, gameEvents);
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
     
     /// <summary>
     /// Pushes a sequence of game events onto the stack. Events will resolve in the order they were supplied
     /// </summary>
-    public static async Task PushGameEventsAsync(Game game, params IEnumerable<GameEvent> gameEvents)
+    public static void PushGameEvents(Game game, params IEnumerable<GameEvent> gameEvents)
     {
         foreach (var gameEvent in gameEvents.Reverse())
         {
@@ -349,8 +336,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         triggerList!.Remove(triggeredEffect);
         
-        //TODO: Check if we are inside ContinueResolving, if not call it?
-        // Maybe a use case for a non-DB game data object
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
 
@@ -621,7 +606,16 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_ActionComplete gameEvent, Game game,
         IServiceProvider serviceProvider)
-        => await OnActionCompletedAsync(builder, game, gameEvent.ActionType, serviceProvider);
+    {
+        if (gameEvent.ActionType == ActionType.Main)
+        {
+            Debug.Assert(!game.ActionTakenThisTurn);
+            game.ActionTakenThisTurn = true;
+        }
+        
+        game.AnyActionTakenThisTurn = true;
+        return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
+    }
 
     public static void OnUserTriggeredResolveEffectInteraction(Game game, TriggeredEffectInteractionData interactionData)
     {

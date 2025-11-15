@@ -604,7 +604,11 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
 
         if (ActionType.HasValue)
         {
-            await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Value, serviceProvider);
+            await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+                new GameEvent_ActionComplete
+                {
+                    ActionType = ActionType.Value,
+                });
         }
 
         if (!string.IsNullOrEmpty(gameEvent.TriggerToMarkResolved))

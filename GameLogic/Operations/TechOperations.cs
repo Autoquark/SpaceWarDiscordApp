@@ -2,89 +2,15 @@ using System.Text;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public static class TechOperations
+public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDecision, PurchaseTechInteraction>, IEventResolvedHandler<GameEvent_PlayerGainScience>
 {
-    public static async Task<DiscordMultiMessageBuilder> ShowTechPurchaseButtonsAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
-        IServiceProvider serviceProvider)
-    {
-        var availableUniversal = player.Science >= GameConstants.UniversalTechCost
-            ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() : [];
-        
-        var availableMarket = game.TechMarket.Select(x => (techId: x, cost: GetMarketSlotCost(game.TechMarket.IndexOf(x))))
-            .Where(x => x.techId != null && player.TryGetPlayerTechById(x.techId) == null && player.Science >= x.cost)!
-            // Assert that techId is not null, because it's checked above
-            .ToList<(string techId, int cost)>();
-
-        if (availableUniversal.Count == 0 && availableMarket.Count == 0)
-        {
-            return builder;
-        }
-        
-        var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, you may purchase a tech:")
-            .WithAllowedMentions(player);
-        
-        var universalIds = serviceProvider.AddInteractionsToSetUp(availableUniversal.Select(x =>
-            new PurchaseTechInteraction
-            {
-                Game = game.DocumentId,
-                TechId = x,
-                ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = false,
-                Cost = GameConstants.UniversalTechCost
-            }));
-            
-        var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket 
-            .Select(x => new PurchaseTechInteraction
-                {
-                    Game = game.DocumentId,
-                    TechId = x.techId,
-                    ForGamePlayerId = player.GamePlayerId,
-                    EditOriginalMessage = false,
-                    Cost = x.cost
-                }));
-
-        var declineId = serviceProvider.AddInteractionToSetUp(new DeclineTechPurchaseInteraction
-            {
-                Game = game.DocumentId,
-                ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = false
-            });
-
-        if (availableUniversal.Count > 0)
-        {
-            builder.AppendContentNewline("Universal Techs:".DiscordHeading3());
-            builder.AppendButtonRows(availableUniversal.Zip(universalIds)
-                .Select(x => new DiscordButtonComponent(
-                    DiscordButtonStyle.Primary,
-                    x.Second,
-                    $"{Tech.TechsById[x.First].DisplayName} ({GameConstants.UniversalTechCost})")));
-        }
-
-        if (availableMarket.Count > 0)
-        {
-            builder.AppendContentNewline("Market Techs:".DiscordHeading3());
-            builder.AppendButtonRows(availableMarket
-                .Zip(marketIds, (x, y) => (x.techId, x.cost, interactionId: y))
-                .Select(x => new DiscordButtonComponent(
-                    DiscordButtonStyle.Primary,
-                    x.interactionId,
-                    $"{Tech.TechsById[x.techId].DisplayName} ({x.cost})")));
-        }
-        
-        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
-
-        game.IsWaitingForTechPurchaseDecision = true;
-
-        return builder;
-    }
-    
     public static async Task<DiscordMultiMessageBuilder> PurchaseTechAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         string techId, int cost, IServiceProvider serviceProvider)
     {
@@ -109,8 +35,6 @@ public static class TechOperations
         builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
         
         await CycleTechMarketAsync(builder, game);
-
-        game.IsWaitingForTechPurchaseDecision = false;
         
         await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
         
@@ -268,4 +192,122 @@ public static class TechOperations
     public static void AddTechToDiscards(Game game, string techId) => game.TechDiscards.Insert(0, techId);
 
     public static int GetMarketSlotCost(int slotNumber) => slotNumber == 0 ? 3 : 2;
+
+    public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(DiscordMultiMessageBuilder builder, GameEvent_TechPurchaseDecision gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
+        var availableUniversal = GetPurchaseableUniversalTechsForPlayer(game, player).ToList();
+        
+        var availableMarket = game.TechMarket.Select(x => (techId: x, cost: GetMarketSlotCost(game.TechMarket.IndexOf(x))))
+            .Where(x => x.techId != null && player.TryGetPlayerTechById(x.techId) == null && player.Science >= x.cost)!
+            // Assert that techId is not null, because it's checked above
+            .ToList<(string techId, int cost)>();
+        
+        var name = await player.GetNameAsync(true);
+        builder.AppendContentNewline($"{name}, you may purchase a tech:")
+            .WithAllowedMentions(player);
+        
+        var universalIds = serviceProvider.AddInteractionsToSetUp(availableUniversal.Select(x =>
+            new PurchaseTechInteraction
+            {
+                Game = game.DocumentId,
+                TechId = x,
+                ForGamePlayerId = player.GamePlayerId,
+                EditOriginalMessage = false,
+                Cost = GameConstants.UniversalTechCost,
+                ResolvesChoiceEvent = gameEvent.DocumentId,
+            }));
+            
+        var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket 
+            .Select(x => new PurchaseTechInteraction
+                {
+                    Game = game.DocumentId,
+                    TechId = x.techId,
+                    ForGamePlayerId = player.GamePlayerId,
+                    EditOriginalMessage = false,
+                    Cost = x.cost,
+                    ResolvesChoiceEvent = gameEvent.DocumentId
+                }));
+
+        var declineId = serviceProvider.AddInteractionToSetUp(new PurchaseTechInteraction
+            {
+                Game = game.DocumentId,
+                TechId = null,
+                Cost = 0,
+                ForGamePlayerId = player.GamePlayerId,
+                EditOriginalMessage = false,
+                ResolvesChoiceEvent = gameEvent.DocumentId
+            });
+
+        if (availableUniversal.Count > 0)
+        {
+            builder.AppendContentNewline("Universal Techs:".DiscordHeading3());
+            builder.AppendButtonRows(availableUniversal.Zip(universalIds)
+                .Select(x => new DiscordButtonComponent(
+                    DiscordButtonStyle.Primary,
+                    x.Second,
+                    $"{Tech.TechsById[x.First].DisplayName} ({GameConstants.UniversalTechCost})")));
+        }
+
+        if (availableMarket.Count > 0)
+        {
+            builder.AppendContentNewline("Market Techs:".DiscordHeading3());
+            builder.AppendButtonRows(availableMarket
+                .Zip(marketIds, (x, y) => (x.techId, x.cost, interactionId: y))
+                .Select(x => new DiscordButtonComponent(
+                    DiscordButtonStyle.Primary,
+                    x.interactionId,
+                    $"{Tech.TechsById[x.techId].DisplayName} ({x.cost})")));
+        }
+        
+        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
+
+        return builder;
+    }
+
+    public async Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechPurchaseDecision gameEvent,
+        PurchaseTechInteraction choice, Game game, IServiceProvider serviceProvider)
+    {
+        if (choice.TechId != null)
+        {
+            await PurchaseTechAsync(builder!, game, game.GetGamePlayerByGameId(gameEvent.PlayerGameId), choice.TechId, choice.Cost, serviceProvider);
+        }
+        
+        return builder;
+    }
+
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PlayerGainScience gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        if (gameEvent.Amount > 0)
+        {
+            var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
+            player.Science += gameEvent.Amount;
+            builder?.AppendContentNewline($"{await player.GetNameAsync(false)} now has {player.Science} science (was {player.Science - gameEvent.Amount})");
+            
+            if (GetPurchaseableUniversalTechsForPlayer(game, player).Any() ||
+                GetPurchaseableMarketTechsForPlayer(game, player).Any())
+            {
+                GameFlowOperations.PushGameEvents(game, new GameEvent_TechPurchaseDecision
+                {
+                    PlayerGameId = gameEvent.PlayerGameId
+                });
+            }
+        }
+        
+        return builder;
+    }
+    
+    private static IEnumerable<string> GetPurchaseableMarketTechsForPlayer(Game game, GamePlayer player) =>
+        game.TechMarket.WhereNonNull()
+            .Where(x => player.TryGetPlayerTechById(x) == null)
+            .Where(x => player.Science >= GetMarketSlotCost(game.TechMarket.IndexOf(x)))
+            .ToList();
+    
+    private static IEnumerable<string> GetPurchaseableUniversalTechsForPlayer(Game game, GamePlayer player) =>
+        player.Science >= GameConstants.UniversalTechCost
+            ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() 
+            : [];
+        
 }

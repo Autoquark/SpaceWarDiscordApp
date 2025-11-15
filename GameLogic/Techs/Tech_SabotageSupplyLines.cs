@@ -1,6 +1,7 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -39,6 +40,8 @@ public class Tech_SabotageSupplyLines : Tech
         builder.AppendContentNewline($"{name} used {DisplayName} to remove 1 forces from: " + string.Join(", ", targets.Select(x => x.ToHexNumberWithDieEmoji(game))));
         
         tech.UsedThisTurn = true;
+
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
 
         return builder;
     }

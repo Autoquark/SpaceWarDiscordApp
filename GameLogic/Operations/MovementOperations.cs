@@ -172,7 +172,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
 
         if (newOwner != null && newOwner.GamePlayerId != oldOwner)
         {
-            await GameFlowOperations.PushGameEventsAsync(game, new GameEvent_CapturePlanet
+            GameFlowOperations.PushGameEvents(game, new GameEvent_CapturePlanet
             {
                 FormerOwnerGameId = oldOwner,
                 Location = destinationHex.Coordinates

@@ -2,6 +2,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.VolunteerTesters;
 using SpaceWarDiscordApp.Discord;
@@ -75,12 +76,11 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
 
         hex.Planet!.SubtractForces(interactionData.Amount);
         var player = game.GetGamePlayerForInteraction(interactionData);
-        player.Science += interactionData.Amount;
         
         var name = await player.GetNameAsync(false);
 
-        builder.AppendContentNewline($"{interactionData.Amount} of {name}'s forces on {interactionData.Target} have been converted into pure Science")
-            .AppendContentNewline($"{name} now has {player.Science} science (was {player.Science - interactionData.Amount})");
+        builder.AppendContentNewline(
+            $"{interactionData.Amount} of {name}'s forces on {interactionData.Target} have been converted into pure Science");
         
         var tech = player.GetPlayerTechById(Id);
         tech.IsExhausted = true;
@@ -89,13 +89,20 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         {
             Coordinates = hex.Coordinates
         });
-
-        await TechOperations.ShowTechPurchaseButtonsAsync(builder, game, player, serviceProvider);
+        
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_PlayerGainScience
+            {
+                PlayerGameId = player.GamePlayerId,
+                Amount = interactionData.Amount,
+            },
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType
+            });
         
         // I guess you can eliminate yourself with this, if you want to...
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
-        
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

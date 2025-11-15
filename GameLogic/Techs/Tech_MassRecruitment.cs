@@ -1,4 +1,5 @@
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -24,14 +25,18 @@ public class Tech_MassRecruitment : Tech
         foreach (var boardHex in targets)
         {
             boardHex.Planet!.AddForces(1);
-            ProduceOperations.CheckPlanetCapacity(builder, boardHex);
+            ProduceOperations.CheckPlanetCapacity(game, boardHex);
         }
         
         builder.AppendContentNewline($"Used {DisplayName} to produce 1 forces on: " + string.Join(", ", targets.Select(x => x.Coordinates)));
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
 
         return builder;
     }

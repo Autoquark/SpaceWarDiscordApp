@@ -1,5 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -32,12 +33,16 @@ public class Tech_LocalDefenseForces : Tech
         {
             affectedHex.Planet!.AddForces(1);
             // Don't see how we actually could exceed capacity, but just in case of future complexity
-            ProduceOperations.CheckPlanetCapacity(builder, affectedHex);
+            ProduceOperations.CheckPlanetCapacity(game, affectedHex);
         }
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         
-        return (await GameFlowOperations.OnActionCompletedAsync(builder, game, SimpleActionType, serviceProvider))!;
+        return (await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            }))!;
     }
     
     private static IEnumerable<BoardHex> GetAffectedHexes(Game game, GamePlayer player)

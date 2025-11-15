@@ -6,7 +6,7 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Tech;
 public class PurchaseTechInteraction : InteractionData
 {
     [FirestoreProperty]
-    public required string TechId { get; set; }
+    public required string? TechId { get; set; }
     
     [FirestoreProperty]
     public required int Cost { get; set; }

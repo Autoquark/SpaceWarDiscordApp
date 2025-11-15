@@ -2,6 +2,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -68,7 +69,11 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
 
         builder?.AppendContentNewline($"All forces on {interactionData.Target} have been destroyed");
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Main, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
         
         return new SpaceWarInteractionOutcome(true, builder);
     }

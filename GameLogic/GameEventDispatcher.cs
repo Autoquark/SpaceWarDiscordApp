@@ -4,6 +4,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic;
 
@@ -75,7 +76,8 @@ public static class GameEventDispatcher
         
         Debug.Assert(game.EventStack.Items[^1] is TEvent);
         game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
-        return await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>) handler).HandlePlayerChoiceEventResolvedAsync(builder, gameEvent, choice, game, serviceProvider);
+        await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>) handler).HandlePlayerChoiceEventResolvedAsync(builder, gameEvent, choice, game, serviceProvider);
+        return await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
 
     public static async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent gameEvent, Game game,

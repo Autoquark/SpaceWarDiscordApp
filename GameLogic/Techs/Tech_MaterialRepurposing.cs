@@ -11,7 +11,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRepurposingInteraction>
 {
     public Tech_MaterialRepurposing() : base("material-repurposing", "Material Repurposing",
-        "When you capture a planet, if it is ready, produce there (then exhaust it as normal)",
+        "When you capture a planet, if it's ready, produce there (then exhaust it as normal)",
         "It turns out the main difference between our battle ships and theirs is the paint job.",
         ["Exhaust"])
     {
@@ -56,7 +56,7 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
             var player = game.GetGamePlayerForInteraction(interactionData);
             GetThisTech(player).IsExhausted = true;
             builder?.AppendContentNewline($"{await player.GetNameAsync(false)} is using {DisplayName} to produce on {hex.ToHexNumberWithDieEmoji(game)}");
-            await GameFlowOperations.PushGameEventsAsync(game,
+            GameFlowOperations.PushGameEvents(game, 
                 ProduceOperations.CreateProduceEvent(game, hex.Coordinates));
         }
         

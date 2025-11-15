@@ -47,7 +47,11 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         var name = await player.GetNameAsync(false);
         builder.AppendContentNewline($"{name} performs a rousing speech!");
         
-        await GameFlowOperations.OnActionCompletedAsync(builder, game, ActionType.Free, serviceProvider);
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
         
         return builder;
     }

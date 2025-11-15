@@ -407,7 +407,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
         game.ActionTakenThisTurn = false;
         game.AnyActionTakenThisTurn = false;
-        game.IsWaitingForTechPurchaseDecision = false;
         
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .WithAllowedMentions(gamePlayer, previousPlayer);
