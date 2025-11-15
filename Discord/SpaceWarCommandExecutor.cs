@@ -31,6 +31,8 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             requiresGameAttribute = type.GetCustomAttribute<RequireGameChannelAttribute>();
             type = type.BaseType;
         }
+        
+        var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
 
         SemaphoreSlim? semaphore = null;
         try
@@ -39,7 +41,6 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                                requiresGameAttribute.Mode != RequireGameChannelMode.DoNotRequire;
             if (requiresGame)
             {
-                var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
                 // Attempt to find the relevant game for this channel and store it in the context data
                 contextData.Game = cache.GetGame(context.Channel.Id)
                                    ?? await Program.FirestoreDb.RunTransactionAsync(
@@ -140,7 +141,15 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         }
         catch (Exception e)
         {
-            await Program.LogExceptionAsync(e);
+            // Force a refetch next command so any half-complete operations on the in-memory game object are discarded
+            if (contextData.Game?.DocumentId != null)
+            {
+                cache.Clear(contextData.Game.DocumentId);
+            }
+
+            await Program.LogExceptionAsync(contextData.Game, e);
+            
+            await context.EditResponseAsync("An error occurred. Please try again, or report as a bug if the problem persists");
             throw;
         }
         finally

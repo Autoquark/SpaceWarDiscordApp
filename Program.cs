@@ -51,7 +51,7 @@ static class Program
     {
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
-            LogExceptionAsync(args.Exception).Wait();
+            LogExceptionAsync(null, args.Exception).Wait();
         };
         
         var secrets = JsonConvert.DeserializeObject<Secrets>(await File.ReadAllTextAsync("Secrets.json"));
@@ -197,7 +197,7 @@ static class Program
         }
     }
     
-    public static async Task LogExceptionAsync(Exception exception)
+    public static async Task LogExceptionAsync(Game? game, Exception exception)
     {
         Console.WriteLine(exception);
         var aggregateException = exception as AggregateException;
@@ -213,18 +213,38 @@ static class Program
 
         if (!IsTestEnvironment && _userToMessageErrorsTo != null)
         {
-            var builder = new DiscordMessageBuilder();
-            builder.AppendContentNewline(exception.ToString());
+            var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+            if (game != null)
+            {
+                var gameChannel = await DiscordClient.TryGetChannelAsync(game.GameChannelId);
+                builder.AppendContentNewline($"ERROR relating to game {gameChannel?.Mention ?? game.Name}:");
+            }
+            else
+            {
+                builder.AppendContentNewline("ERROR without a related game:");
+            }
+            
+            foreach (var section in exception.ToString().Chunk(1900).Select(x => new string(x)))
+            {
+                builder.AppendContentNewline($"```\n{section}\n```");
+            }
             
             if (aggregateException != null)
             {
                 foreach (var innerException in aggregateException.InnerExceptions)
                 {
-                    builder.AppendContentNewline(innerException.ToString());
+                    foreach (var section in innerException.ToString().Chunk(1900).Select(x => new string(x)))
+                    {
+                        builder.AppendContentNewline($"```\n{section}\n```");
+                    }
                 }
             }
 
-            await _userToMessageErrorsTo.SendMessageAsync(builder);
+            foreach (var discordMessageBuilder in builder.Builders.Cast<DiscordMessageBuilder>())
+            {
+                await _userToMessageErrorsTo.SendMessageAsync(discordMessageBuilder);
+            }
+            
         }
     }
 

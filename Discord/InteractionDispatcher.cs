@@ -206,7 +206,17 @@ public static class InteractionDispatcher
         }
         catch (Exception e)
         {
-            await Program.LogExceptionAsync(e);
+            // Force a refetch next command so any half complete operations on the in-memory game object are discarded
+            if (game.DocumentId != null)
+            {
+                cache.Clear(game.DocumentId);
+            }
+
+            await Program.LogExceptionAsync(game, e);
+
+            await args.Interaction.EditOriginalResponseAsync(
+                new DiscordWebhookBuilder().WithContent(
+                    "An error occurred. Please try again, or report as a bug if the problem persists"));
             throw;
         }
         finally
