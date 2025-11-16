@@ -68,6 +68,7 @@ public static class MessageBuilderExtensions
     public static IDiscordMessageBuilder AppendHexButtons(this IDiscordMessageBuilder builder, Game game,
         IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds)
         => builder.AppendButtonRows(hexes.Zip(interactionIds)
+            .OrderBy(x => x.First.Coordinates.ToHexNumber())
             .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
 
     /// <summary>
