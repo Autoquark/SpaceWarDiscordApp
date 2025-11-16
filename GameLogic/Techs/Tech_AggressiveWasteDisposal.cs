@@ -36,6 +36,8 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
             builder.AppendContentNewline("No targets available");
         }
 
+        builder.AppendContentNewline("Choose where to aggressively dispose waste:");
+
         var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new UseAggressiveWasteDisposalInteraction
             {
