@@ -33,6 +33,8 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         }
 
         builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
+
+        ShowTechDetails(builder, tech.Id);
         
         await CycleTechMarketAsync(builder, game);
         
@@ -214,7 +216,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                 Game = game.DocumentId,
                 TechId = x,
                 ForGamePlayerId = player.GamePlayerId,
-                EditOriginalMessage = false,
+                EditOriginalMessage = true,
                 Cost = GameConstants.UniversalTechCost,
                 ResolvesChoiceEvent = gameEvent.DocumentId,
             }));
@@ -225,9 +227,9 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                     Game = game.DocumentId,
                     TechId = x.techId,
                     ForGamePlayerId = player.GamePlayerId,
-                    EditOriginalMessage = false,
+                    EditOriginalMessage = true,
                     Cost = x.cost,
-                    ResolvesChoiceEvent = gameEvent.DocumentId
+                    ResolvesChoiceEvent = gameEvent.DocumentId,
                 }));
 
         var declineId = serviceProvider.AddInteractionToSetUp(new PurchaseTechInteraction
