@@ -33,7 +33,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         "perplexing", "inane", "insane", "mad", "maddening", "crazy", "bonkers", "wild", "fitful", "woeful", "furious", "furtive", "ghastly",
         "startling", "troublesome", "inconvenient", "dubious", "unwelcome", "unlikely", "improbable", "unbelievable", "implausible",
         "persnickety", "perfidious", "rambunctious", "troubling", "burdensome", "perturbing", "inaugural", "surprising", "tumultuous",
-        "rambunctious", "off-putting", "bellicose"]);
+        "rambunctious", "off-putting", "bellicose", "undesirable"]);
     private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement",
         "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff", "fracas", "occurrence", "besmirchment",
         "brawl", "farce", "belligerence", "craziness", "lunacy", "fiasco", "furore", "faff", "perfidy", "quarrel", "tumult", "altercation",

@@ -19,7 +19,7 @@ public class HexCoordsAutoCompleteProvider : IAutoCompleteProvider
         }
 
         return Filter(game.Hexes).Select(x =>
-            new DiscordAutoCompleteChoice(x.Coordinates.ToString(), x.Coordinates.ToString()));
+            new DiscordAutoCompleteChoice(x.Coordinates.ToString(), x.Coordinates.ToCoordsString()));
     }
 
     protected virtual IEnumerable<BoardHex> Filter(IEnumerable<BoardHex> boardHexes) => boardHexes;

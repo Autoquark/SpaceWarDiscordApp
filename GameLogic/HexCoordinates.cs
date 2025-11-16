@@ -111,6 +111,7 @@ public readonly partial record struct HexCoordinates
     public string ToHexNumberString() => ToHexNumber().ToString("000");
 
     public override string ToString() => ToHexNumberString();
+    public string ToCoordsString() => $"({Q}, {R})";
 
     /// <summary>
     /// Returns this position rotated the given number of 60 degree increments clockwise around 0, 0

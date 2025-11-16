@@ -130,7 +130,7 @@ public class BackstoryGenerator
         new()
         {
             Nouns = ["Empire", "Confederacy", "Potentate", "Dominion", "Imperium"],
-            Adjectives = ["mighty", "oppressive", "powerful"],
+            Adjectives = ["mighty", "oppressive", "powerful", "sprawling"],
             Adverbs = ["violent", "bloody"],
             Verbs = ["collapse", "overthrow"],
             NameAdjectiveCombiner = (noun, adjective, name) => $"{adjective} {name} {noun}",
