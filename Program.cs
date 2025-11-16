@@ -91,6 +91,7 @@ static class Program
             });
             x.AddSingleton<GameCache>();
             x.AddSingleton<GameSyncManager>();
+            x.AddSingleton<BackstoryGenerator>();
         });
         discordBuilder.UseCommands((_, extension) =>
         {

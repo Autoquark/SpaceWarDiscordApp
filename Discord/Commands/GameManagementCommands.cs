@@ -233,6 +233,20 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         await context.RespondAsync(builder);
     }
 
+    [Command("Lore")]
+    [Description("Posts some lore about the SpaceWar setting")]
+    [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
+    public static async Task Lore(CommandContext context)
+    {
+        var outcome = context.Outcome();
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        
+        builder.AppendContentNewline(context.ServiceProvider.GetRequiredService<BackstoryGenerator>()
+            .GenerateBackstory(null));
+        
+        outcome.ReplyBuilder = builder;
+    }
+
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, JoinGameInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {

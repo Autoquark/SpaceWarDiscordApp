@@ -6,6 +6,13 @@ namespace SpaceWarDiscordApp
     internal static class CollectionExtensions
     {
         public static T Random<T>(this IReadOnlyList<T> list) => list[Program.Random.Next(list.Count)];
+        public static T Random<T>(this IReadOnlyList<T> list, Func<T, float> weightSelector)
+        {
+            var totalWeight = list.Sum(weightSelector);
+            var selected = Program.Random.NextDouble() * totalWeight;
+            var skipped = 0f;
+            return list.SkipWhile(x => (skipped += weightSelector(x)) <= selected).FirstOrDefault() ?? list[^1];
+        }
         public static IEnumerable<T> RandomUnique<T>(this IReadOnlyList<T> list, int count) => list.Shuffled().Take(count);
 
         public static IList<T> Shuffled<T>(this IEnumerable<T> list)

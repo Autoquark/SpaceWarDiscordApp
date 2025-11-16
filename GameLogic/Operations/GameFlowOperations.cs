@@ -698,6 +698,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
+
+        builder.AppendContentNewline("The Story So Far".DiscordHeading1());
+        var backstoryGenerator = serviceProvider.GetRequiredService<BackstoryGenerator>();
+        builder.AppendContentNewline(backstoryGenerator.GenerateBackstory(game));
+        builder.NewMessage();
         
         builder.AppendContentNewline("The game has started.");
         builder.AppendContentNewline("Universal Techs:".DiscordHeading2());
