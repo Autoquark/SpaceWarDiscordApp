@@ -17,6 +17,11 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
     
     public override async ValueTask ExecuteAsync(CommandContext context, CancellationToken cancellationToken = new())
     {
+        if (!Program.BotReady)
+        {
+            await context.RespondAsync(new DiscordMessageBuilder().WithContent("Bot is starting up, please try again in a few seconds."));
+        }
+        
         await context.DeferResponseAsync();
         
         var outcome = context.ServiceProvider.GetRequiredService<SpaceWarCommandOutcome>();

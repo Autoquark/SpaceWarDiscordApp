@@ -46,6 +46,8 @@ static class Program
     private static Task? _updateEmojiTask;
 
     private static DiscordUser? _userToMessageErrorsTo = null;
+
+    public static bool BotReady { get; private set; } = false;
     
     static async Task Main()
     {
@@ -178,6 +180,7 @@ static class Program
         }
         
         await _updateEmojiTask;
+        BotReady = true;
         
         Console.WriteLine("Ready to go. Let's play some SpaceWar!");
         

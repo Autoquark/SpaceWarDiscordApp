@@ -54,6 +54,12 @@ public static class InteractionDispatcher
     /// </summary>
     public static async Task HandleInteractionCreated(DiscordClient client, InteractionCreatedEventArgs args)
     {
+        if (!Program.BotReady)
+        {
+            await args.Interaction.CreateResponseAsync(DiscordInteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().WithContent("Bot is starting up, please try again in a few seconds.").AsEphemeral());
+        }
+        
         if (args.Interaction.Type == DiscordInteractionType.ApplicationCommand || !Guid.TryParse(args.Interaction.Data.CustomId, out _))
         {
             return;
