@@ -5,6 +5,19 @@ namespace SpaceWarDiscordApp
 {
     internal static class CollectionExtensions
     {
+        public static IEnumerable<int> Between(int start, int end) => Enumerable.Range(start, end - start + 1);
+
+        public static IEnumerable<(T first, T second)> Combinations<T>(this IReadOnlyList<T> list)
+        {
+            for (var i = 0; i < list.Count; i++)
+            {
+                for (var j = i + 1; j < list.Count; j++)
+                {
+                    yield return (list[i], list[j]);
+                }
+            }
+        }
+        
         public static T Random<T>(this IReadOnlyList<T> list) => list[Program.Random.Next(list.Count)];
         public static T Random<T>(this IReadOnlyList<T> list, Func<T, float> weightSelector)
         {

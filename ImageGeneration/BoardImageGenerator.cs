@@ -236,7 +236,7 @@ public static class BoardImageGenerator
         }
     }
     
-    public static Image GenerateBoardImage(Game game)
+    public static Image GenerateBoardImage(Game game, bool oldCoords = false)
     {
         var playerNames = game.Players
             .Select(player => (player, player.GetNameAsync(false, false).GetAwaiter().GetResult()))
@@ -318,7 +318,7 @@ public static class BoardImageGenerator
         
         // Draw board
         var sectionTopLeft = new Point(Margin, Margin);
-        sectionTopLeft = DrawBoard(game, image, sectionTopLeft);
+        sectionTopLeft = DrawBoard(game, image, sectionTopLeft, oldCoords);
         sectionTopLeft += verticalMargin;
 
         // Universal Techs
@@ -655,7 +655,7 @@ public static class BoardImageGenerator
         return rect.Size + new Size(0, TechBoxToCostSpacing + ScienceCostIcon.Height);
     }
     
-    private static Point DrawBoard(Game game, Image<Rgba32> image, Point topLeft)
+    private static Point DrawBoard(Game game, Image<Rgba32> image, Point topLeft, bool oldCoords)
     {
         var minBoardX = (int)game.Hexes.Min(x => HexToPixelOffset(x.Coordinates).X);
         var minBoardY = (int)game.Hexes.Min(x => HexToPixelOffset(x.Coordinates).Y);
@@ -787,6 +787,7 @@ public static class BoardImageGenerator
                     }
                 }
                 
+                // Draw coordinates
                 var textOrigin = hexCentre + new PointF(0, HexInnerDiameter * 0.4f);
                 SizeF textAreaSize = new SizeF(100, 50);
                 image.Mutate(x =>
@@ -803,7 +804,7 @@ public static class BoardImageGenerator
                         [
                         ] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
                     },
-                    hex.Coordinates.ToHexNumberString(),
+                    oldCoords ? hex.Coordinates.ToCoordsString() : hex.Coordinates.ToHexNumberString(),
                     Color.Black));
             }
 

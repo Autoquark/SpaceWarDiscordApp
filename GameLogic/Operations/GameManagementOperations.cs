@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.GameRules;
 using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -17,6 +18,7 @@ public class GameManagementOperations
             message = await channel.TryGetMessageAsync(game.SetupMessageId);
         }
 
+        // Starting tech rule
         var builder = new DiscordMessageBuilder().EnableV2Components()
             .AppendContentNewline("Game Setup".DiscordHeading1())
             .AppendContentNewline("Starting Tech:".DiscordHeading2());
@@ -36,6 +38,30 @@ public class GameManagementOperations
                         : DiscordButtonStyle.Secondary,
                     interactionId,
                     Enum.GetName(enumValue)!.InsertSpacesInCamelCase())));
+        
+        // Map generator
+        builder.AppendContentNewline("Map Generator:".DiscordHeading2());
+
+        interactionIds = serviceProvider.AddInteractionsToSetUp(BaseMapGenerator.GetAllGenerators().Select(x =>
+            new SetMapGeneratorInteraction
+            {
+                Game = game.DocumentId,
+                ForGamePlayerId = -1,
+                GeneratorId = x.Id
+            }));
+
+        builder.AppendButtonRows(BaseMapGenerator.GetAllGenerators().Zip(interactionIds, (generator, interactionId) =>
+            new DiscordButtonComponent(
+                generator.Id == game.Rules.MapGeneratorId
+                    ? DiscordButtonStyle.Success
+                    : DiscordButtonStyle.Secondary, interactionId, $"{generator.DisplayName} [{string.Join(",", generator.SupportedPlayerCounts)}]")
+        ));
+
+        if (!BaseMapGenerator.GetGenerator(game.Rules.MapGeneratorId).SupportedPlayerCounts.Contains(game.Players.Count))
+        {
+            builder.AppendContentNewline(
+                "Warning: The selected map generator does not support the current player count");
+        }
         
         if (message == null)
         {

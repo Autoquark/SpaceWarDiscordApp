@@ -16,7 +16,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
 {
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
-    public static async Task ShowBoardStateCommand(CommandContext context)
+    public static async Task ShowBoardStateCommand(CommandContext context, bool oldCoords = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -29,7 +29,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         }
         
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        await GameFlowOperations.ShowBoardStateMessageAsync(builder, game);
+        await GameFlowOperations.ShowBoardStateMessageAsync(builder, game, oldCoords);
         outcome.ReplyBuilder = builder;
     }
 

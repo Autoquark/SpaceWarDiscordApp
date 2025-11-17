@@ -14,6 +14,7 @@ using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.GameEvents;
+using SpaceWarDiscordApp.GameLogic.MapGeneration;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;
 
@@ -21,9 +22,9 @@ namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>
 {
-    public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game)
+    public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game, bool oldCoords = false)
     {
-        using var image = BoardImageGenerator.GenerateBoardImage(game);
+        using var image = BoardImageGenerator.GenerateBoardImage(game, oldCoords);
         var stream = new MemoryStream();
         await image.SaveAsPngAsync(stream);
         stream.Position = 0;
@@ -675,10 +676,16 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             return builder.AppendContentNewline("Game has already started");
         }
         
+        var mapGenerator = BaseMapGenerator.GetGenerator(game.Rules.MapGeneratorId);
+        if (!mapGenerator.SupportedPlayerCounts.Contains(game.Players.Count))
+        {
+            builder.AppendContentNewline("Can't start the game as selected map generator does not support the current player count");
+        }
+        
         // Shuffle turn order - this is also the map slice order
         game.Players = game.Players.Shuffled().ToList();
         
-        MapGenerator.GenerateMap(game);
+        game.Hexes = mapGenerator.GenerateMap(game);
 
         game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
         game.TechDeck.Shuffle();
@@ -698,11 +705,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
-
-        builder.AppendContentNewline("The Story So Far".DiscordHeading1());
-        var backstoryGenerator = serviceProvider.GetRequiredService<BackstoryGenerator>();
-        builder.AppendContentNewline(backstoryGenerator.GenerateBackstory(game));
-        builder.NewMessage();
         
         builder.AppendContentNewline("The game has started.");
         builder.AppendContentNewline("Universal Techs:".DiscordHeading2());
@@ -718,6 +720,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
 
         await TechOperations.UpdatePinnedTechMessage(game);
+        
+        builder.AppendContentNewline("The Story So Far".DiscordHeading1());
+        var backstoryGenerator = serviceProvider.GetRequiredService<BackstoryGenerator>();
+        builder.AppendContentNewline(backstoryGenerator.GenerateBackstory(game));
+        builder.NewMessage();
 
         if (game.Players.Count == 2)
         {
@@ -728,5 +735,5 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
     
-    private static readonly MapGenerator MapGenerator = new();
+    private static readonly DefaultMapGenerator DefaultMapGenerator = new();
 }

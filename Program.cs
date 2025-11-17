@@ -18,6 +18,7 @@ using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.MapGeneration;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -147,6 +148,14 @@ static class Program
             {
                 RegisterEverything(handler);
             }
+        }
+        
+        foreach (var mapGeneratorType in Assembly.GetExecutingAssembly()
+                     .GetTypes()
+                     .Where(x => x.IsAssignableTo(typeof(BaseMapGenerator)) && !x.IsAbstract))
+        {
+            // Instance will register itself from the constructor
+            var instance = Activator.CreateInstance(mapGeneratorType) as BaseMapGenerator ?? throw new Exception();
         }
 
         discordBuilder.ConfigureEventHandlers(builder =>

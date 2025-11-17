@@ -16,7 +16,8 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel(RequireGameChannelMode.RequiresSave, GamePhase.Setup)]
-public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>
+public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>,
+    IInteractionHandler<SetMapGeneratorInteraction>
 {
     private class NounProjectImageCredit
     {
@@ -293,7 +294,31 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetStartingTechRuleInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the starting tech rule after the game has started");
+            return new SpaceWarInteractionOutcome(false, builder);       
+        }
+        
         game.Rules.StartingTechRule = interactionData.Value;
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true, builder)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMapGeneratorInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the map generator after the game has started");
+            return new SpaceWarInteractionOutcome(false, builder);       
+        }
+        
+        game.Rules.MapGeneratorId = interactionData.GeneratorId;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true, builder)

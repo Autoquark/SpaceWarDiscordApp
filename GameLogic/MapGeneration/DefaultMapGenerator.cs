@@ -1,107 +1,16 @@
 using SpaceWarDiscordApp.Database;
 
-namespace SpaceWarDiscordApp.GameLogic;
+namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
-public class MapGenerator
+public class DefaultMapGenerator : BaseMapGenerator
 {
-    private List<BoardHex> HomeSystems =
-    [
-        new()
-        {
-            Planet = new Planet
-            {
-                ForcesPresent = 3,
-                Production = 3,
-                Science = 1,
-                Stars = 2,
-                IsHomeSystem = true
-            }
-        }
-    ];
+    public static string StaticId => "default";
     
-    private List<BoardHex> OuterSystems =
-    [
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 3,
-            }
-        },
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 1,
-                Science = 1
-            }
-        },
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 1,
-                Stars = 1
-            }
-        }
-    ];
+    public DefaultMapGenerator() : base(StaticId, "Default", CollectionExtensions.Between(2, 6))
+    {
+    }
     
-    private List<BoardHex> InnerSystems =
-    [
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 3,
-            }
-        },
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 2,
-                Science = 1
-            }
-        },
-        new()
-        {
-            Planet = new Planet
-            {
-                Production = 1,
-                Stars = 1
-            }
-        },
-    ];
-    
-    private List<BoardHex> CenterSystems =
-    [
-        /*new()
-        {
-            Planet = new Planet
-            {
-                Production = 6,
-                Science = 1
-            }
-        },*/
-        new()
-        {
-            Planet = new Planet
-            {
-                Stars = 2,
-                Science = 1
-            }
-        },
-        /*new()
-        {
-            Planet = new Planet
-            {
-                Science = 3
-            }
-        },*/
-    ];
-    
-    
-    public List<BoardHex> GenerateMap(Game game)
+    public override List<BoardHex> GenerateMapInternal(Game game)
     {
         var map = new List<BoardHex>();
         
@@ -323,13 +232,6 @@ public class MapGenerator
             map.Add(system);
         }
         
-        var distinct = map.Select(x => x.Coordinates).Distinct();
-        var duplicate = map.Select(x => x.Coordinates).Except(distinct).ToList();
-        if (duplicate.Any())
-        {
-            throw new Exception("Bad map generated! Duplicate hex coordinates: " + string.Join(", ", duplicate));
-        }
-        game.Hexes = map;
         return map;
     }
 }
