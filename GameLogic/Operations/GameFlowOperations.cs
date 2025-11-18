@@ -679,7 +679,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         var mapGenerator = BaseMapGenerator.GetGenerator(game.Rules.MapGeneratorId);
         if (!mapGenerator.SupportedPlayerCounts.Contains(game.Players.Count))
         {
-            builder.AppendContentNewline("Can't start the game as selected map generator does not support the current player count");
+            return builder.AppendContentNewline("Can't start the game as selected map generator does not support the current player count");
         }
         
         // Shuffle turn order - this is also the map slice order
@@ -721,13 +721,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
+        builder.NewMessage();
         builder.AppendContentNewline("The Story So Far".DiscordHeading1());
         var backstoryGenerator = serviceProvider.GetRequiredService<BackstoryGenerator>();
         builder.AppendContentNewline(backstoryGenerator.GenerateBackstory(game));
-        builder.NewMessage();
 
         if (game.Players.Count == 2)
         {
+            builder.NewMessage();
             builder.AppendContentNewline(
                 "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
         }

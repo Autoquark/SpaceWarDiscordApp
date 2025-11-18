@@ -20,7 +20,12 @@ public class PaulbyMapGenerator : BaseMapGenerator
         map.Add(system);
 
         // Player slices
-        var playerSliceRotations = playerCount == 3 ? new List<int> { 0, 2, 4 } : new List<int> { 0, 1, 3, 4 };
+        var playerSliceRotations = playerCount switch
+        {
+            2 => new List<int> { 0, 3 },
+            3 => new List<int> { 0, 2, 4 },
+            _ => new List<int> { 0, 1, 3, 4 }
+        };
         if (playerCount >= 5)
         {
             playerSliceRotations.Add(2);
@@ -74,20 +79,30 @@ public class PaulbyMapGenerator : BaseMapGenerator
             };
             map.Add(system);*/
 
+            List<HexDirection> connections = [HexDirection.SouthEast, HexDirection.SouthWest];
+            if (playerSliceRotations.Contains(MathEx.Modulo(rotation - 1, 6)))
+            {
+                connections.Add(HexDirection.NorthWest);
+            }
             system = new BoardHex()
             {
                 Coordinates = new HexCoordinates(0, -2).RotateClockwise(rotation),
-                HyperlaneConnections = new []{HexDirection.NorthWest, HexDirection.SouthEast, HexDirection.SouthWest}
+                HyperlaneConnections = connections
                     .Combinations()
                     .Select(x => new HyperlaneConnection(x.first.RotateClockwise(rotation), x.second.RotateClockwise(rotation)))
                     .ToList()
             };
             map.Add(system);
 
+            connections = [HexDirection.NorthWest, HexDirection.SouthEast];
+            if (playerSliceRotations.Contains(MathEx.Modulo(rotation + 1, 6)))
+            {
+                connections.Add(HexDirection.South);
+            }
             system = new BoardHex()
             {
                 Coordinates = new HexCoordinates(1, -2).RotateClockwise(rotation),
-                HyperlaneConnections = new []{HexDirection.NorthWest, HexDirection.SouthEast, HexDirection.South}
+                HyperlaneConnections = connections
                     .Combinations()
                     .Select(x => new HyperlaneConnection(x.first.RotateClockwise(rotation), x.second.RotateClockwise(rotation)))
                     .ToList()
@@ -95,10 +110,15 @@ public class PaulbyMapGenerator : BaseMapGenerator
             map.Add(system);
 
             // Inner hyperlane
+            connections = [HexDirection.SouthWest, HexDirection.SouthEast];
+            if (playerSliceRotations.Contains(MathEx.Modulo(rotation - 1, 6)))
+            {
+                connections.Add(HexDirection.NorthWest);
+            }
             system = new BoardHex()
             {
                 Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation),
-                HyperlaneConnections = new []{HexDirection.SouthWest, HexDirection.SouthEast, HexDirection.NorthWest}
+                HyperlaneConnections = connections
                     .Combinations()
                     .Select(x => new HyperlaneConnection(x.first.RotateClockwise(rotation), x.second.RotateClockwise(rotation)))
                     .ToList()
