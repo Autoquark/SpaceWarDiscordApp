@@ -4,15 +4,17 @@ namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 public class EllisMapGenerator : BaseMapGenerator
 {
-    public EllisMapGenerator() : base("ellis-1", "Ellis", CollectionExtensions.Between(3, 3))
+    public EllisMapGenerator() : base("ellis-1", "Mini Madness", [3, 6])
     {
     }
 
     public override List<BoardHex> GenerateMapInternal(Game game)
     {
+        var playerCount = game.Players.Count;
+
         // Edit default tiles
         CenterSystems.Clear();
-        CenterSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 3, Science = 2 } });
+        CenterSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 3, Science = (playerCount == 6) ? 3 : 2 } });
         InnerSystems.Clear();
         InnerSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 2, Production = 4 } });
         InnerSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 2, Production = 2, Science = 1 } });
@@ -22,40 +24,31 @@ public class EllisMapGenerator : BaseMapGenerator
 
         var map = new List<BoardHex>();
 
-        var playerCount = game.Players.Count;
 
         // Centre
         var system = new BoardHex(CenterSystems.Random());
         system.Coordinates = new HexCoordinates(0, 0);
         map.Add(system);
 
-        // Player slices
-        var playerSliceRotations = playerCount == 3 ? new List<int> { 0, 2, 4 } : new List<int> { 0, 1, 3, 4 };
-        if (playerCount >= 5)
+        // Player slices for first 3 players
+        for (int rotation = 0; rotation < 6; rotation += 2)
         {
-            playerSliceRotations.Add(2);
-        }
+            int playerIndex = playerCount == 6 ? rotation : rotation / 2;
 
-        if (playerCount >= 6)
-        {
-            playerSliceRotations.Add(5);
-        }
-
-        foreach (var (rotation, player) in playerSliceRotations.Zip(game.Players))
-        {
             // Home system
             system = new BoardHex(HomeSystems.Random());
             system.Coordinates = new HexCoordinates(0, -2).RotateClockwise(rotation);
-            system.Planet!.OwningPlayerId = player.GamePlayerId;
+            system.Planet!.OwningPlayerId = game.Players[playerIndex].GamePlayerId;
             map.Add(system);
 
             // Neighbours
             OuterSystems.Shuffle();
+            InnerSystems.Shuffle();
             system = new BoardHex(OuterSystems[0]);
             system.Coordinates = new HexCoordinates(-1, -1).RotateClockwise(rotation);
             map.Add(system);
 
-            system = new BoardHex(OuterSystems[1]);
+            system = new BoardHex(playerCount == 6 ? InnerSystems[0] : OuterSystems[1]);
             system.Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation);
             map.Add(system);
 
@@ -64,17 +57,25 @@ public class EllisMapGenerator : BaseMapGenerator
             map.Add(system);
 
             // Inner system
-            system = new BoardHex(InnerSystems.Random());
+            system = new BoardHex(InnerSystems[1]);
             system.Coordinates = new HexCoordinates(1, -1).RotateClockwise(rotation);
             map.Add(system);
 
-            // Hyperlane
-            system = new BoardHex()
+            if (playerCount == 3) // Hyperlanes for 3 player variation
             {
-                Coordinates = new HexCoordinates(2, -2).RotateClockwise(rotation),
-                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.South.RotateClockwise(rotation))]
-            };
-            map.Add(system);
+                system = new BoardHex()
+                {
+                    Coordinates = new HexCoordinates(2, -2).RotateClockwise(rotation),
+                    HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.South.RotateClockwise(rotation))]
+                };
+                map.Add(system);
+            } else // Home systems for 6 player variation
+            {
+                system = new BoardHex(HomeSystems.Random());
+                system.Coordinates = new HexCoordinates(2, -2).RotateClockwise(rotation);
+                system.Planet!.OwningPlayerId = game.Players[playerIndex + 1].GamePlayerId;
+                map.Add(system);
+            }
         }
 
         return map;
