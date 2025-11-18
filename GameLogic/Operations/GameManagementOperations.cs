@@ -70,6 +70,8 @@ public class GameManagementOperations
                 "Warning: The selected map generator does not support the current player count");
         }
         
+        builder.AppendContentNewline("Current players: " + string.Join(", ", await Task.WhenAll(game.Players.Select(x => x.GetNameAsync(false)))));
+        
         if (message == null)
         {
             game.SetupMessageId = (await channel.SendMessageAsync(builder)).Id;

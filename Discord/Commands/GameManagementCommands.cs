@@ -202,6 +202,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         });
         
         outcome.SetSimpleReply($"Dummy player {name} added to the game");
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
     }
 
     [Command("StartGame")]
@@ -287,6 +289,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         replyBuilder.AppendContentNewline($"{user.Mention} joined the game!");
         
         await Program.DiscordClient.SendMessageAsync(await Program.DiscordClient.GetChannelAsync(game.GameChannelId), replyBuilder);
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
         
         return new SpaceWarInteractionOutcome(true, builder);
     }
