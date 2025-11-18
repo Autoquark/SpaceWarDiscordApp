@@ -93,19 +93,11 @@ public class PaulbyMapGenerator : BaseMapGenerator
                     .ToList()
             };
             map.Add(system);
-
-            connections = [HexDirection.NorthWest, HexDirection.SouthEast];
-            if (playerSliceRotations.Contains(MathEx.Modulo(rotation + 1, 6)))
-            {
-                connections.Add(HexDirection.South);
-            }
+            
             system = new BoardHex()
             {
                 Coordinates = new HexCoordinates(1, -2).RotateClockwise(rotation),
-                HyperlaneConnections = connections
-                    .Combinations()
-                    .Select(x => new HyperlaneConnection(x.first.RotateClockwise(rotation), x.second.RotateClockwise(rotation)))
-                    .ToList()
+                HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
             };
             map.Add(system);
 
