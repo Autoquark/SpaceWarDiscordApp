@@ -19,6 +19,7 @@ namespace SpaceWarDiscordApp
         }
         
         public static T Random<T>(this IReadOnlyList<T> list) => list[Program.Random.Next(list.Count)];
+        public static int RandomIndex<T>(this IReadOnlyList<T> list) => Program.Random.Next(list.Count);
         public static T Random<T>(this IReadOnlyList<T> list, Func<T, float> weightSelector)
         {
             var totalWeight = list.Sum(weightSelector);

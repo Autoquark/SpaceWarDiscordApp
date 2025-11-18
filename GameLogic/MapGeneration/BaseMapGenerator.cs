@@ -28,6 +28,8 @@ public abstract class BaseMapGenerator
     
     public string Id { get; }
     public string DisplayName { get; }
+
+    public string Description { get; init; } = "";
     
     public IReadOnlyCollection<int> SupportedPlayerCounts { get; set; }
 

@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.GameRules;
 using SpaceWarDiscordApp.Discord;
@@ -49,13 +50,19 @@ public class GameManagementOperations
                 ForGamePlayerId = -1,
                 GeneratorId = x.Id
             }));
-
+        
+        var currentGenerator = BaseMapGenerator.GetGenerator(game.Rules.MapGeneratorId);
         builder.AppendButtonRows(BaseMapGenerator.GetAllGenerators().Zip(interactionIds, (generator, interactionId) =>
             new DiscordButtonComponent(
-                generator.Id == game.Rules.MapGeneratorId
+                generator.Id == currentGenerator.Id
                     ? DiscordButtonStyle.Success
                     : DiscordButtonStyle.Secondary, interactionId, $"{generator.DisplayName} [{string.Join(",", generator.SupportedPlayerCounts)}]")
         ));
+
+        if (!string.IsNullOrWhiteSpace(currentGenerator.Description))
+        {
+            builder.AppendContentNewline(currentGenerator.Description);
+        }
 
         if (!BaseMapGenerator.GetGenerator(game.Rules.MapGeneratorId).SupportedPlayerCounts.Contains(game.Players.Count))
         {

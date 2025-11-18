@@ -210,7 +210,7 @@ public static class InteractionDispatcher
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception e) when (!Program.IsTestEnvironment)
         {
             // Force a refetch next command so any half complete operations on the in-memory game object are discarded
             if (game.DocumentId != null)
