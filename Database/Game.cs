@@ -102,7 +102,7 @@ public class Game : FirestoreModel
 
     
     /// <summary>
-    /// Stack of events currently being resolved
+    /// Stack of events currently being resolved. The last event in the list is on top of the stack.
     /// </summary>
     public LinkedDocumentCollection<GameEvent> EventStack { get; set; }
     

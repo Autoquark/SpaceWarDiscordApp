@@ -268,7 +268,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         return builder;
     }
 
-    public async Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechPurchaseDecision gameEvent,
+    public async Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechPurchaseDecision gameEvent,
         PurchaseTechInteraction choice, Game game, IServiceProvider serviceProvider)
     {
         if (choice.TechId != null)
@@ -276,7 +276,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             await PurchaseTechAsync(builder!, game, game.GetGamePlayerByGameId(gameEvent.PlayerGameId), choice.TechId, choice.Cost, serviceProvider);
         }
         
-        return builder;
+        return true;
     }
 
     public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PlayerGainScience gameEvent, Game game,

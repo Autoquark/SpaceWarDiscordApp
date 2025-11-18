@@ -155,7 +155,7 @@ public class Tech_WarpNodes : Tech,
                     "Done making Warp Nodes moves"));
     }
 
-    public async Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder,
         GameEvent_ChooseWarpNodesDestination gameEvent,
         WarpNodes_ChooseDestinationInteraction choice,
         Game game, IServiceProvider serviceProvider)
@@ -172,7 +172,7 @@ public class Tech_WarpNodes : Tech,
                 {
                     ActionType = SimpleActionType,
                 });
-            return builder;
+            return true;
         }
 
         var maxAmount = game.GetHexAt(playerTech.Source).Planet!.ForcesPresent;
@@ -184,8 +184,10 @@ public class Tech_WarpNodes : Tech,
             Destination = choice.Destination.Value
         }));
         
-        return builder?.AppendContentNewline($"{name}, choose amount of forces to move:")
+        builder?.AppendContentNewline($"{name}, choose amount of forces to move:")
             .WithAllowedMentions(player)
             .AppendButtonRows(interactionIds.ZipWithIndices().Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.item, x.index.ToString())));
+
+        return true;
     }
 }

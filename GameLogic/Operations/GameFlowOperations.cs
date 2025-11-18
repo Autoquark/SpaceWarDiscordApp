@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Setup;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
@@ -488,34 +489,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         transientState.IsResolvingStack = false;
-
-        // Check if any players still need to select starting tech
-        if (game.Rules.StartingTechRule == StartingTechRule.OneUniversal)
-        {
-            var notChosen = game.Players.Where(x => string.IsNullOrEmpty(x.StartingTechId))
-                .ToList();
-
-            if (notChosen.Count != 0)
-            {
-                if (builder != null)
-                {
-                    await ShowBoardStateMessageAsync(builder, game);
-                }
-
-                builder?.AppendContentNewline(string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) + ", please choose a starting tech.");
-
-                var interactions = serviceProvider.AddInteractionsToSetUp(game.UniversalTechs.Select(x =>
-                    new SetPlayerStartingTechInteraction
-                    {
-                        ForGamePlayerId = -1,
-                        Game = game.DocumentId,
-                        TechId = x
-                    }));
-                
-                builder?.AppendButtonRows(game.UniversalTechs.Zip(interactions, (techId, interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionId, Tech.TechsById[techId].DisplayName)));
-                return builder;
-            }
-        }
         
         return (await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider))!;
     }
@@ -566,6 +539,26 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         return triggers;
+    }
+
+    public static async Task<DiscordChannel> GetOrCreatePlayerPrivateThread(Game game, GamePlayer player)
+    {
+        DiscordChannel? privateThread = null;
+        
+        if (player.PrivateThreadId != 0)
+        {
+            privateThread = await Program.DiscordClient.TryGetChannelAsync(player.PrivateThreadId);
+        }
+
+        if (privateThread == null)
+        {
+            var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
+            var playerName = await player.GetNameAsync(false);
+            privateThread = await gameChannel.CreateThreadAsync($"{playerName}'s private thread", DiscordAutoArchiveDuration.Week, DiscordChannelType.PrivateThread);
+            player.PrivateThreadId = privateThread.Id;
+        }
+
+        return privateThread;
     }
 
     /// <summary>
@@ -642,7 +635,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 var tech = Tech.TechsById[eachPlayer.StartingTechId];
                 eachPlayer.Techs.Add(tech.CreatePlayerTech(game, eachPlayer));
             }
-            await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
         }
         else
         {
@@ -732,8 +724,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             builder.AppendContentNewline(
                 "Reminder: In a 2 player game, you score if you have more stars at the end of your opponent's turn".DiscordHeading2());
         }
+
+        if (game.Rules.StartingTechRule != StartingTechRule.None)
+        {
+            PushGameEvents(game, new GameEvent_PlayersChooseStartingTech());
+        }
         
-        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
     
     private static readonly DefaultMapGenerator DefaultMapGenerator = new();

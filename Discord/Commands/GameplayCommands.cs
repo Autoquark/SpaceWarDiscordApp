@@ -3,6 +3,7 @@ using DSharpPlus.Commands;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents.Setup;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ContextChecks;
@@ -12,7 +13,8 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>, IInteractionHandler<SetPlayerStartingTechInteraction>
+public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>,
+    IPlayerChoiceEventHandler<GameEvent_PlayersChooseStartingTech, ChoosePlayerStartingTechInteraction>
 {
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
@@ -78,20 +80,56 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         await GameFlowOperations.DeclineOptionalTriggersAsync(builder, game, serviceProvider);
         return new SpaceWarInteractionOutcome(true, builder);
     }
-
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetPlayerStartingTechInteraction interactionData,
+    
+    public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(DiscordMultiMessageBuilder builder, GameEvent_PlayersChooseStartingTech gameEvent,
         Game game, IServiceProvider serviceProvider)
     {
+        if (game.Rules.StartingTechRule == StartingTechRule.OneUniversal)
+        {
+            var notChosen = game.Players.Where(x => string.IsNullOrEmpty(x.StartingTechId))
+                .ToList();
+            
+            await GameFlowOperations.ShowBoardStateMessageAsync(builder, game);
+
+            builder.AppendContentNewline(
+                string.Join(", ", await Task.WhenAll(notChosen.Select(x => x.GetNameAsync(true)))) +
+                ", please choose a starting tech.");
+
+            var interactions = serviceProvider.AddInteractionsToSetUp(game.UniversalTechs.Select(x =>
+                new ChoosePlayerStartingTechInteraction
+                {
+                    ForGamePlayerId = -1,
+                    Game = game.DocumentId,
+                    TechId = x,
+                    ResolvesChoiceEvent = gameEvent.DocumentId
+                }));
+
+            builder.AppendButtonRows(game.UniversalTechs.Zip(interactions,
+                (techId, interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Primary, interactionId,
+                    Tech.TechsById[techId].DisplayName)));
+
+        }
+
+        return builder;
+    }
+
+    public async Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder,
+        GameEvent_PlayersChooseStartingTech gameEvent, ChoosePlayerStartingTechInteraction choice, Game game,
+        IServiceProvider serviceProvider)
+    {
         var discordUser = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().User;
-        var gamePlayer = game.TryGetGamePlayerByDiscordId(discordUser.Id);
+        
+        // If this is being triggered artificially from a fixup command, we need to use the interaction game player ID
+        // to know the intended player. Otherwise, this button might be for any player so we need to use the Discord user ID.
+        var gamePlayer = game.TryGetGamePlayerByGameId(choice.ForGamePlayerId) ?? game.TryGetGamePlayerByDiscordId(discordUser.Id);
 
         if (gamePlayer == null)
         {
-            return new SpaceWarInteractionOutcome(false, builder);
+            return false;
         }
         
-        await GameFlowOperations.SetPlayerStartingTechAsync(builder, game, gamePlayer, interactionData.TechId, serviceProvider);
+        await GameFlowOperations.SetPlayerStartingTechAsync(builder, game, gamePlayer, choice.TechId, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return game.Players.All(x => x.StartingTechId != "");
     }
 }

@@ -19,6 +19,9 @@ public class GamePlayer
     
     [FirestoreProperty]
     public ulong DiscordUserId { get; set; }
+
+    [FirestoreProperty]
+    public ulong PrivateThreadId { get; set; } = 0;
     
     [FirestoreProperty]
     public int GamePlayerId { get; set; } = -1;

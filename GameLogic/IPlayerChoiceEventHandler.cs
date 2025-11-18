@@ -14,7 +14,11 @@ public interface IPlayerChoiceEventHandler<TEvent, TInteractionData>
         TEvent gameEvent,
         Game game, IServiceProvider serviceProvider);
 
-    public Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, TEvent gameEvent,
+    /// <summary>
+    /// Called when an interaction relating to a player choice is received
+    /// </summary>
+    /// <returns>Whether the choice event should be considered resolved</returns>
+    public Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, TEvent gameEvent,
         TInteractionData choice,
         Game game, IServiceProvider serviceProvider);
 }

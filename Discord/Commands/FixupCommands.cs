@@ -5,6 +5,8 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Setup;
+using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
@@ -695,17 +697,32 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
     [Command("SetPlayerStartingTech")]
     public async Task SetStartingTech(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        int player,
+        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        string techId)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var gamePlayer = game.GetGamePlayerByGameId(player);
-        
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        
-        await GameFlowOperations.SetPlayerStartingTechAsync(builder, game, gamePlayer, techId, context.ServiceProvider);
+
+        var topEvent = game.EventStack.LastOrDefault();
+
+        if (topEvent is GameEvent_PlayersChooseStartingTech)
+        {
+            await InteractionDispatcher.HandleInteractionAsync(builder, new ChoosePlayerStartingTechInteraction
+            {
+                TechId = techId,
+                ForGamePlayerId = player,
+                Game = game.DocumentId,
+                ResolvesChoiceEvent = topEvent.DocumentId
+            }, game, context.ServiceProvider);
+        }
+        else
+        {
+            builder.AppendContentNewline("There is not a tech selection event on top of the stack");
+        }
         
         outcome.ReplyBuilder = builder;
         outcome.RequiresSave = true;
