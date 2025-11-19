@@ -163,51 +163,48 @@ public static class InteractionDispatcher
                 }
             }
 
-            if (outcome.DeleteOriginalMessage)
+            var firstBuilder = outcome.ReplyBuilder?.Builders[0];
+            if (firstBuilder is { Components.Count: > 0 })
             {
-                await args.Interaction.DeleteOriginalResponseAsync();
-            }
-
-            if (outcome.ReplyBuilder != null)
-            {
-                var firstBuilder = outcome.ReplyBuilder.Builders.First();
-                if (firstBuilder.Components.Count > 0)
+                if (outcome.DeleteOriginalMessage)
                 {
-                    if (outcome.DeleteOriginalMessage)
-                    {
-                        if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
-                        {
-                            await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
-                        }
-                        else
-                        {
-                            await args.Interaction.CreateFollowupMessageAsync(
-                                new DiscordFollowupMessageBuilder()
-                                    .EnableV2Components()
-                                    .AppendContentNewline(
-                                        $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
-                        }
-                    }
-                    else
-                    {
-                        if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
-                        {
-                            await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
-                        }
-                        else if (outcome.ReplyBuilder is not null)
-                        {
-                            await args.Interaction.CreateFollowupMessageAsync(
-                                new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
-                                    $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
-                        }
-                    }
-
-                    foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
-                                 .Cast<DiscordFollowupMessageBuilder>())
+                    if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
                     {
                         await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
                     }
+                    else
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(
+                            new DiscordFollowupMessageBuilder()
+                                .EnableV2Components()
+                                .AppendContentNewline(
+                                    $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
+                    }
                 }
+                else
+                {
+                    if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
+                    {
+                        await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
+                    }
+                    else if (outcome.ReplyBuilder is not null)
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(
+                            new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
+                                $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
+                    }
+                }
+
+                foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
+                             .Cast<DiscordFollowupMessageBuilder>())
+                {
+                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                }
+            }
+            else
+            {
+                // No response, delete the deferred response placeholder
+                await args.Interaction.DeleteOriginalResponseAsync();
             }
         }
         catch (Exception e) when (!Program.IsTestEnvironment)
