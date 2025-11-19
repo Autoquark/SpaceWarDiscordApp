@@ -61,7 +61,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
             new GameEvent_PostProduce
             {
                 PlayerGameId = player.GamePlayerId,
-                ForcesProduced = hex.Planet.Production,
+                ForcesProduced = gameEvent.EffectiveProductionValue,
                 ScienceProduced = hex.Planet.Science,
                 Location = hex.Coordinates
             });
