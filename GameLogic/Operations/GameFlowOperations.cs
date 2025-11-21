@@ -253,6 +253,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /reprompt to continue playing")
                 .WithAllowedMentions(game.Players);
             game.Phase = GamePhase.Finished;
+
+            if (builder != null)
+            {
+                await ShowBoardStateMessageAsync(builder, game);
+            }
         }
 
         return builder;
