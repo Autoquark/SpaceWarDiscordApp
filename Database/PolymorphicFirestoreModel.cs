@@ -3,11 +3,11 @@ using Google.Cloud.Firestore;
 namespace SpaceWarDiscordApp.Database;
 
 /// <summary>
-/// Subclasses of this can be saved and restored polymorphically i.e. preserving their runtime type.
-/// This is not possible for nested classes, however. They must be the root documents of a collection.
+/// Base class for non-root firestore data model classes that can be saved and restored polymorphically]
+/// i.e. preserving their runtime type.
 /// </summary>
 [FirestoreData]
-public abstract class PolymorphicFirestoreModel : FirestoreModel
+public abstract class PolymorphicFirestoreModel : IPolymorphicFirestoreData
 {
     protected PolymorphicFirestoreModel()
     {

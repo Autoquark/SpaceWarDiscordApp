@@ -4,7 +4,7 @@ using Google.Cloud.Firestore;
 namespace SpaceWarDiscordApp.Database.InteractionData;
 
 [FirestoreData]
-public abstract class InteractionData : PolymorphicFirestoreModel
+public abstract class InteractionData : PolymorphicFirestoreDocument
 {
     [FirestoreProperty]
     public string InteractionId { get; set; } = Guid.NewGuid().ToString();
@@ -16,7 +16,7 @@ public abstract class InteractionData : PolymorphicFirestoreModel
     /// Optional reference to a GameEvent_PlayerChoice that is resolved by this interaction
     /// </summary>
     [FirestoreProperty]
-    public DocumentReference? ResolvesChoiceEvent { get; set; }
+    public string? ResolvesChoiceEventId { get; set; }
 
     /// <summary>
     /// GamePlayer id of the player that is allowed to perform the interaction, or -1 if it's not player specific

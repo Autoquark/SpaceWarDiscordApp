@@ -9,7 +9,7 @@ public class LinkedDocumentCollection
     
 }
 
-public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreModel
+public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreDocument
 {
     private readonly Func<IList<DocumentReference>> _documentList;
 
@@ -71,9 +71,7 @@ public class LinkedDocumentCollection<T> : IEnumerable<T> where T : FirestoreMod
             .WhereNonNull();
 
         _items.Clear();
-        _items.AddRange(typeof(T).IsAssignableTo(typeof(PolymorphicFirestoreModel))
-            ? snapshots.Select(x => (T)(object)x.ConvertToPolymorphic<PolymorphicFirestoreModel>())
-            : snapshots.Select(x => x.ConvertTo<T>()));
+        _items.AddRange(snapshots.Select(x => x.ConvertTo<T>()));
     }
 
     public void OnSavingParentDoc(Transaction transaction)

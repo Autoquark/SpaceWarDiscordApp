@@ -37,7 +37,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
-                            EventDocumentId = beginProduce.DocumentId!,
+                            EventId = beginProduce.EventId,
                             Event = beginProduce
                         }
                     }

@@ -36,7 +36,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
-                            EventDocumentId = beginProduce.DocumentId!,
+                            EventId = beginProduce.EventId,
                             Event = beginProduce
                         }
                     }
@@ -76,7 +76,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
             .Select(x => new SpecifyPeoplePrintersAmountInteraction
             {
                 Event = interactionData.Event,
-                EventDocumentId = interactionData.Event.DocumentId!,
+                EventId = interactionData.Event.EventId,
                 ForGamePlayerId = interactionData.ForGamePlayerId,
                 Game = interactionData.Game,
                 ScienceAmount = x

@@ -131,7 +131,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder?> AdvanceTurnOrPromptNextActionAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
-        if (game.EventStack.Items.Count > 0)
+        if (game.EventStack.Count > 0)
         {
             return builder;
         }
@@ -356,7 +356,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         transientState.IsResolvingStack = true;
         
-        while (game.EventStack.Items.Count > 0)
+        while (game.EventStack.Count > 0)
         {
             var resolvingEvent = game.EventStack.Last();
             
@@ -527,7 +527,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             throw new Exception("No events to resolve");
         }
         
-        game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
+        game.EventStack.RemoveAt(game.EventStack.Count - 1);
         await GameEventDispatcher.HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
         
         return builder;

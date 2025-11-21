@@ -48,7 +48,7 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
                             Event = preMove,
-                            EventDocumentId = preMove.DocumentId!,
+                            EventId = preMove.EventId,
                             IsAttacker = isAttacker.Value
                         }
                     }

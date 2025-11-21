@@ -33,7 +33,7 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
                     ResolveInteractionData = new ApplyMassMigrationBonusInteraction
                     {
                         Event = preMove,
-                        EventDocumentId = preMove.DocumentId!,
+                        EventId = preMove.EventId,
                         ForGamePlayerId = player.GamePlayerId,
                         Game = game.DocumentId
                     }

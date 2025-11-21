@@ -38,7 +38,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     private static readonly IReadOnlyList<string> NameNouns = new List<string>(["war", "conflict", "battle", "disagreement",
         "fight", "confrontation", "scuffle", "kerfuffle", "brouhaha", "disturbance", "tiff", "fracas", "occurrence", "besmirchment",
         "brawl", "farce", "belligerence", "craziness", "lunacy", "fiasco", "furore", "faff", "perfidy", "quarrel", "tumult", "altercation",
-        "rumpus", "happening", "thing", "violence"]);
+        "rumpus", "happening", "thing", "violence", "event", "incident"]);
     private const string GameChannelCategoryName = "Spacewar Games";
 
     private static readonly IReadOnlyList<PlayerColour> PlayerColours = Enum.GetValues<PlayerColour>();

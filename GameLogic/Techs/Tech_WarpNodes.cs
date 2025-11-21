@@ -143,7 +143,7 @@ public class Tech_WarpNodes : Tech,
                     ForGamePlayerId = player.GamePlayerId,
                     Game = game.DocumentId,
                     Destination = x,
-                    ResolvesChoiceEvent = gameEvent.DocumentId
+                    ResolvesChoiceEventId = gameEvent.EventId
                 })).ToList();
         
         return builder.AppendContentNewline($"{name}, choose a planet to move to:")

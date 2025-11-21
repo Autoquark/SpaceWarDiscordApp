@@ -65,11 +65,37 @@ static class Program
 
         IsTestEnvironment = secrets.IsTestEnvironment;
         
+        var converterRegistry = new ConverterRegistry() { new ImageSharpColorCoordinateConverter() };
+        var typeDiscriminator = new TypeDiscriminator();
+
+        /*foreach (var type in Assembly.GetExecutingAssembly().GetTypes()
+                     .Where(x => x.IsAssignableTo(typeof(IPolymorphicFirestoreData))))
+        {
+            var methods = typeof(ConverterRegistry).GetMethods();
+            var typeT = Type.MakeGenericMethodParameter(0);
+            typeof(ConverterRegistry).GetMethod(nameof(ConverterRegistry.Add), 1, BindingFlags.Public | BindingFlags.Instance,
+                    [typeof(IFirestoreTypeDiscriminator<>).MakeGenericType(typeT)])!
+                .MakeGenericMethod(type)
+                .Invoke(converterRegistry, [typeDiscriminator]);
+        }*/
+
+        foreach (var type in typeof(TypeDiscriminator).GetInterfaces()
+                     .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IFirestoreTypeDiscriminator<>))
+                     .Select(x => x.GetGenericArguments()[0]))
+        {
+            var typeT = Type.MakeGenericMethodParameter(0);
+            typeof(ConverterRegistry).GetMethod(nameof(ConverterRegistry.Add), 1,
+                    BindingFlags.Public | BindingFlags.Instance,
+                    [typeof(IFirestoreTypeDiscriminator<>).MakeGenericType(typeT)])!
+                .MakeGenericMethod(type)
+                .Invoke(converterRegistry, [typeDiscriminator]);
+        }
+        
         var firestoreBuilder = new FirestoreDbBuilder
         {
             //EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
             ProjectId = secrets.FirestoreProjectId,
-            ConverterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() }
+            ConverterRegistry = converterRegistry
             //Credential = SslCredentials.Insecure,
         };
         FirestoreDb = await firestoreBuilder.BuildAsync();

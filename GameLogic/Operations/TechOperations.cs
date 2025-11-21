@@ -218,7 +218,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = true,
                 Cost = GameConstants.UniversalTechCost,
-                ResolvesChoiceEvent = gameEvent.DocumentId,
+                ResolvesChoiceEventId = gameEvent.EventId,
             }));
             
         var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket 
@@ -229,7 +229,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = true,
                     Cost = x.cost,
-                    ResolvesChoiceEvent = gameEvent.DocumentId,
+                    ResolvesChoiceEventId = gameEvent.EventId,
                 }));
 
         var declineId = serviceProvider.AddInteractionToSetUp(new PurchaseTechInteraction
@@ -239,7 +239,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                 Cost = 0,
                 ForGamePlayerId = player.GamePlayerId,
                 EditOriginalMessage = false,
-                ResolvesChoiceEvent = gameEvent.DocumentId
+                ResolvesChoiceEventId = gameEvent.EventId
             });
 
         if (availableUniversal.Count > 0)

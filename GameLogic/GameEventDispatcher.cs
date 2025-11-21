@@ -74,11 +74,11 @@ public static class GameEventDispatcher
             throw new Exception("Handler not found");
         }
         
-        Debug.Assert(game.EventStack.Items[^1] is TEvent);
+        Debug.Assert(game.EventStack[^1] is TEvent);
         if (await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>)handler)
             .HandlePlayerChoiceEventInteractionAsync(builder, gameEvent, choice, game, serviceProvider))
         {
-            game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
+            game.EventStack.RemoveAt(game.EventStack.Count - 1);
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
         }
 

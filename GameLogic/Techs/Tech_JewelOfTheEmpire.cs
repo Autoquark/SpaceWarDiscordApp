@@ -37,7 +37,7 @@ public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEm
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
-                            EventDocumentId = beginProduce.DocumentId!,
+                            EventId = beginProduce.EventId,
                             Event = beginProduce
                         }
                     }

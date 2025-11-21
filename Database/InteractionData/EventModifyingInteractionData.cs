@@ -6,5 +6,5 @@ namespace SpaceWarDiscordApp.Database.InteractionData;
 public abstract class EventModifyingInteractionData : TriggeredEffectInteractionData
 {
     [FirestoreProperty]
-    public required DocumentReference EventDocumentId { get; set; }
+    public required string EventId { get; set; }
 }

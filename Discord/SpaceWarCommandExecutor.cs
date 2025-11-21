@@ -153,7 +153,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                         contextData.GlobalData.InteractionGroupId), cancellationToken: cancellationToken);
             }
 
-            if (outcome.ReplyBuilder != null)
+            if (outcome.ReplyBuilder != null && !outcome.ReplyBuilder.IsEmpty())
             {
                 var first = outcome.ReplyBuilder.Builders.First();
                 await context.EditResponseAsync(first);

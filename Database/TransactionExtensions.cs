@@ -25,25 +25,11 @@ public static class TransactionExtensions
             .FirstOrDefault()
             ?.ConvertTo<Game>();
 
-        if (game == null)
-        {
-            return null;
-        }
-        
-        await PopulateGameSubcollectionsAsync(transaction, game);
-        
         return game;
     }
 
     public static async Task<Game?> GetGameAsync(this Transaction transaction, DocumentReference gameRef)
-    {
-        var game = (await transaction.GetSnapshotAsync(gameRef))
-            .ConvertTo<Game>();
-        
-        await PopulateGameSubcollectionsAsync(transaction, game);
-
-        return game;
-    }
+        => (await transaction.GetSnapshotAsync(gameRef)) .ConvertTo<Game>();
 
     public static async Task<T> GetInteractionDataAsync<T>(this Transaction transaction, Guid interactionId)
         where T : InteractionData.InteractionData
@@ -69,34 +55,7 @@ public static class TransactionExtensions
                     .WhereEqualTo(x => x.InteractionId, interactionId.ToString())
             .Limit(1)))
         .FirstOrDefault()
-        ?.ConvertToPolymorphic<InteractionData.InteractionData>();
+        ?.ConvertTo<InteractionData.InteractionData>();
 
-    public static void Set(this Transaction transaction, FirestoreModel model)
-    {
-        if (model is Game game)
-        {
-            game.EventStack.OnSavingParentDoc(transaction);
-            
-            foreach (var gamePlayer in game.Players)
-            {
-                gamePlayer.Techs.OnSavingParentDoc(transaction);
-                gamePlayer.LastTurnEvents.OnSavingParentDoc(transaction);
-                gamePlayer.CurrentTurnEvents.OnSavingParentDoc(transaction);
-            }
-        }
-        
-        transaction.Set(model.DocumentId, model);
-    }
-
-    private static async Task PopulateGameSubcollectionsAsync(Transaction transaction, Game game)
-    {
-        await game.EventStack.PopulateAsync(transaction);
-
-        foreach (var gamePlayer in game.Players)
-        {
-            await gamePlayer.Techs.PopulateAsync(transaction); //TODO: Fetch in parallel?
-            await gamePlayer.LastTurnEvents.PopulateAsync(transaction);
-            await gamePlayer.CurrentTurnEvents.PopulateAsync(transaction);
-        }
-    }
+    public static void Set(this Transaction transaction, FirestoreDocument document) => transaction.Set(document.DocumentId, document);
 }

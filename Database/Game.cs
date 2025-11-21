@@ -13,13 +13,8 @@ public enum GamePhase
 }
 
 [FirestoreData]
-public class Game : FirestoreModel
+public class Game : FirestoreDocument
 {
-    public Game()
-    {
-        EventStack = new LinkedDocumentCollection<GameEvent>(Program.FirestoreDb.GameEvents(), () => EventsDocuments);
-    }
-    
     /// <summary>
     /// All players in the game. Once the game has started, they will be in turn order.
     /// </summary>
@@ -97,17 +92,15 @@ public class Game : FirestoreModel
     
     // ID of the last action selection message. Used to edit the buttons away when another one is posted, to avoid
     // clicking old buttons
+    // Not implemented yet
     [FirestoreProperty]
     public ulong LastSelectActionMessageId { get; set; }
 
-    [FirestoreProperty]
-    private IList<DocumentReference> EventsDocuments { get; set; } = [];
-
-    
     /// <summary>
     /// Stack of events currently being resolved. The last event in the list is on top of the stack.
     /// </summary>
-    public LinkedDocumentCollection<GameEvent> EventStack { get; set; }
+    [FirestoreProperty]
+    public List<GameEvent> EventStack { get; set; } = [];
     
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     

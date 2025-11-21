@@ -146,7 +146,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
 
-        var index = gamePlayer.Techs.Items.Index().FirstOrDefault(x => x.Item.TechId == techId, (-1, null!)).Index;
+        var index = gamePlayer.Techs.Index().FirstOrDefault(x => x.Item.TechId == techId, (-1, null!)).Index;
         if (index == -1)
         {
             outcome.RequiresSave = false;
@@ -716,7 +716,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
                 TechId = techId,
                 ForGamePlayerId = player,
                 Game = game.DocumentId,
-                ResolvesChoiceEvent = topEvent.DocumentId
+                ResolvesChoiceEventId = topEvent.EventId
             }, game, context.ServiceProvider);
         }
         else

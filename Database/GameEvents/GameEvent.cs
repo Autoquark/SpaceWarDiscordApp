@@ -12,6 +12,9 @@ namespace SpaceWarDiscordApp.Database.GameEvents;
 public abstract class GameEvent : PolymorphicFirestoreModel
 {
     [FirestoreProperty]
+    public string EventId { get; set; } = Guid.NewGuid().ToString();
+    
+    [FirestoreProperty]
     public List<TriggeredEffect> RemainingTriggersToResolve { get; set; } = [];
 
     [FirestoreProperty]

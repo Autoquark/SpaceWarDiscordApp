@@ -6,7 +6,7 @@ namespace SpaceWarDiscordApp.Database;
 /// Global persistent bot data
 /// </summary>
 [FirestoreData]
-public class GlobalData : FirestoreModel
+public class GlobalData : FirestoreDocument
 {
     /// <summary>
     /// Incrementing ID associated with the InteractionData for a set of buttons which is presented to the user

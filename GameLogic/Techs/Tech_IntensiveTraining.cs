@@ -69,7 +69,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
                             ForGamePlayerId = player.GamePlayerId,
                             IsAttacker = isAttacker.Value,
                             Event = preMove,
-                            EventDocumentId = preMove.DocumentId!
+                            EventId = preMove.EventId
                         }
                     }
                 ];

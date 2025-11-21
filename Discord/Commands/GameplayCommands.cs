@@ -103,7 +103,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
                         ForGamePlayerId = -1,
                         Game = game.DocumentId,
                         TechId = x,
-                        ResolvesChoiceEvent = gameEvent.DocumentId
+                        ResolvesChoiceEventId = gameEvent.EventId
                     }));
 
                 builder.AppendButtonRows(game.UniversalTechs.Zip(interactions,
@@ -123,7 +123,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
                         TechId = x,
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
-                        ResolvesChoiceEvent = gameEvent.DocumentId
+                        ResolvesChoiceEventId = gameEvent.EventId
                     }));
                     
                     playerBuilder.NewMessage();

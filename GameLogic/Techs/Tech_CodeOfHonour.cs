@@ -47,7 +47,7 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
                             Event = preMove,
-                            EventDocumentId = preMove.DocumentId!,
+                            EventId = preMove.EventId,
                             IsAttacker = isAttacker.Value
                         }
                     }

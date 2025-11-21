@@ -10,13 +10,6 @@ public class GamePlayer
 {
     public const int GamePlayerIdNone = -1;
     
-    public GamePlayer()
-    {
-        Techs = new LinkedDocumentCollection<PlayerTech>(Program.FirestoreDb.PlayerTechs(), () => TechsDocuments);
-        LastTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.EventRecords(), () => LastTurnEventsDocuments);
-        CurrentTurnEvents = new LinkedDocumentCollection<EventRecord>(Program.FirestoreDb.EventRecords(), () => CurrentTurnEventsDocuments);
-    }
-    
     [FirestoreProperty]
     public ulong DiscordUserId { get; set; }
 
@@ -53,30 +46,23 @@ public class GamePlayer
     [FirestoreProperty]
     public int CurrentStartingTechHandIndex { get; set; } = 0;
 
-    [FirestoreProperty]
-    private IList<DocumentReference> TechsDocuments { get; set; } = [];
-
     /// <summary>
     /// PlayerTech objects for techs owned by this player
     /// </summary>
-    /// <remarks>NOT a FirestoreProperty, we manually populate this from the subcollection when querying a game</remarks>
-    public LinkedDocumentCollection<PlayerTech> Techs { get; }
-    
     [FirestoreProperty]
-    private IList<DocumentReference> LastTurnEventsDocuments { get; set; } = [];
-    
+    public List<PlayerTech> Techs { get; set; } = [];
+
     /// <summary>
     /// Events associated with this player from their last turn. Used to draw recap icons on the map
     /// </summary>
-    public LinkedDocumentCollection<EventRecord> LastTurnEvents { get; }
-    
     [FirestoreProperty]
-    private IList<DocumentReference> CurrentTurnEventsDocuments { get; set; } = [];
-    
+    public List<EventRecord> LastTurnEvents { get; set; } = [];
+
     /// <summary>
     /// Events associated with this player from their current turn. Will become LastTurnEvents when the turn ends
     /// </summary>
-    public LinkedDocumentCollection<EventRecord> CurrentTurnEvents { get; }
+    [FirestoreProperty]
+    public List<EventRecord> CurrentTurnEvents { get; set; } = [];
 
     public bool IsDummyPlayer => DiscordUserId == 0;
     

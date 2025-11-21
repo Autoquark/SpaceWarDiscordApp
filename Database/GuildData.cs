@@ -3,7 +3,7 @@ using Google.Cloud.Firestore;
 namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
-public class GuildData : FirestoreModel
+public class GuildData : FirestoreDocument
 {
     [FirestoreProperty]
     public ulong GuildId { get; set; }

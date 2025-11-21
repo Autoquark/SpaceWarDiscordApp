@@ -99,7 +99,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
                             ForGamePlayerId = player.GamePlayerId,
                             IsAttacker = isAttacker.Value,
                             Event = preMove,
-                            EventDocumentId = preMove.DocumentId!
+                            EventId = preMove.EventId
                         }
                     }
                 ];

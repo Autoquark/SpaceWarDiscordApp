@@ -12,9 +12,11 @@ public enum StartingTechRule
 }
 
 [FirestoreData]
-public class GameRules : FirestoreModel
+public class GameRules : FirestoreDocument
 {
+    [FirestoreProperty]
     public StartingTechRule StartingTechRule { get; set; } = StartingTechRule.None;
 
+    [FirestoreProperty]
     public string MapGeneratorId { get; set; } = DefaultMapGenerator.StaticId;
 }

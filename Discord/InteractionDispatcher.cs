@@ -272,7 +272,7 @@ public static class InteractionDispatcher
         where TInteractionData : InteractionData
     {
         var currentEvent = game.EventStack.LastOrDefault();
-        if (interaction.ResolvesChoiceEvent != null)
+        if (interaction.ResolvesChoiceEventId != null)
         {
             if (currentEvent is GameEvent_PlayerChoice<TInteractionData> choiceEvent)
             {
@@ -308,8 +308,8 @@ public static class InteractionDispatcher
             if (baseType != null)
             {
                 var eventType = baseType.GetGenericArguments()[0];
-                // Document id check for the remote scenario where the top event on the stack is of the right type, but not actually the event that this trigger is associated with
-                if (currentEvent == null || currentEvent.GetType() != eventType || !eventModifyingInteractionData.EventDocumentId.Equals(currentEvent.DocumentId))
+                // Event id check for the remote scenario where the top event on the stack is of the right type, but not actually the event that this trigger is associated with
+                if (currentEvent == null || currentEvent.GetType() != eventType || !eventModifyingInteractionData.EventId.Equals(currentEvent.EventId))
                 {
                     builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
                     return new SpaceWarInteractionOutcome(false);
