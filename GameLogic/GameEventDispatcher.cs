@@ -76,7 +76,7 @@ public static class GameEventDispatcher
         
         Debug.Assert(game.EventStack.Items[^1] is TEvent);
         if (await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>)handler)
-            .HandlePlayerChoiceEventResolvedAsync(builder, gameEvent, choice, game, serviceProvider))
+            .HandlePlayerChoiceEventInteractionAsync(builder, gameEvent, choice, game, serviceProvider))
         {
             game.EventStack.RemoveAt(game.EventStack.Items.Count - 1);
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);

@@ -57,6 +57,6 @@ public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEm
         
         builder?.AppendContentNewline($"Produced 2 additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

@@ -71,7 +71,7 @@ public class Tech_WarpNodes : Tech,
             Source = interactionData.Source
         });
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
@@ -117,7 +117,7 @@ public class Tech_WarpNodes : Tech,
         
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, events);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(
@@ -155,7 +155,7 @@ public class Tech_WarpNodes : Tech,
                     "Done making Warp Nodes moves"));
     }
 
-    public async Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<bool> HandlePlayerChoiceEventInteractionAsync(DiscordMultiMessageBuilder? builder,
         GameEvent_ChooseWarpNodesDestination gameEvent,
         WarpNodes_ChooseDestinationInteraction choice,
         Game game, IServiceProvider serviceProvider)

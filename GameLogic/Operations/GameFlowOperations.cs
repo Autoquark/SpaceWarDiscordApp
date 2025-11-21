@@ -541,20 +541,36 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return triggers;
     }
 
-    public static async Task<DiscordChannel> GetOrCreatePlayerPrivateThread(Game game, GamePlayer player)
+    // Don't take service provider as we need to call this from a point in SpaceWarCommandExecutor.ExecuteAsync where our service provider
+    // is disposed, just take messageBuilders directly
+    public static async Task<DiscordChannel> GetOrCreatePlayerPrivateThread(Game game, GamePlayer player, GameMessageBuilders messageBuilders)
     {
-        DiscordChannel? privateThread = null;
+        DiscordThreadChannel? privateThread = null;
         
         if (player.PrivateThreadId != 0)
         {
-            privateThread = await Program.DiscordClient.TryGetChannelAsync(player.PrivateThreadId);
+            privateThread = (DiscordThreadChannel)await Program.DiscordClient.GetChannelAsync(player.PrivateThreadId);
         }
 
         if (privateThread == null)
         {
             var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
-            var playerName = await player.GetNameAsync(false);
-            privateThread = await gameChannel.CreateThreadAsync($"{playerName}'s private thread", DiscordAutoArchiveDuration.Week, DiscordChannelType.PrivateThread);
+            var playerName = await player.GetNameAsync(false, false);
+
+            // Dummy players have a public 'private' thread
+            privateThread = await gameChannel.CreateThreadAsync($"{playerName}'s private thread",
+                DiscordAutoArchiveDuration.Week, player.IsDummyPlayer ? DiscordChannelType.PublicThread : DiscordChannelType.PrivateThread);
+
+            if (!player.IsDummyPlayer)
+            {
+                var playerMember = await gameChannel.Guild.GetMemberAsync(player.DiscordUserId);
+                await privateThread.AddThreadMemberAsync(playerMember);
+            }
+
+            messageBuilders.PlayerPrivateThreadBuilders[player.GamePlayerId]
+                .AppendContentNewline(
+                    $"{await player.GetNameAsync(true)}, this is your private thread for {game.Name}, visible only to you (and server admins, but they promise not to cheat). Any secret information or choices will be presented here.");
+
             player.PrivateThreadId = privateThread.Id;
         }
 
@@ -623,22 +639,29 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         triggerList!.Remove(triggeredEffect);
     }
     
-    public static async Task<DiscordMultiMessageBuilder?> SetPlayerStartingTechAsync(DiscordMultiMessageBuilder? builder, Game game, GamePlayer player, string techId, IServiceProvider serviceProvider)
+    public static async Task<DiscordMultiMessageBuilder?> PlayerChooseStartingTechAsync(DiscordMultiMessageBuilder? builder, Game game, GamePlayer player, string techId, IServiceProvider serviceProvider)
     {
-        player.StartingTechId = techId;
+        if (game.Rules.StartingTechRule is StartingTechRule.OneUniversal or StartingTechRule.IndividualDraft)
+        {
+            player.StartingTechs = [techId];
+        }
         
-        var notChosenCount = game.Players.Count(x => string.IsNullOrEmpty(x.StartingTechId));
+        var notChosenCount = game.Players.Count(x => x.StartingTechs.Count == 0);
         if (notChosenCount == 0)
         {
             foreach (var eachPlayer in game.Players)
             {
-                var tech = Tech.TechsById[eachPlayer.StartingTechId];
-                eachPlayer.Techs.Add(tech.CreatePlayerTech(game, eachPlayer));
+                foreach (var tech in eachPlayer.StartingTechs.ToTechsById())
+                {
+                    eachPlayer.Techs.Add(tech.CreatePlayerTech(game, eachPlayer));
+                }
             }
         }
         else
         {
-            builder?.AppendContentNewline(await player.GetNameAsync(false) + $" has chosen their starting tech (waiting for {notChosenCount} more players)");
+            // The button clicked might have been in a private thread, so explicitly use the game channel builder
+            serviceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder
+                ?.AppendContentNewline(await player.GetNameAsync(false) + $" has chosen their starting tech (waiting for {notChosenCount} more players)");
         }
 
         return builder;
@@ -651,7 +674,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         await StartGameAsync(builder, game, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async static Task<DiscordMultiMessageBuilder> StartGameAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
@@ -728,10 +751,28 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         if (game.Rules.StartingTechRule != StartingTechRule.None)
         {
             PushGameEvents(game, new GameEvent_PlayersChooseStartingTech());
+
+            switch (game.Rules.StartingTechRule)
+            {
+                case StartingTechRule.IndividualDraft:
+                    foreach (var (gamePlayer, index) in game.Players.ZipWithIndices())
+                    {
+                        var hand = new List<string>();
+                        game.StartingTechHands.Add(new StartingTechHand
+                        {
+                            Techs = hand
+                        });
+                        for (var i = 0; i < 3; i++)
+                        {
+                            hand.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
+                        }
+                        
+                        gamePlayer.CurrentStartingTechHandIndex = index;
+                    }
+                    break;
+            }
         }
         
         return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
-    
-    private static readonly DefaultMapGenerator DefaultMapGenerator = new();
 }

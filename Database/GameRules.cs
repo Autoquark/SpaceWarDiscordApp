@@ -7,7 +7,8 @@ namespace SpaceWarDiscordApp.Database;
 public enum StartingTechRule
 {
     None,
-    OneUniversal
+    OneUniversal,
+    IndividualDraft
 }
 
 [FirestoreData]

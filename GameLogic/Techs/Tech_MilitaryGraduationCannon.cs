@@ -63,7 +63,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
             dynamicMaxAmountPerSource: interactionData.AmountProduced,
             triggerToMarkResolved: interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 }
 

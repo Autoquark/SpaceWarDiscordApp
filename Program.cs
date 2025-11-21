@@ -85,6 +85,7 @@ static class Program
             x.AddScoped<List<InteractionData>>();
 
             x.AddScoped<TransientGameState>();
+            x.AddScoped<GameMessageBuilders>();
             
             x.AddHttpClient();
             x.AddScoped<OpenRouterService>(serviceProvider =>

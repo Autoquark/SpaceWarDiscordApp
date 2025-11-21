@@ -68,7 +68,7 @@ public class BotManagementCommands
         }
         else
         {
-            var channelGame = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel.Id));
+            var channelGame = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel));
             if (channelGame == null)
             {
                 outcome.SetSimpleReply("No game id given or game found for this channel");

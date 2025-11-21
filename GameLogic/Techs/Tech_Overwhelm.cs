@@ -81,6 +81,6 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

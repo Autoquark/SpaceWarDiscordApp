@@ -268,7 +268,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         return builder;
     }
 
-    public async Task<bool> HandlePlayerChoiceEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechPurchaseDecision gameEvent,
+    public async Task<bool> HandlePlayerChoiceEventInteractionAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechPurchaseDecision gameEvent,
         PurchaseTechInteraction choice, Game game, IServiceProvider serviceProvider)
     {
         if (choice.TechId != null)

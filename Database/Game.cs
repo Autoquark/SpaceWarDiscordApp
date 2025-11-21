@@ -66,6 +66,9 @@ public class Game : FirestoreModel
     public List<string> TechDiscards { get; set; } = [];
 
     [FirestoreProperty]
+    public List<StartingTechHand> StartingTechHands { get; set; } = [];
+
+    [FirestoreProperty]
     public List<string> UniversalTechs { get; set; } = [];
 
     [FirestoreProperty]

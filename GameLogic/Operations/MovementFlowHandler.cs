@@ -101,7 +101,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         await BeginPlanningMoveAsync(builder, game, player, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 
     public async Task<DiscordMultiMessageBuilder> BeginPlanningMoveAsync(DiscordMultiMessageBuilder builder,
@@ -269,7 +269,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
             }
             
-            return new SpaceWarInteractionOutcome(true, builder);
+            return new SpaceWarInteractionOutcome(true);
         }
 
         // Let player specify a source
@@ -282,7 +282,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
             interactionData.TriggerToMarkResolvedId);
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     /// <summary>
@@ -316,7 +316,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             if (!AllowManyToOne || sources.Count == 1)
             {
                 await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
-                return new SpaceWarInteractionOutcome(true, builder);
+                return new SpaceWarInteractionOutcome(true);
             }
 
             await ShowSpecifyMovementSourceButtonsAsync(builder,
@@ -330,7 +330,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             
             ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
             
-            return new SpaceWarInteractionOutcome(true, builder);
+            return new SpaceWarInteractionOutcome(true);
         }
 
         var amount = await GetOrPromptMovementAmountAsync(
@@ -376,10 +376,10 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             }
             
             // Require save because of planned move data change
-            return new SpaceWarInteractionOutcome(true, builder);
+            return new SpaceWarInteractionOutcome(true);
         }
         
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 
     /// <summary>
@@ -437,7 +437,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
         }
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
@@ -447,7 +447,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         ArgumentNullException.ThrowIfNull(builder);
         await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData), interactionData.TriggerToMarkResolvedId, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     protected async Task<int?> GetOrPromptMovementAmountAsync(DiscordMultiMessageBuilder builder,

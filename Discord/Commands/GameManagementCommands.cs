@@ -259,13 +259,13 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (game.TryGetGamePlayerByDiscordId(userId) != null)
         {
             builder.AppendContentNewline("You are already in this game!");
-            return new SpaceWarInteractionOutcome(false, builder);
+            return new SpaceWarInteractionOutcome(false);
         }
 
         if (game.Phase != GamePhase.Setup)
         {
             builder.AppendContentNewline("You can't join this game because it has already started");
-            return new SpaceWarInteractionOutcome(false, builder);
+            return new SpaceWarInteractionOutcome(false);
         }
         
         game.Players.Add(new GamePlayer
@@ -292,7 +292,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetStartingTechRuleInteraction interactionData,
@@ -301,13 +301,13 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the starting tech rule after the game has started");
-            return new SpaceWarInteractionOutcome(false, builder);       
+            return new SpaceWarInteractionOutcome(false);       
         }
         
         game.Rules.StartingTechRule = interactionData.Value;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true, builder)
+        return new SpaceWarInteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
@@ -319,13 +319,13 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the map generator after the game has started");
-            return new SpaceWarInteractionOutcome(false, builder);       
+            return new SpaceWarInteractionOutcome(false);       
         }
         
         game.Rules.MapGeneratorId = interactionData.GeneratorId;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true, builder)
+        return new SpaceWarInteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };

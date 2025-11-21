@@ -62,6 +62,6 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

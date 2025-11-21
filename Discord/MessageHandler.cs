@@ -34,8 +34,14 @@ public static partial class MessageHandler
                         return;
                     }
 
+                    var channel = await client.TryGetChannelAsync(args.Message.ChannelId);
+                    if (channel is null)
+                    {
+                        return;
+                    }
+                    
                     var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
-                        transaction.GetGameForChannelAsync(args.Message.ChannelId));
+                        transaction.GetGameForChannelAsync(channel));
 
                     if (game == null)
                     {
@@ -68,8 +74,7 @@ public static partial class MessageHandler
                         }
                         catch (RpcException)
                         {
-                            outcome.SetSimpleReply(
-                                "ERROR: Failed to save game state. Please report this to the developer.");
+                            builder.AppendContentNewline("ERROR: Failed to save game state. Please report this to the developer.");
                             throw;
                         }
                     }

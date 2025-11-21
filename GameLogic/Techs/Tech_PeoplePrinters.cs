@@ -56,7 +56,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
         if (hex.Planet == null || hex.Planet.Science == 0 || interactionData.Event.EffectiveScienceProduction == 0)
         {
             await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-            return new SpaceWarInteractionOutcome(true, builder);
+            return new SpaceWarInteractionOutcome(true);
         }
 
         // Only 1 science produced so no need to prompt for amount
@@ -68,7 +68,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
             builder?.AppendContentNewline(GetMessage(1));
             
             await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-            return new SpaceWarInteractionOutcome(true, builder);
+            return new SpaceWarInteractionOutcome(true);
         }
 
         // Prompt for amount
@@ -87,7 +87,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second,
                     $"{x.First} science -> {x.First * 2} forces"))));
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SpecifyPeoplePrintersAmountInteraction interactionData,
@@ -104,7 +104,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
         builder?.AppendContentNewline(GetMessage(interactionData.ScienceAmount));
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     private static string GetMessage(int scienceAmount) =>

@@ -69,7 +69,7 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         builder.AppendContentNewline($"{DisplayName}: {name}, choose the second system to swap:");
         builder.AppendHexButtons(game, targets, interactions);
         
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseDimensionalOrigamiInteraction interactionData,
@@ -103,6 +103,6 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

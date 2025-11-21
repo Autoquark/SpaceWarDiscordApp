@@ -89,6 +89,6 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

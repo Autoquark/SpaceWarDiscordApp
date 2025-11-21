@@ -31,7 +31,7 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
         builder?.AppendContentNewline("Choose a ready planet to produce on:");
         builder?.AppendHexButtons(game, candidates, interactionIds);
 
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
@@ -50,6 +50,6 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
                 ActionType = ActionType.Main
             });
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

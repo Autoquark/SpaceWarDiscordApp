@@ -59,6 +59,6 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
                 ActionType = ActionType.Main
             });
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

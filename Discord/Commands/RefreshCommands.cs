@@ -22,6 +22,6 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
                 ActionType = ActionType.Main,
             });
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

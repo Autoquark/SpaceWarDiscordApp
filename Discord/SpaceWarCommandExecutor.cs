@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
+using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -46,10 +47,15 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                                requiresGameAttribute.Mode != RequireGameChannelMode.DoNotRequire;
             if (requiresGame)
             {
+                if (requiresGameAttribute!.Mode == RequireGameChannelMode.RequiresSave && context.Channel is DiscordThreadChannel)
+                {
+                    await context.EditResponseAsync("Commands that alter the game state can only be used from the main game channel");
+                }
+                
                 // Attempt to find the relevant game for this channel and store it in the context data
-                contextData.Game = cache.GetGame(context.Channel.Id)
+                contextData.Game = cache.GetGame(context.Channel)
                                    ?? await Program.FirestoreDb.RunTransactionAsync(
-                                       transaction => transaction.GetGameForChannelAsync(context.Channel.Id),
+                                       transaction => transaction.GetGameForChannelAsync(context.Channel),
                                        cancellationToken: cancellationToken);
 
                 if (contextData.Game == null)
@@ -63,8 +69,8 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 if (!semaphore.Wait(0, cancellationToken))
                 {
                     // Prevents trying to release the semaphore, since we did not acquire it
-                    
                     semaphore = null;
+                    
                     await context.EditResponseAsync(
                         "An operation is already in progress for this game. Please wait for it to finish before trying again.");
                     return;
@@ -89,6 +95,20 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             contextData.User = context.User;
             
             var interactionsToSetUp = context.ServiceProvider.GetInteractionsToSetUp();
+
+            var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
+            if (contextData.Game != null)
+            {
+                builders.SourceChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+                builders.GameChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+                builders.PlayerPrivateThreadBuilders = contextData.Game.Players.ToDictionary(x => x.GamePlayerId,
+                    _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
+                var privateThreadPlayer = contextData.Game.Players.FirstOrDefault(x => x.PrivateThreadId == context.Channel.Id);
+                if (privateThreadPlayer != null)
+                {
+                    builders.PlayerPrivateThreadBuilders[privateThreadPlayer.GamePlayerId] = builders.SourceChannelBuilder;
+                }
+            }
 
             await base.ExecuteAsync(context, cancellationToken);
 
@@ -141,6 +161,28 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 foreach (var followupBuilder in outcome.ReplyBuilder.Builders.Skip(1))
                 {
                     await context.FollowupAsync(followupBuilder);
+                }
+            }
+            
+            foreach (var (playerId, playerBuilder) in builders.PlayerPrivateThreadBuilders
+                         .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
+            {
+                var thread =
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThread(contextData.Game!, contextData.Game!.GetGamePlayerByGameId(playerId), builders);
+
+                foreach (var discordMessageBuilder in playerBuilder.Builders)
+                {
+                    await thread.SendMessageAsync((DiscordMessageBuilder)discordMessageBuilder);
+                }
+            }
+            
+            if (builders.GameChannelBuilder != builders.SourceChannelBuilder)
+            {
+                var gameChannel = await Program.DiscordClient.GetChannelAsync(contextData.Game!.GameChannelId);
+                foreach (var discordMessageBuilder in builders.GameChannelBuilder!.Builders.Cast<DiscordMessageBuilder>()
+                             .Where(x => x.Components.Count > 0))
+                {
+                    await gameChannel.SendMessageAsync(discordMessageBuilder);
                 }
             }
         }

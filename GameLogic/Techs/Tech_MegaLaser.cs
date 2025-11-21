@@ -75,6 +75,6 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

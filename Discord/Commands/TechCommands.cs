@@ -24,7 +24,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
         
         await tech.UseTechActionAsync(builder, game, player, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     [Command("ShowTech")]

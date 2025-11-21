@@ -87,7 +87,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 
     public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
@@ -120,6 +120,6 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         builder?.AppendContentNewline($"{DisplayName} has been refreshed!");
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

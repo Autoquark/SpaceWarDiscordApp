@@ -39,6 +39,16 @@ public class GameManagementOperations
                         : DiscordButtonStyle.Secondary,
                     interactionId,
                     Enum.GetName(enumValue)!.InsertSpacesInCamelCase())));
+
+        builder.AppendContentNewline(game.Rules.StartingTechRule switch
+        {
+            StartingTechRule.None => "No starting techs",
+            StartingTechRule.IndividualDraft =>
+                "Each player is secretly dealt 3 tech cards and chooses one to keep. Each player will be offered different techs.",
+            StartingTechRule.OneUniversal =>
+                "Each player simultaneously and secretly chooses one universal tech to start with. Multiple players can choose the same tech.",
+            _ => "???"
+        });
         
         // Map generator
         builder.AppendContentNewline("Map Generator:".DiscordHeading2());

@@ -1,3 +1,4 @@
+using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 
 namespace SpaceWarDiscordApp.Database;
@@ -12,10 +13,14 @@ public static class TransactionExtensions
         .FirstOrDefault()
         ?.ConvertTo<GuildData>() ?? new GuildData { GuildId = guildId, DocumentId = transaction.Database.GuildData().Document() };
 
-    public static async Task<Game?> GetGameForChannelAsync(this Transaction transaction, ulong channelId)
+    public static async Task<Game?> GetGameForChannelAsync(this Transaction transaction, DiscordChannel channel)
     {
+        if (channel is DiscordThreadChannel threadChannel)
+        {
+            channel = threadChannel.Parent;
+        }
         var game = (await transaction.GetSnapshotAsync(
-                new Query<Game>(transaction.Database.Games()).WhereEqualTo(x => x.GameChannelId, channelId)
+                new Query<Game>(transaction.Database.Games()).WhereEqualTo(x => x.GameChannelId, channel.Id)
                     .Limit(1)))
             .FirstOrDefault()
             ?.ConvertTo<Game>();

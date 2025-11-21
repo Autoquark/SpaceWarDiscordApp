@@ -11,7 +11,7 @@ public class HexCoordsAutoCompleteProvider : IAutoCompleteProvider
     {
         //TODO: Allow filtering further (e.g. only hexes with planets). Probably get config from context.Parameter.Attributes
         var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
-            transaction.GetGameForChannelAsync(context.Channel.Id));
+            transaction.GetGameForChannelAsync(context.Channel));
 
         if (game == null)
         {

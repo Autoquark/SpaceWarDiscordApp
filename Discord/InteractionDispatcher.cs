@@ -64,8 +64,6 @@ public static class InteractionDispatcher
         {
             return;
         }
-        
-        var builder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder());
 
         if (!Guid.TryParse(args.Interaction.Data.CustomId, out var interactionId))
         {
@@ -135,10 +133,23 @@ public static class InteractionDispatcher
             contextData.Game = game;
             contextData.User = args.Interaction.User;
             contextData.InteractionMessage = args.Interaction.Message;
+            
+            var builders = serviceProvider.GetRequiredService<GameMessageBuilders>();
+            builders.SourceChannelBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder());
+            builders.GameChannelBuilder = args.Interaction.ChannelId == game.GameChannelId
+                ? builders.SourceChannelBuilder
+                : DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+            builders.PlayerPrivateThreadBuilders = game.Players.ToDictionary(x => x.GamePlayerId,
+                _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
+            var privateThreadPlayer = game.Players.FirstOrDefault(x => x.PrivateThreadId == args.Interaction.ChannelId);
+            if (privateThreadPlayer != null)
+            {
+                builders.PlayerPrivateThreadBuilders[privateThreadPlayer.GamePlayerId] = builders.SourceChannelBuilder;
+            }
 
             var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
 
-            var outcome = await HandleInteractionInternalAsync(builder, interactionData, game, serviceProvider);
+            var outcome = await HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
 
             if (outcome.RequiresSave || interactionsToSetUp.Any())
             {
@@ -158,12 +169,13 @@ public static class InteractionDispatcher
                 }
                 catch (RpcException)
                 {
-                    outcome.SetSimpleReply("ERROR: Failed to save game state. Please report this to the developer.");
+                    builders.GameChannelBuilder.AppendContentNewline("ERROR: Failed to save game state. Please report this to the developer.");
                     throw;
                 }
             }
 
-            var firstBuilder = outcome.ReplyBuilder?.Builders[0];
+            // Send messages to the source channel as interaction followups - not sure how necessary this is
+            var firstBuilder = builders.SourceChannelBuilder.Builders[0];
             if (firstBuilder is { Components.Count: > 0 })
             {
                 if (outcome.DeleteOriginalMessage)
@@ -187,15 +199,9 @@ public static class InteractionDispatcher
                     {
                         await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
                     }
-                    else if (outcome.ReplyBuilder is not null)
-                    {
-                        await args.Interaction.CreateFollowupMessageAsync(
-                            new DiscordFollowupMessageBuilder().EnableV2Components().AppendContentNewline(
-                                $"ERROR: Invalid reply builder type. Please report this to the developer ({interactionData.SubtypeName})"));
-                    }
                 }
 
-                foreach (var followupBuilder in outcome.ReplyBuilder!.Builders.Skip(1)
+                foreach (var followupBuilder in builders.SourceChannelBuilder.Builders.Skip(1)
                              .Cast<DiscordFollowupMessageBuilder>())
                 {
                     await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
@@ -205,6 +211,29 @@ public static class InteractionDispatcher
             {
                 // No response, delete the deferred response placeholder
                 await args.Interaction.DeleteOriginalResponseAsync();
+            }
+
+            foreach (var (playerId, playerBuilder) in builders.PlayerPrivateThreadBuilders
+                         .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
+            {
+                var thread =
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThread(game, game.GetGamePlayerByGameId(playerId), builders);
+
+                foreach (var discordMessageBuilder in playerBuilder.Builders.Cast<DiscordMessageBuilder>()
+                             .Where(x => x.Components.Count > 0))
+                {
+                    await thread.SendMessageAsync(discordMessageBuilder);
+                }
+            }
+
+            if (builders.GameChannelBuilder != builders.SourceChannelBuilder)
+            {
+                var gameChannel = await client.GetChannelAsync(game.GameChannelId);
+                foreach (var discordMessageBuilder in builders.GameChannelBuilder.Builders.Cast<DiscordMessageBuilder>()
+                             .Where(x => x.Components.Count > 0))
+                {
+                    await gameChannel.SendMessageAsync(discordMessageBuilder);
+                }
             }
         }
         catch (Exception e) when (!Program.IsTestEnvironment)
@@ -250,12 +279,12 @@ public static class InteractionDispatcher
                 await (Task<DiscordMultiMessageBuilder?>) typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceEventResolvedAsync))!
                     .MakeGenericMethod(currentEvent.GetType(), typeof(TInteractionData))
                     .Invoke(null, [builder, choiceEvent, interaction, game, serviceProvider])!;
-                return new SpaceWarInteractionOutcome(true, builder);
+                return new SpaceWarInteractionOutcome(true);
             }
             else
             {
                 builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
-                return new SpaceWarInteractionOutcome(false, builder);
+                return new SpaceWarInteractionOutcome(false);
             }
         }
         
@@ -283,7 +312,7 @@ public static class InteractionDispatcher
                 if (currentEvent == null || currentEvent.GetType() != eventType || !eventModifyingInteractionData.EventDocumentId.Equals(currentEvent.DocumentId))
                 {
                     builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
-                    return new SpaceWarInteractionOutcome(false, builder);
+                    return new SpaceWarInteractionOutcome(false);
                 }
 
                 interactionType.GetProperty(nameof(EventModifyingInteractionData<GameEvent>.Event))!

@@ -87,6 +87,6 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

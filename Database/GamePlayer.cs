@@ -45,7 +45,13 @@ public class GamePlayer
     public bool IsEliminated { get; set; }
     
     [FirestoreProperty]
-    public string StartingTechId { get; set; } = "";
+    public List<string> StartingTechs { get; set; } = [];
+    
+    /// <summary>
+    /// Index into Game.StartingTechHands of the 'hand' of possible starting techs this player is currently choosing from
+    /// </summary>
+    [FirestoreProperty]
+    public int CurrentStartingTechHandIndex { get; set; } = 0;
 
     [FirestoreProperty]
     private IList<DocumentReference> TechsDocuments { get; set; } = [];

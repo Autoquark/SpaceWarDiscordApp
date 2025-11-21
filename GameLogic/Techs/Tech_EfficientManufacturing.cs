@@ -58,6 +58,6 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
         
         builder?.AppendContentNewline($"Produced 1 additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

@@ -64,7 +64,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
                 .Zip(interactions)
                 .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.ToString())));
 
-        return new SpaceWarInteractionOutcome(false, builder);
+        return new SpaceWarInteractionOutcome(false);
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
@@ -104,6 +104,6 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         // I guess you can eliminate yourself with this, if you want to...
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }

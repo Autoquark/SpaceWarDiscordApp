@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 
 namespace SpaceWarDiscordApp.Database;
@@ -9,7 +10,14 @@ public class GameCache
     private readonly ConcurrentDictionary<ulong, Game> _gamesByChannelId = new();
     
     public Game? GetGame(DocumentReference documentRef) => _gamesByDocumentRef.GetValueOrDefault(documentRef);
-    public Game? GetGame(ulong channelId) => _gamesByChannelId.GetValueOrDefault(channelId);
+    public Game? GetGame(DiscordChannel channel)
+    {
+        if (channel is DiscordThreadChannel threadChannel)
+        {
+            channel = threadChannel.Parent;
+        }
+        return _gamesByChannelId.GetValueOrDefault(channel.Id);
+    }
 
     public void AddOrUpdateGame(Game game)
     {

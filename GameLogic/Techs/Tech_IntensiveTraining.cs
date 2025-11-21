@@ -101,6 +101,6 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true, builder);
+        return new SpaceWarInteractionOutcome(true);
     }
 }
