@@ -3,6 +3,10 @@ using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 
+/// <summary>
+/// When this resolves, movement of forces from one or more sources to a single destination is resolved.
+/// Allows for modification of combat strength sources for both attacking and defending players.
+/// </summary>
 [FirestoreData]
 public class GameEvent_PreMove : GameEvent
 {
@@ -21,6 +25,9 @@ public class GameEvent_PreMove : GameEvent
     [FirestoreProperty]
     public List<CombatStrengthSource> DefenderCombatStrengthSources { get; set; } = [];
     
+    /// <summary>
+    /// ID of the tech that is being used to perform this move, if any
+    /// </summary>
     [FirestoreProperty]
     public string? TechId { get; set; } = null;
 }

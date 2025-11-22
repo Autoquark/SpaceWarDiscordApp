@@ -95,9 +95,12 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         var name = await player.GetNameAsync(false);
         builder.AppendContentNewline($"{name} has swapped {interactionData.Target1} and {interactionData.Target2} using {DisplayName}!");
         
-        player.Techs.Remove(GetThisTech(player));
-        
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_PlayerLoseTech
+            {
+                TechId = Id,
+                PlayerGameId = player.GamePlayerId
+            },
             new GameEvent_ActionComplete
             {
                 ActionType = SimpleActionType,

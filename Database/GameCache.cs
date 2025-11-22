@@ -8,15 +8,16 @@ public class GameCache
 {
     private readonly ConcurrentDictionary<DocumentReference, Game> _gamesByDocumentRef = new();
     private readonly ConcurrentDictionary<ulong, Game> _gamesByChannelId = new();
-    
-    public Game? GetGame(DocumentReference documentRef) => _gamesByDocumentRef.GetValueOrDefault(documentRef);
+
+    public Game? GetGame(DocumentReference documentRef) => null; //_gamesByDocumentRef.GetValueOrDefault(documentRef);
     public Game? GetGame(DiscordChannel channel)
     {
-        if (channel is DiscordThreadChannel threadChannel)
+        return null;
+        /*if (channel is DiscordThreadChannel threadChannel)
         {
             channel = threadChannel.Parent;
         }
-        return _gamesByChannelId.GetValueOrDefault(channel.Id);
+        return _gamesByChannelId.GetValueOrDefault(channel.Id);*/
     }
 
     public void AddOrUpdateGame(Game game)

@@ -39,11 +39,14 @@ public class Tech_Bioweapon : Tech
         
         builder.AppendContentNewline(stringBuilder.ToString());
         
-        player.Techs.Remove(GetThisTech(player));
-        
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_PlayerLoseTech
+            {
+                TechId = Id,
+                PlayerGameId = player.GamePlayerId
+            },
             new GameEvent_ActionComplete
             {
                 ActionType = SimpleActionType,

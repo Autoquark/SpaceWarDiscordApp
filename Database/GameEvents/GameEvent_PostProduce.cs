@@ -3,6 +3,9 @@ using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 
+/// <summary>
+/// Fires after a player has produced on a planet
+/// </summary>
 [FirestoreData]
 public class GameEvent_PostProduce : GameEvent
 {

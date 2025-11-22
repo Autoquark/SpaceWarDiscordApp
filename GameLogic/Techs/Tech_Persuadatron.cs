@@ -67,9 +67,6 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
         // Replace all forces on the hex with the same number of our forces
         hex.Planet!.SetForces(hex.Planet!.ForcesPresent, player.GamePlayerId);
         
-        // Single use tech
-        player.Techs.Remove(GetThisTech(player));
-        
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
         {
             Coordinates = interactionData.Target
@@ -82,6 +79,11 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_PlayerLoseTech
+            {
+                TechId = Id,
+                PlayerGameId = player.GamePlayerId
+            },
             new GameEvent_ActionComplete
             {
                 ActionType = SimpleActionType,

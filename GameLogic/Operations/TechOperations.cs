@@ -9,40 +9,11 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDecision, PurchaseTechInteraction>, IEventResolvedHandler<GameEvent_PlayerGainScience>
+public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDecision, PurchaseTechInteraction>,
+    IEventResolvedHandler<GameEvent_PlayerGainScience>,
+    IEventResolvedHandler<GameEvent_PlayerGainTech>,
+    IEventResolvedHandler<GameEvent_PlayerLoseTech>
 {
-    public static async Task<DiscordMultiMessageBuilder> PurchaseTechAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
-        string techId, int cost, IServiceProvider serviceProvider)
-    {
-        var name = await player.GetNameAsync(false);
-        var tech = Tech.TechsById[techId];
-
-        if (player.Science < cost)
-        {
-            return builder.AppendContentNewline($"{name} does not have enough science to purchase {tech.DisplayName}!");
-        }
-
-        var originalScience = player.Science;
-        player.Science -= cost;
-        player.Techs.Add(tech.CreatePlayerTech(game, player));
-        
-        var index = game.TechMarket.IndexOf(techId);
-        if (index != -1)
-        {
-            game.TechMarket[index] = null;
-        }
-
-        builder.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {cost} Science ({originalScience} -> {player.Science})");
-
-        ShowTechDetails(builder, tech.Id);
-        
-        await CycleTechMarketAsync(builder, game);
-        
-        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
-        
-        return builder;
-    }
-
     public static DiscordMultiMessageBuilder ShowTechDetails(DiscordMultiMessageBuilder builder, string techId)
     {
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
@@ -85,16 +56,16 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         return builder;
     }
 
-    public static async Task<DiscordMultiMessageBuilder> CycleTechMarketAsync(DiscordMultiMessageBuilder builder, Game game)
+    public static async Task<DiscordMultiMessageBuilder?> CycleTechMarketAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
-        builder.AppendContentNewline("The tech market has been cycled.");
+        builder?.AppendContentNewline("The tech market has been cycled.");
         var added = TryDrawTechFromDeck(builder, game);
         game.TechMarket.Insert(0, added?.Id);
         
         if (added != null)
         {
-            builder.AppendContentNewline("A new tech has been added to the tech market:");
-            ShowTechDetails(builder, added.Id);
+            builder?.AppendContentNewline("A new tech has been added to the tech market:");
+            builder.OrDefault(x => ShowTechDetails(x, added.Id));
         }
         
         var removed = game.TechMarket.Last();
@@ -103,7 +74,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         {
             AddTechToDiscards(game, removed);
             var tech = Tech.TechsById[removed];
-            builder.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
+            builder?.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
         }
 
         await UpdatePinnedTechMessage(game);
@@ -273,7 +244,21 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
     {
         if (choice.TechId != null)
         {
-            await PurchaseTechAsync(builder!, game, game.GetGamePlayerByGameId(gameEvent.PlayerGameId), choice.TechId, choice.Cost, serviceProvider);
+            var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
+            var name = await player.GetNameAsync(false);
+            var tech = Tech.TechsById[choice.TechId];
+            
+            var originalScience = player.Science;
+            player.Science -= choice.Cost;
+            
+            builder?.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {choice.Cost} Science ({originalScience} -> {player.Science})");
+            
+            await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+                new GameEvent_PlayerGainTech
+                {
+                    TechId = choice.TechId,
+                    PlayerGameId = gameEvent.PlayerGameId,
+                });
         }
         
         return true;
@@ -311,5 +296,35 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         player.Science >= GameConstants.UniversalTechCost
             ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() 
             : [];
+
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PlayerGainTech gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
+        var tech = Tech.TechsById[gameEvent.TechId];
         
+        player.Techs.Add(tech.CreatePlayerTech(game, player));
+        
+        var index = game.TechMarket.IndexOf(tech.Id);
+        if (index != -1)
+        {
+            game.TechMarket[index] = null;
+        }
+
+        builder.OrDefault(x => ShowTechDetails(x, tech.Id));
+        
+        await CycleTechMarketAsync(builder, game);
+        
+        await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
+        
+        return builder;
+    }
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PlayerLoseTech gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
+        player.Techs.Remove(player.GetPlayerTechById(gameEvent.TechId));
+        return Task.FromResult(builder);
+    }
 }

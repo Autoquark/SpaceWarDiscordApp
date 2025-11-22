@@ -3,6 +3,9 @@ using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 
+/// <summary>
+/// When this resolves, forces on the given planet that are in excess of capacity will be removed.
+/// </summary>
 [FirestoreData]
 public class GameEvent_ExceedingPlanetCapacity : GameEvent
 {

@@ -14,7 +14,8 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>,
-    IPlayerChoiceEventHandler<GameEvent_PlayersChooseStartingTech, ChoosePlayerStartingTechInteraction>
+    IPlayerChoiceEventHandler<GameEvent_PlayersChooseStartingTech, ChoosePlayerStartingTechInteraction>,
+    IInteractionHandler<RepromptInteraction>
 {
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
@@ -155,5 +156,12 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         await GameFlowOperations.PlayerChooseStartingTechAsync(builder, game, gamePlayer, choice.TechId, serviceProvider);
         
         return game.Players.All(x => x.StartingTechs.Count > 0);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RepromptInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+        return new SpaceWarInteractionOutcome(false);
     }
 }

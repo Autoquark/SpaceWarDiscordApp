@@ -3,6 +3,10 @@ using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 
+/// <summary>
+/// When this resolves forces/science points will be added.
+/// Allows for manipulation of the amount of forces/science produced.
+/// </summary>
 [FirestoreData]
 public class GameEvent_BeginProduce : GameEvent
 {
