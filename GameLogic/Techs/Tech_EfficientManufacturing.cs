@@ -12,7 +12,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
 {
     public Tech_EfficientManufacturing() : base("efficient-manufacturing",
         "Efficient Manufacturing",
-        "When you produce on a planet with 1 production, produce 1 additional forces.",
+        "When you produce on a planet with 1 or 0 production, produce 1 additional forces.",
         "Would you believe that this body armour is made out of mud? You would? Well, good! Because it is!")
     {
     }
@@ -24,7 +24,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
         if (gameEvent is GameEvent_BeginProduce beginProduce)
         {
             var hex = game.GetHexAt(beginProduce.Location);
-            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && hex.Planet.Production == 1)
+            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && hex.Planet.Production <= 1)
             {
                 return
                 [
