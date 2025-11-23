@@ -15,7 +15,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
         "Military Graduation Cannon",
         "When you produce Forces, immediately move any number of the forces produced to one adjacent planet. (This occurs before forces on the producing planet are capped to 6)",
         "When your identification number is called, please collect your medal and climb into the barrel",
-        ["Exhaust"])
+        [TechKeyword.Exhaust])
     {
         _movementFlowHandler = new MilitaryGraduationCannon_MovementFlowHandler(this);
         AdditionalHandlers = [_movementFlowHandler];

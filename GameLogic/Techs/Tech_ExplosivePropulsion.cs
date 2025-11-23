@@ -11,7 +11,7 @@ public class Tech_ExplosivePropulsion : Tech
         "Explosive Propulsion",
         "Choose a ready planet you control. Exhaust it and move any number of forces from it to an adjacent planet.",
         "They told me that I should wait until we were clear of the atmosphere before I hit this button, but I don't think their opinions are going to be relevant for much longer.",
-        ["Free Action", "Once per turn"])
+        [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

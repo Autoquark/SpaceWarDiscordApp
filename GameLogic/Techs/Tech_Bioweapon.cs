@@ -12,7 +12,7 @@ public class Tech_Bioweapon : Tech
     public Tech_Bioweapon() : base("bioweapon", "Bioweapon",
         "Remove 1 forces from each of your opponent's planets.",
         "Quick, sneeze on this missile.",
-        ["Single Use", "Action"])
+        [TechKeyword.SingleUse, TechKeyword.Action])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;

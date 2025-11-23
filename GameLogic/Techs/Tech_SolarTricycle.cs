@@ -13,7 +13,7 @@ public class Tech_SolarTricycle : Tech
         "Solar Tricycle",
         "Move 1 of your forces to an adjacent planet. Can only be used after you have taken your main action.",
         "It's both ecologically friendly and a great form of exercise!",
-        ["Free Action", "Once per turn"])
+        [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

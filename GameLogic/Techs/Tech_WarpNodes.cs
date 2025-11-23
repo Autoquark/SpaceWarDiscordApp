@@ -22,7 +22,7 @@ public class Tech_WarpNodes : Tech,
         "Warp Nodes", 
         "Choose a planet you control. Move any number of forces to any number of adjacent planets.", 
         "They're nodes that are made out of warp. I really don't know how I can make this any simpler",
-        ["Action"])
+        [TechKeyword.Action])
     {
         HasSimpleAction = true;
     }

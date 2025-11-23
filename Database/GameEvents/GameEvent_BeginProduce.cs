@@ -18,4 +18,7 @@ public class GameEvent_BeginProduce : GameEvent
     
     [FirestoreProperty]
     public required int EffectiveScienceProduction { get; set; }
+    
+    [FirestoreProperty]
+    public required int? OverrideProducingPlayerId { get; set; }
 }

@@ -70,6 +70,9 @@ public static class MessageBuilderExtensions
         => builder.AppendButtonRows(hexes.Zip(interactionIds)
             .OrderBy(x => x.First.Coordinates.ToHexNumber())
             .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
+    
+    public static IDiscordMessageBuilder AppendCancelButton(this IDiscordMessageBuilder builder, string interactionId)
+        => builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Cancel"));
 
     /// <summary>
     /// Allows mentioning the given player(s) in this message (does nothing for dummy players)

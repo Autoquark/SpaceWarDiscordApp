@@ -9,7 +9,7 @@ public class Tech_MassMigration : Tech
     public Tech_MassMigration() : base("mass-migration2", "Mass Migration",
         "Move all of your forces from one planet to an adjacent planet.",
         "Due to recent budget cutbacks, the planetary government will unfortunately no longer be able to provide certain public services to residents, such as a breathable atmosphere.",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

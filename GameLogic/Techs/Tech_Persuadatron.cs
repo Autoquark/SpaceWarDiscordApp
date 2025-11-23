@@ -15,7 +15,7 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
     public Tech_Persuadatron(): base("persuadatron", "Persuadatron 3000", 
     "Choose a planet adjacent to one you control. Replace all forces on it with the same quantity of your forces.",
     "Activate brain scanner... find all instances of 'blue'... replace with 'red'... and we're done!",
-    ["Single Use", "Action"])
+    [TechKeyword.SingleUse, TechKeyword.Action])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;

@@ -14,7 +14,7 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
     public Tech_Plagiarism() : base("plagiarism", "Plagiarism",
         "Gain a tech that at least one other player owns.",
         "I think you'll find that the addition of an air freshener renders our giant space laser legally distinct under intergalactic patent conventions.",
-        ["Free Action", "Single Use"])
+        [TechKeyword.FreeAction, TechKeyword.SingleUse])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

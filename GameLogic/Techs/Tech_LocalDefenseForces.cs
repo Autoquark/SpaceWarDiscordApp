@@ -12,7 +12,7 @@ public class Tech_LocalDefenseForces : Tech
         "Local Defense Forces",
         "Add 1 forces to each of your planets where you have exactly 1 forces. Don't exhaust those planets.",
         "We pay taxes for the privilege of not getting bombed by our own government. Not getting bombed by the enemy is our own responsibility.",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

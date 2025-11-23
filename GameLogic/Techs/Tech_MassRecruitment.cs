@@ -11,7 +11,7 @@ public class Tech_MassRecruitment : Tech
         "Mass Recruitment",
         "Produce 1 forces on each of your ready planets, then exhaust those planets.",
         "We are expanding conscription to include the elderly, children over the age of 12 and most family pets.",
-        ["Action"])
+        [TechKeyword.Action])
     {
         HasSimpleAction = true;
     }

@@ -16,7 +16,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         "Freeze Dried Forces",
         "Produce 3 forces on a planet you control.",
         "War has never been so convenient!",
-        ["Action", "Exhaust"])
+        [TechKeyword.Action, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
     }

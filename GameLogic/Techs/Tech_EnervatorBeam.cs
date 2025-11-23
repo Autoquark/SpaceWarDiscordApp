@@ -16,7 +16,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         "Enervator Beam",
         "Exhaust any planet",
         "Does anybody else feel tired today?",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
@@ -54,7 +54,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         
         builder?.AppendContentNewline($"{name} has exhausted {interactionData.Target} using Enervator Beam");
         
-        player.GetPlayerTechById(Id).IsExhausted = true;
+        GetThisTech(player).IsExhausted = true;
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
         {
             Coordinates = interactionData.Target

@@ -7,6 +7,15 @@ using SpaceWarDiscordApp.GameLogic.GameEvents;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
+public enum TechKeyword
+{
+    Action,
+    FreeAction,
+    OncePerTurn,
+    Exhaust,
+    SingleUse
+}
+
 public abstract class Tech
 {
     static Tech()
@@ -23,7 +32,7 @@ public abstract class Tech
 
     private static readonly Dictionary<string, Tech> _techsById = new();
     
-    protected Tech(string id, string displayName, string description, string flavourText, IEnumerable<string>? descriptionKeywords = null)
+    protected Tech(string id, string displayName, string description, string flavourText, IEnumerable<TechKeyword>? descriptionKeywords = null)
     {
         Id = id;
         Description = description;
@@ -43,7 +52,7 @@ public abstract class Tech
     
     public string DisplayName { get; }
 
-    public IReadOnlyList<string> DescriptionKeywords { get; }
+    public IReadOnlyList<TechKeyword> DescriptionKeywords { get; }
     
     /// <summary>
     /// Player facing rules text for this tech
@@ -92,7 +101,7 @@ public abstract class Tech
     public virtual string GetTechStatusLine(Game game, GamePlayer player)
     {
         // If tech is limited use, show whether it is available
-        if (DescriptionKeywords.Intersect(["Exhaust", "Once per turn"]).Any())
+        if (DescriptionKeywords.Intersect([TechKeyword.Exhaust, TechKeyword.OncePerTurn]).Any())
         {
             var playerTech = player.GetPlayerTechById(Id);
             return playerTech switch

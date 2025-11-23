@@ -16,7 +16,7 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         "Dimensional Origami",
         "Swap the positions of two systems with planets.",
         "If you could see in four dimensions, it would look a bit like a rabbit",
-        ["Free Action", "Single Use"])
+        [TechKeyword.FreeAction, TechKeyword.SingleUse])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

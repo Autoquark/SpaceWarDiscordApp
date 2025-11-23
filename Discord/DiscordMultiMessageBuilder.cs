@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.InteractionData;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -158,5 +159,11 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
     {
         CurrentBuilder.AppendHexButtons(game, hexes, interactionIds);
         return this;   
+    }
+
+    public DiscordMultiMessageBuilder AppendCancelButton(string interactionId)
+    {
+        CurrentBuilder.AppendCancelButton(interactionId);
+        return this;
     }
 }

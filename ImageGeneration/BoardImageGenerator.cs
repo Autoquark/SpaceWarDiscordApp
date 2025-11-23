@@ -555,7 +555,9 @@ public static class BoardImageGenerator
 
     private static (string text, List<RichTextRun> runs) FormatTechDescription(Tech tech)
     {
-        var keywords = tech.DescriptionKeywords.Any() ? string.Join(", ", tech.DescriptionKeywords) + ": " : "";
+        var keywords = tech.DescriptionKeywords.Any()
+            ? string.Join(", ", tech.DescriptionKeywords.Select(x => x.ToString().InsertSpacesInCamelCase())) + ": "
+            : "";
         var text = keywords + tech.Description;
         var runs = new List<RichTextRun>();
         if (tech.DescriptionKeywords.Any())

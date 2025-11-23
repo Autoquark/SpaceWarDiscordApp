@@ -10,7 +10,7 @@ public class Tech_ScientificSuperiority : Tech
     public Tech_ScientificSuperiority() : base("scientificSuperiority", "Scientific Superiority",
         "If you control planets with more $science$ symbols than any other player, gain 1VP",
         "Our indomitable spirit of curiosity is WAY better than yours!",
-        ["Action", "Exhaust"])
+        [TechKeyword.Action, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
     }

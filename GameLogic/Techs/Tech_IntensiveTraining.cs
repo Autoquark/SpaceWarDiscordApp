@@ -14,7 +14,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         "Intensive Training",
         "While this tech is exhausted, gain +1 Combat Strength.",
         "I'll teach you how to fire your guns when you've mastered standing in a straight line. Which may take some time, at this rate.",
-        ["Action", "Exhaust" ])
+        [TechKeyword.Action, TechKeyword.Exhaust ])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;

@@ -10,7 +10,7 @@ public class Tech_TacticalRetreat : Tech
         "Tactical Retreat",
         "Move all of your forces from a planet to an adjacent planet that you control.",
         "It's a bold new brand concept for cowardice.",
-        [ "Free Action" ])
+        [ TechKeyword.FreeAction ])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

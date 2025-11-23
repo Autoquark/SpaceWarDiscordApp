@@ -18,7 +18,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         "Aggressive Waste Disposal",
         "Destroy 1 forces on a planet adjacent to one you control.\nRefresh this whenever you take the produce action",
         "A primitive civilisation like theirs will probably appreciate these thousand ton containers of miscellaneous industrial refuse!",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

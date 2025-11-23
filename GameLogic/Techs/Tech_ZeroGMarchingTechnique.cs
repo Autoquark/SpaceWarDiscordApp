@@ -11,7 +11,7 @@ public class Tech_ZeroGMarchingTechnique : Tech
         "Zero G Marching Technique",
         "Perform a Move action. Exhaust the destination planet.",
         "Left! Right! Left! Right! Hey, you! Stop floating!",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

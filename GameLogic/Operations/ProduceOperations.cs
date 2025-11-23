@@ -10,7 +10,7 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
     IEventResolvedHandler<GameEvent_PostProduce>,
     IEventResolvedHandler<GameEvent_ExceedingPlanetCapacity>
 {
-    public static GameEvent_BeginProduce CreateProduceEvent(Game game, HexCoordinates location, bool allowExhausted = false)
+    public static GameEvent_BeginProduce CreateProduceEvent(Game game, HexCoordinates location, bool allowExhausted = false, GamePlayer? overrideProducingPlayer = null)
     {
         var hex = game.GetHexAt(location);
         if (hex.Planet == null || hex.Planet.IsExhausted && !allowExhausted)
@@ -22,7 +22,8 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
         {
             Location = location,
             EffectiveProductionValue = hex.Planet.Production,
-            EffectiveScienceProduction = hex.Planet.Science
+            EffectiveScienceProduction = hex.Planet.Science,
+            OverrideProducingPlayerId = overrideProducingPlayer?.GamePlayerId
         };
     }
 
@@ -35,10 +36,19 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
             throw new Exception();
         }
         
-        var player = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
+        var producingPlayerId = gameEvent.OverrideProducingPlayerId ?? hex.Planet.OwningPlayerId;
+        var previousOwner = hex.Planet.OwningPlayerId;
+        
+        // Combat resulting from producing opposing forces isn't implemented yet
+        if (producingPlayerId != previousOwner && !hex.IsNeutral)
+        {
+            throw new Exception();
+        }
+        
+        var player = game.GetGamePlayerByGameId(producingPlayerId);
         var name = await player.GetNameAsync(false);
         
-        hex.Planet.AddForces(gameEvent.EffectiveProductionValue);
+        hex.Planet.SetForces(hex.Planet.ForcesPresent + gameEvent.EffectiveProductionValue, producingPlayerId);
         hex.Planet.IsExhausted = true;
         var producedScience = gameEvent.EffectiveScienceProduction > 0;
 
@@ -53,6 +63,15 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
         builder?.AppendContentNewline(
             $"{name} is producing on {hex.Coordinates}. Produced {gameEvent.EffectiveProductionValue} forces" + (producedScience ? $" and {gameEvent.EffectiveScienceProduction} science" : ""));
 
+        if (producingPlayerId != previousOwner && hex.AnyForcesPresent)
+        {
+            GameFlowOperations.PushGameEvents(game, new GameEvent_CapturePlanet
+            {
+                FormerOwnerGameId = previousOwner,
+                Location = hex.Coordinates
+            });
+        }
+        
         GameFlowOperations.PushGameEvents(game, new GameEvent_PlayerGainScience
             {
                 PlayerGameId = player.GamePlayerId,

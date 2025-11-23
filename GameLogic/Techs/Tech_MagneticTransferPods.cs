@@ -10,7 +10,7 @@ public class Tech_MagneticTransferPods : Tech
         "Magnetic Transfer Pods",
         "Move any number of forces from one planet you control to an adjacent planet you control.",
         "You'll be spending the next week in this small metal pod stuck to the hull of a tomato soup tanker. Any questions?",
-        ["Free Action", "Once per turn"])
+        [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

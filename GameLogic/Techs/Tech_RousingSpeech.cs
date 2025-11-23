@@ -14,7 +14,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
     public Tech_RousingSpeech (): base("rousing-speech", "Rousing Speech", 
         "Gain +1 Combat Strength until the start of your next turn.",
         "Some of you may die. Many of you, in fact. We must seriously consider the possibility that all of you will die. Nevertheless...",
-        ["Free Action", "Exhaust"])
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;

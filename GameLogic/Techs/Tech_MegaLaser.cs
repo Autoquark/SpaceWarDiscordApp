@@ -16,7 +16,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         "Mega Laser",
         "Remove all Forces from a planet adjacent to one you control",
         "Building on the shoulders of the Large Space Laser, the Very Large Space Laser and the Truly Humongous Space Laser, we proudly present a bold new answer to the question 'just how large can a space laser be?'",
-        ["Action", "Exhaust"])
+        [TechKeyword.Action, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
     }
