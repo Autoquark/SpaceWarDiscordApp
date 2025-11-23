@@ -118,10 +118,10 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
                 foreach (var player in game.Players)
                 {
                     var playerBuilder = builders.PlayerPrivateThreadBuilders[player.GamePlayerId];
-                    var hand = game.StartingTechHands[player.CurrentStartingTechHandIndex];
-                    var interactionIds = serviceProvider.AddInteractionsToSetUp(hand.Techs.Select(x => new ChoosePlayerStartingTechInteraction
+                    var hand = game.StartingTechHands[player.CurrentStartingTechHandIndex].Techs.ToTechsById().ToList();
+                    var interactionIds = serviceProvider.AddInteractionsToSetUp(hand.Select(x => new ChoosePlayerStartingTechInteraction
                     {
-                        TechId = x,
+                        TechId = x.Id,
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
                         ResolvesChoiceEventId = gameEvent.EventId
@@ -129,8 +129,14 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
                     
                     playerBuilder.NewMessage();
                     playerBuilder.AppendContentNewline($"{await player.GetNameAsync(true)}, please choose a starting tech:");
-                    playerBuilder.AppendButtonRows(hand.Techs.Zip(interactionIds).Select(
-                        x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, Tech.TechsById[x.First].DisplayName)));
+
+                    foreach (var tech in hand)
+                    {
+                        TechOperations.ShowTechDetails(playerBuilder, tech.Id);
+                    }
+                    
+                    playerBuilder.AppendButtonRows(hand.Zip(interactionIds).Select(
+                        x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.DisplayName)));
                 }
                 break;
         }
