@@ -113,7 +113,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);
         
@@ -155,7 +155,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         gamePlayer.Techs.RemoveAt(index);
         
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);
         
@@ -173,7 +173,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var outcome = context.Outcome();
 
         var techName = Tech.TechsById[techId].DisplayName;
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         outcome.ReplyBuilder = builder;
         
         if(game.UniversalTechs.Count >= GameConstants.UniversalTechCount)
@@ -222,7 +222,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var outcome = context.Outcome();
 
         var techName = Tech.TechsById[techId].DisplayName;
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         outcome.ReplyBuilder = builder;
         
         if (game.UniversalTechs.Remove(techId))
@@ -243,7 +243,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     public static async Task RefreshPinnedTechMessage(CommandContext context)
     {
         await TechOperations.UpdatePinnedTechMessage(context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!);
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Updated pinned tech message");
         
         var outcome = context.Outcome();
@@ -277,7 +277,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             TechOperations.AddTechToDiscards(game, techId);
         }
         
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline(putInDiscard 
                 ? $"Put {tech.DisplayName} from the tech market into the discard pile"
                 : $"Removed {tech.DisplayName} from the tech market (without putting it in the discard pile)");
@@ -319,7 +319,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         playerTech.IsExhausted = exhausted;
         
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);;
     }
@@ -337,8 +337,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             outcome.RequiresSave = false;
             return;
         }
-        
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         outcome.ReplyBuilder = builder;
 
         // Put first card in market back on the tech deck
@@ -403,7 +403,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
 
-        var builder = new DiscordMultiMessageBuilder(() => new DiscordMessageBuilder());
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         var previousPlayer = game.CurrentTurnPlayer;
         
         game.CurrentTurnPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
@@ -434,7 +434,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             return;
         }
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         var previousPlayer = game.ScoringTokenPlayer;
         
         game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
@@ -465,7 +465,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var previous = gamePlayer.Science;
         gamePlayer.Science = science;
         
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline(
                 $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
             .WithAllowedMentions(gamePlayer);;
@@ -501,7 +501,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             game.Phase = GamePhase.Play;
         }
         
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
             .WithAllowedMentions(gamePlayer);
     }
@@ -569,7 +569,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         await TechOperations.CycleTechMarketAsync(builder, game);
         
         outcome.ReplyBuilder = builder;
@@ -586,7 +586,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
 
         var gamePlayer = game.TryGetGamePlayerByGameId(player) ?? game.TryGetGamePlayerByDiscordId(context.User.Id);
         if (from.HasValue)
@@ -641,7 +641,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         
         var hex = game.TryGetHexAt(location);
         if (hex == null)
@@ -688,7 +688,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
         
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Updated pinned tech message");
         
         outcome.ReplyBuilder = builder;
@@ -705,7 +705,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
 
         var topEvent = game.EventStack.LastOrDefault();
 

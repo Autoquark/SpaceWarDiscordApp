@@ -315,6 +315,8 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         
         await CycleTechMarketAsync(builder, game);
         
+        await UpdatePinnedTechMessage(game);
+        
         await GameFlowOperations.AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
         
         return builder;

@@ -95,7 +95,7 @@ public class BackstoryGenerator
 
     private static readonly string[] DramaticDescriptor =
     [
-        "Golden",
+        "Gold",
         "Twilight",
         "Steel",
         "Iron",

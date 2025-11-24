@@ -651,22 +651,27 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             player.StartingTechs = [techId];
         }
         
+        // The button clicked might have been in a private thread, so explicitly use the game channel builder
+        var gameBuilder = serviceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
+        
         var notChosenCount = game.Players.Count(x => x.StartingTechs.Count == 0);
         if (notChosenCount == 0)
         {
             foreach (var eachPlayer in game.Players)
             {
+                gameBuilder.AppendContentNewline($"{await eachPlayer.GetNameAsync(false)}'s starting tech:");
                 foreach (var tech in eachPlayer.StartingTechs.ToTechsById())
                 {
+                    TechOperations.ShowTechDetails(gameBuilder, tech.Id);
                     eachPlayer.Techs.Add(tech.CreatePlayerTech(game, eachPlayer));
                 }
             }
+
+            await TechOperations.UpdatePinnedTechMessage(game);
         }
         else
         {
-            // The button clicked might have been in a private thread, so explicitly use the game channel builder
-            serviceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder
-                ?.AppendContentNewline(await player.GetNameAsync(false) + $" has chosen their starting tech (waiting for {notChosenCount} more players)");
+            gameBuilder.AppendContentNewline(await player.GetNameAsync(false) + $" has chosen their starting tech (waiting for {notChosenCount} more players)");
         }
 
         return builder;

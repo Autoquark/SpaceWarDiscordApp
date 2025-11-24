@@ -97,9 +97,10 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             var interactionsToSetUp = context.ServiceProvider.GetInteractionsToSetUp();
 
             var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
+            builders.SourceChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+            
             if (contextData.Game != null)
             {
-                builders.SourceChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
                 builders.GameChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
                 builders.PlayerPrivateThreadBuilders = contextData.Game.Players.ToDictionary(x => x.GamePlayerId,
                     _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
@@ -153,7 +154,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                         contextData.GlobalData.InteractionGroupId), cancellationToken: cancellationToken);
             }
 
-            if (outcome.ReplyBuilder != null && !outcome.ReplyBuilder.IsEmpty())
+            if (!builders.SourceChannelBuilder.IsEmpty())
             {
                 var first = outcome.ReplyBuilder.Builders.First();
                 await context.EditResponseAsync(first);
@@ -176,7 +177,8 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 }
             }
             
-            if (builders.GameChannelBuilder != builders.SourceChannelBuilder)
+            if (builders.GameChannelBuilder?.IsEmpty() == false
+                && builders.GameChannelBuilder != builders.SourceChannelBuilder)
             {
                 var gameChannel = await Program.DiscordClient.GetChannelAsync(contextData.Game!.GameChannelId);
                 foreach (var discordMessageBuilder in builders.GameChannelBuilder!.Builders.Cast<DiscordMessageBuilder>()
