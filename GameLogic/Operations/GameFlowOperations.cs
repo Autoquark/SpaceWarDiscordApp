@@ -722,7 +722,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         game.Hexes = mapGenerator.GenerateMap(game);
 
-        game.TechDeck = Tech.TechsById.Values.Select(x => x.Id).ToList();
+        game.TechDeck = Tech.TechsById.Values.Where(x => x.ShouldIncludeInGame(game))
+            .Select(x => x.Id)
+            .ToList();
         game.TechDeck.Shuffle();
 
         // Select universal techs at random

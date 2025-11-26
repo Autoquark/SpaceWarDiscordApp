@@ -22,6 +22,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
+        IncludeInGames = false; // OP, disabling for now. Not sure if I want techs that grant science points in this way at all
     }
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,

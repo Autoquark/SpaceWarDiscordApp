@@ -79,6 +79,8 @@ public abstract class Tech
     
     protected bool SimpleActionIsOncePerTurn { get; init; } = false;
 
+    protected bool IncludeInGames { get; set; } = true;
+
     /// <summary>
     /// Gets a discord message string representing the state of this tech for the given game and player
     /// </summary>
@@ -90,6 +92,8 @@ public abstract class Tech
         
         return [result];
     }
+
+    public bool ShouldIncludeInGame(Game game) => IncludeInGames;
     
     /// <summary>
     /// Called for each planet controlled by each player owning this tech to get any combat strength bonus that
