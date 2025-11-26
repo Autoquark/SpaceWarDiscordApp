@@ -70,10 +70,11 @@ public static class GuildOperations
             }
             
             var newMessage = await channel.SendMessageAsync(discordMessageBuilder);
-            guildData.TechListingMessageIds.Add(newMessage.Id);
+            messages.Add(newMessage);
         }
         
         guildData.TechListingChannelId = channel.Id;
+        guildData.TechListingMessageIds = messages.Select(x => x.Id).ToList();
         
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(guildData));
     }
