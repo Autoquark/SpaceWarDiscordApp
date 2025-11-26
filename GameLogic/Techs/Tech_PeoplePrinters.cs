@@ -38,7 +38,8 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
                             ForGamePlayerId = player.GamePlayerId,
                             EventId = beginProduce.EventId,
                             Event = beginProduce
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

@@ -18,6 +18,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;
+        CheckTriggersWhenExhausted = true;
     }
 
     public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player) => GetThisTech(player).IsExhausted ? 1 : 0;
@@ -38,7 +39,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         return builder;
     }
 
-    public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+    protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         var playerTech = GetThisTech(player);
         if (playerTech.IsExhausted && gameEvent is GameEvent_PreMove preMove)
@@ -70,7 +71,8 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
                             IsAttacker = isAttacker.Value,
                             Event = preMove,
                             EventId = preMove.EventId
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

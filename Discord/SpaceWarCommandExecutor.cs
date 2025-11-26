@@ -101,7 +101,9 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             
             if (contextData.Game != null)
             {
-                builders.GameChannelBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+                builders.GameChannelBuilder = context.Channel.Id == contextData.Game.GameChannelId
+                    ? builders.SourceChannelBuilder
+                    : DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
                 builders.PlayerPrivateThreadBuilders = contextData.Game.Players.ToDictionary(x => x.GamePlayerId,
                     _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
                 var privateThreadPlayer = contextData.Game.Players.FirstOrDefault(x => x.PrivateThreadId == context.Channel.Id);
@@ -119,7 +121,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             {
                 if (!outcome.RequiresSave.HasValue)
                 {
-                    outcome.SetSimpleReply(
+                    builders.SourceChannelBuilder.AppendContentNewline(
                         "ERROR: Command failed to set RequiresSave. Please report this to the developer.");
                 }
                 else if (outcome.RequiresSave == true || interactionsToSetUp.Any())
@@ -141,7 +143,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                     }
                     catch (RpcException)
                     {
-                        outcome.SetSimpleReply(
+                        builders.SourceChannelBuilder.AppendContentNewline(
                             "ERROR: Failed to save game state. Please report this to the developer.");
                         throw;
                     }
@@ -156,10 +158,10 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
 
             if (!builders.SourceChannelBuilder.IsEmpty())
             {
-                var first = outcome.ReplyBuilder.Builders.First();
+                var first = builders.SourceChannelBuilder.Builders[0];
                 await context.EditResponseAsync(first);
 
-                foreach (var followupBuilder in outcome.ReplyBuilder.Builders.Skip(1))
+                foreach (var followupBuilder in builders.SourceChannelBuilder.Builders.Skip(1))
                 {
                     await context.FollowupAsync(followupBuilder);
                 }

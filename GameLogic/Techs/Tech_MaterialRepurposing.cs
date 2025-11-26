@@ -37,7 +37,8 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
                             ForGamePlayerId = player.GamePlayerId,
                             Event = capturePlanet,
                             EventId = capturePlanet.EventId,
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

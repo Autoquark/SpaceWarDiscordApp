@@ -28,6 +28,12 @@ public class TriggeredEffect
     /// </summary>
     [FirestoreProperty]
     public required string DisplayName { get; set; } = "Unknown Effect";
+    
+    /// <summary>
+    /// Used to prevent duplicate triggers when a tech's triggers are rechecked due to other triggers being resolved.
+    /// </summary>
+    [FirestoreProperty]
+    public required string TriggerId { get; set; }
 
     /// <summary>
     /// Reference to an InteractionData which can resolve this effect

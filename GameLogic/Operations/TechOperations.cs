@@ -1,6 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
@@ -22,7 +25,10 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             return builder;
         }
 
-        var keywordsText = tech.DescriptionKeywords.Any() ? (string.Join(", ", tech.DescriptionKeywords) + ": ").DiscordBold() : "";
+        var keywordsText = tech.DescriptionKeywords.Any()
+            ? (string.Join(", ", tech.DescriptionKeywords.Select(x => x.ToString().InsertSpacesInCamelCase())) + ": ")
+            .DiscordBold()
+            : "";
         var text = new StringBuilder(tech.DisplayName.DiscordHeading1())
             .AppendLine()
             .AppendLine(keywordsText + tech.Description.ReplaceIconTokens());

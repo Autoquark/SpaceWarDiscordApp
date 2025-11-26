@@ -39,7 +39,8 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
                             ForGamePlayerId = player.GamePlayerId,
                             EventId = beginProduce.EventId,
                             Event = beginProduce
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

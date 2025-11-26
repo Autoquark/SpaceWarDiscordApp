@@ -36,7 +36,8 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
                         EventId = preMove.EventId,
                         ForGamePlayerId = player.GamePlayerId,
                         Game = game.DocumentId
-                    }
+                    },
+                    TriggerId = GetTriggerId(0)
                 }
             ];
         }

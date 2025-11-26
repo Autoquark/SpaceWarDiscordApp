@@ -18,6 +18,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
+        CheckTriggersWhenExhausted = true;
     }
     
     public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech()
@@ -56,7 +57,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         return builder;
     }
 
-    public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+    protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         var playerTech = GetThisTech(player) as PlayerTech_RousingSpeech;
 
@@ -100,7 +101,8 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
                             IsAttacker = isAttacker.Value,
                             Event = preMove,
                             EventId = preMove.EventId
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

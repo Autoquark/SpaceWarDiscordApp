@@ -22,6 +22,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
+        CheckTriggersWhenExhausted = true;
     }
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();
@@ -90,7 +91,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         return new SpaceWarInteractionOutcome(true);
     }
 
-    public override IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
+    protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_PostProduce postProduce && postProduce.PlayerGameId == player.GamePlayerId)
         {
@@ -105,7 +106,8 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
                     {
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
-                    }
+                    },
+                    TriggerId = GetTriggerId(0)
                 }
             ];
         }

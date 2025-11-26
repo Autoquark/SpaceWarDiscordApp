@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using DSharpPlus.Entities;
+using System.Linq;
+using System.Threading.Tasks;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
@@ -69,6 +72,8 @@ public abstract class Tech
     /// properties
     /// </summary>
     protected bool HasSimpleAction { get; init; } = false;
+    
+    protected bool CheckTriggersWhenExhausted { get; init; } = false;
 
     public ActionType SimpleActionType { get; protected init; } = ActionType.Main;
     
@@ -120,9 +125,11 @@ public abstract class Tech
     /// Get triggered effects from this tech in response to the given GameEvent
     /// </summary>
     /// <returns></returns>
-    public virtual IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
-        => GetThisTech(player).IsExhausted ? [] : GetTriggeredEffectsInternal(game, gameEvent, player);
-    
+    public IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player) =>
+        (!CheckTriggersWhenExhausted && GetThisTech(player).IsExhausted)
+            ? []
+            : GetTriggeredEffectsInternal(game, gameEvent, player);
+
     protected virtual IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player) => [];
 
     /// <summary>
@@ -159,4 +166,10 @@ public abstract class Tech
     
     protected PlayerTech GetThisTech(GamePlayer player) => player.GetPlayerTechById<PlayerTech>(Id);
     protected T GetThisTech<T>(GamePlayer player) where T : PlayerTech => player.GetPlayerTechById<T>(Id);
+    
+    /// <summary>
+    /// Gets a trigger ID that is unique to this tech and index. Used to prevent duplicate resolution of triggers
+    /// when trigger conditions are rechecked for an event.
+    /// </summary>
+    protected string GetTriggerId(int index) => $"{Id}-{index}";
 }

@@ -74,9 +74,10 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         var previousString = previous == 0 ? "(was empty)" : $"(was {previousOwner!.PlayerColourInfo.GetDieEmoji(previous)})";
 
-        outcome.SetSimpleReply(newOwner != null
-            ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)} {previousString}"
-            : $"Removed all forces from {coordinates} {previousString}");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline(newOwner != null
+                ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)} {previousString}"
+                : $"Removed all forces from {coordinates} {previousString}");
     }
     
     [Command("grantTech")]
@@ -113,11 +114,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
-        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);
-        
-        outcome.ReplyBuilder = builder;
     }
 
     /// <summary>
@@ -155,11 +154,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         gamePlayer.Techs.RemoveAt(index);
         
-        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Removed {tech.DisplayName} from {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);
-        
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("AddUniversalTech")]
@@ -174,18 +171,17 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         var techName = Tech.TechsById[techId].DisplayName;
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
-        outcome.ReplyBuilder = builder;
         
         if(game.UniversalTechs.Count >= GameConstants.UniversalTechCount)
         {
-            outcome.SetSimpleReply("This game already has the maximum number of universal techs");
+            builder.AppendContentNewline("This game already has the maximum number of universal techs");
             outcome.RequiresSave = false;
             return;
         }
 
         if (game.UniversalTechs.Contains(techId))
         {
-            outcome.SetSimpleReply($"{techName} is already a universal tech");
+            builder.AppendContentNewline($"{techName} is already a universal tech");
             outcome.RequiresSave = false;
             return;
         }
@@ -223,7 +219,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         var techName = Tech.TechsById[techId].DisplayName;
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
-        outcome.ReplyBuilder = builder;
         
         if (game.UniversalTechs.Remove(techId))
         {
@@ -243,11 +238,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     public static async Task RefreshPinnedTechMessage(CommandContext context)
     {
         await TechOperations.UpdatePinnedTechMessage(context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!);
-        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Updated pinned tech message");
-        
-        var outcome = context.Outcome();
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("discardMarketTech")]
@@ -265,7 +257,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         if (index == -1)
         {
             outcome.RequiresSave = false;
-            outcome.SetSimpleReply("That tech is not in the market");
+            context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+                .AppendContentNewline("That tech is not in the market");
             return;
         }
         
@@ -277,7 +270,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             TechOperations.AddTechToDiscards(game, techId);
         }
         
-        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline(putInDiscard 
                 ? $"Put {tech.DisplayName} from the tech market into the discard pile"
                 : $"Removed {tech.DisplayName} from the tech market (without putting it in the discard pile)");
@@ -319,7 +312,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         playerTech.IsExhausted = exhausted;
         
-        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} {tech.DisplayName} for {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);;
     }
@@ -333,13 +326,13 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         if (game.TechMarket.Count == 0)
         {
-            outcome.SetSimpleReply("This game appears to have no tech market (0 slots)");
+            context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+                .AppendContentNewline("This game appears to have no tech market (0 slots)");
             outcome.RequiresSave = false;
             return;
         }
 
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
-        outcome.ReplyBuilder = builder;
 
         // Put first card in market back on the tech deck
         var first = game.TechMarket[0];
@@ -383,7 +376,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         hex.Planet.IsExhausted = exhausted;
         
-        outcome.SetSimpleReply($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline($"{(exhausted ? "Exhausted" : "Unexhausted")} planet at {coordinates}");
     }
 
     [Command("SetPlayerTurn")]
@@ -413,8 +407,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         builder.AppendContentNewline($"Set current turn to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .WithAllowedMentions(gamePlayer, previousPlayer);
         await GameFlowOperations.ShowSelectActionMessageAsync(builder, game, context.ServiceProvider);
-        
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("SetScoringTokenPlayer")]
@@ -441,8 +433,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         builder.AppendContentNewline($"Moved scoring token to {await gamePlayer.GetNameAsync(true)} (was {await previousPlayer.GetNameAsync(true)})")
             .WithAllowedMentions(gamePlayer, previousPlayer);
-        
-        outcome.ReplyBuilder = builder;
     }
     
     [Command("SetPlayerScience")]
@@ -465,10 +455,10 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var previous = gamePlayer.Science;
         gamePlayer.Science = science;
         
-        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline(
                 $"Set {await gamePlayer.GetNameAsync(true)}'s science to {science} (was {previous})")
-            .WithAllowedMentions(gamePlayer);;
+            .WithAllowedMentions(gamePlayer);
         
         game.ScoringTokenPlayerIndex = game.Players.FindIndex(x => x.GamePlayerId == gamePlayer.GamePlayerId);
     }
@@ -501,7 +491,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             game.Phase = GamePhase.Play;
         }
         
-        outcome.ReplyBuilder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Set {await gamePlayer.GetNameAsync(true)}'s VP to {vp} (was {previous})")
             .WithAllowedMentions(gamePlayer);
     }
@@ -511,10 +501,10 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     public static async Task ShuffleTechDeck(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
         game.TechDeck.Shuffle();
         
-        outcome.SetSimpleReply("Shuffled the tech deck");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline("Shuffled the tech deck");
     }
 
     [Command("AddTechToDeck")]
@@ -530,13 +520,15 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
+            context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+                .AppendContentNewline($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
             return;
         }
         
         game.TechDeck.Insert(0, techId);
         
-        outcome.SetSimpleReply($"Put {techName} on top of the tech deck. You may now want to shuffle the deck (/shuffle_tech_deck)");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline($"Put {techName} on top of the tech deck. You may now want to shuffle the deck (/shuffle_tech_deck)");
     }
 
     [Command("AddTechToDiscards")]
@@ -553,13 +545,15 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         if (!allowDuplicate && (game.TechDeck.Contains(techId) || game.TechDiscards.Contains(techId)))
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
+            context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+                .AppendContentNewline($"Failed because {techName} is already in tech deck or discards. Specify allowDuplicate = true if you want to allow this");
             return;
         }
         
         TechOperations.AddTechToDiscards(game, techId);
         
-        outcome.SetSimpleReply($"Put {techName} into the tech discards");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline($"Put {techName} into the tech discards");
     }
 
     [Command("CycleTechMarket")]
@@ -567,12 +561,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     public static async Task CycleTechMarket(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
         await TechOperations.CycleTechMarketAsync(builder, game);
-        
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("MoveForces")]
@@ -596,7 +587,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             {
                 builder.AppendContentNewline($"Invalid 'from' coordinates {from.Value}");
                 outcome.RequiresSave = false;
-                outcome.ReplyBuilder = builder;
                 return;
             }
 
@@ -604,7 +594,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             {
                 builder.AppendContentNewline($"Can't move from {from.Value}, no planet");
                 outcome.RequiresSave = false;
-                outcome.ReplyBuilder = builder;
                 return;
             }
 
@@ -612,7 +601,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             {
                 builder.AppendContentNewline($"Can't move from {from.Value}, no forces present");
                 outcome.RequiresSave = false;
-                outcome.ReplyBuilder = builder;
                 return;
             }
 
@@ -623,14 +611,12 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         {
             builder.AppendContentNewline("Must specify either the movement source or player to move forces for");
             outcome.RequiresSave = false;
-            outcome.ReplyBuilder = builder;
             return;
         }
         
         await BeginPlanningMoveAsync(builder, game, gamePlayer, context.ServiceProvider, from, to, amount, amount);
         
         outcome.RequiresSave = true;
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("Produce")]
@@ -648,7 +634,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         {
             builder.AppendContentNewline($"Invalid coordinates {location}");
             outcome.RequiresSave = false;
-            outcome.ReplyBuilder = builder;
             return;
         }
 
@@ -656,7 +641,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         {
             builder.AppendContentNewline($"Can't produce at {location}, no planet");
             outcome.RequiresSave = false;
-            outcome.ReplyBuilder = builder;
             return;
         }
 
@@ -664,7 +648,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         {
             builder.AppendContentNewline($"Can't produce at {location}, planet is unowned");
             outcome.RequiresSave = false;
-            outcome.ReplyBuilder = builder;
             return;
         }
 
@@ -677,7 +660,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             ProduceOperations.CreateProduceEvent(game, hex.Coordinates, true));
         
         outcome.RequiresSave = true;
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("RefreshSettingsMessage")]
@@ -688,10 +670,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
         
-        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline($"Updated pinned tech message");
         
-        outcome.ReplyBuilder = builder;
         outcome.RequiresSave = false;
     }
 
@@ -724,7 +705,6 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
             builder.AppendContentNewline("There is not a tech selection event on top of the stack");
         }
         
-        outcome.ReplyBuilder = builder;
         outcome.RequiresSave = true;
     }
 }

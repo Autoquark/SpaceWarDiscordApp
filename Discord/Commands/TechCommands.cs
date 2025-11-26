@@ -31,12 +31,10 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
     public Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
     {
-        var outcome = context.Outcome();
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         TechOperations.ShowTechDetails(builder, techId);
         
-        outcome.ReplyBuilder = builder;
         return Task.CompletedTask;
     }
 
@@ -52,7 +50,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
             .OrderBy(x => x.DisplayName)
             .ToList();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         if (deckTechs.Count == 0)
         {
@@ -75,7 +73,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
             }
         }
         
-        outcome.ReplyBuilder = builder;
         return Task.CompletedTask;
     }
     
@@ -90,7 +87,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
         var deckTechs = game.TechDiscards.Select(x => Tech.TechsById[x])
             .ToList();
 
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         if (deckTechs.Count == 0)
         {
@@ -113,7 +110,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
             }
         }
         
-        outcome.ReplyBuilder = builder;
         return Task.CompletedTask;
     }
 }

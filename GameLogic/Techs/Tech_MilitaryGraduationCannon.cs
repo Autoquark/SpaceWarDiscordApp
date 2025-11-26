@@ -43,7 +43,8 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
                     Game = game.DocumentId,
                     AmountProduced = postProduce.ForcesProduced,
                     Source = postProduce.Location
-                }
+                },
+                TriggerId = GetTriggerId(0)
             }];
         }
 

@@ -8,19 +8,10 @@ public class SpaceWarCommandOutcome
     {
     }
 
-    public SpaceWarCommandOutcome(bool requiresSave, DiscordMultiMessageBuilder replyBuilder)
+    public SpaceWarCommandOutcome(bool requiresSave)
     {
         RequiresSave = requiresSave;
-        ReplyBuilder = replyBuilder;
     }
 
     public bool? RequiresSave { get; set; } = null;
-
-    public DiscordMultiMessageBuilder ReplyBuilder { get; set; }
-
-    public void SetSimpleReply(string content)
-    {
-        ReplyBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder())
-            .AppendContentNewline(content);
-    }
 }

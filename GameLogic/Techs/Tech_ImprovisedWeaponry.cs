@@ -36,7 +36,8 @@ public class Tech_ImprovisedWeaponry : Tech, IInteractionHandler<ImprovisedWeapo
                             ForGamePlayerId = player.GamePlayerId,
                             Event = capturePlanet,
                             EventId = capturePlanet.EventId
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

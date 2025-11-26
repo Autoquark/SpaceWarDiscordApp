@@ -22,4 +22,7 @@ public abstract class GameEvent : PolymorphicFirestoreModel
     
     [FirestoreProperty]
     public List<int> PlayerIdsToResolveTriggersFor { get; set; } = [];
+    
+    [FirestoreProperty]
+    public List<string> TriggerIdsResolved { get; set; } = [];
 }

@@ -50,7 +50,8 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
                             Event = preMove,
                             EventId = preMove.EventId,
                             IsAttacker = isAttacker.Value
-                        }
+                        },
+                        TriggerId = GetTriggerId(0)
                     }
                 ];
             }

@@ -174,12 +174,10 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             ForGamePlayerId = -1
         });
         
-        var builder = new DiscordMessageBuilder().EnableV2Components();
-        builder.AppendContentNewline($"{user.Mention}, you have been invited to join this game. To accept, click this button:")
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline($"{user.Mention}, you have been invited to join this game. To accept, click this button:")
             .WithAllowedMention(new UserMention(user.Id))
             .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
-        
-        await context.RespondAsync(builder);
     }
 
     [Command("AddDummyPlayer")]
@@ -187,7 +185,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     public static async Task AddDummyPlayerToGameCommand(CommandContext context, string name = "")
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
         
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -201,7 +198,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             DummyPlayerName = name
         });
         
-        outcome.SetSimpleReply($"Dummy player {name} added to the game");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+            .AppendContentNewline($"Dummy player {name} added to the game");
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
     }
@@ -210,12 +208,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     public static async Task StartGameCommand(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         await GameFlowOperations.StartGameAsync(builder, game, context.ServiceProvider);
-        
-        outcome.ReplyBuilder = builder;
     }
 
     [Command("Credits")]
@@ -223,7 +218,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
     public static async Task CreditsCommand(CommandContext context)
     {
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         builder.AppendContentNewline("Bot & game design by @Autoquark.");
         builder.AppendContentNewline("Image Credits".DiscordHeading3());
         builder.AppendContentNewline("Die icons by [Delapouite](https://delapouite.com/)");
@@ -233,7 +228,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         builder.AppendContentNewline(text.ToString());
         builder.AppendContentNewline("Other".DiscordHeading3());
         builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, to everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
-        await context.RespondAsync(builder);
     }
 
     [Command("Lore")]
@@ -241,13 +235,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
     public static async Task Lore(CommandContext context)
     {
-        var outcome = context.Outcome();
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-        
-        builder.AppendContentNewline(context.ServiceProvider.GetRequiredService<BackstoryGenerator>()
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+            .AppendContentNewline(context.ServiceProvider.GetRequiredService<BackstoryGenerator>()
             .GenerateBackstory(null));
-        
-        outcome.ReplyBuilder = builder;
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, JoinGameInteraction interactionData, Game game,

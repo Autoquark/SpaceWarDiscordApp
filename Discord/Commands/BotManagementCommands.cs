@@ -33,9 +33,8 @@ public class BotManagementCommands
     public static async Task ShowGameId(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
             .AppendContentNewline($"Game document ID: {game.DocumentId}");
     }
 
@@ -43,40 +42,39 @@ public class BotManagementCommands
     public static async Task NewChannelForGame(CommandContext context, string gameId)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
-        outcome.ReplyBuilder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
 
         var channel = await context.Guild!.CreateChannelAsync(game.Name, DiscordChannelType.Text);
         game.GameChannelId = channel.Id;
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 
-        outcome.ReplyBuilder.AppendContentNewline($"Created channel {channel.Mention}");
+        builder.AppendContentNewline($"Created channel {channel.Mention}");
     }
 
     [Command("ClearGameCache")]
     public static async Task ClearGameCache(CommandContext context, string? gameId = null)
     {
         var cache = context.ServiceProvider.GetRequiredService<GameCache>();
-        var outcome = context.Outcome();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         if (gameId != null)
         {
             var documentReference = Program.FirestoreDb.Games().Document(gameId);
             cache.Clear(documentReference);
-            outcome.SetSimpleReply($"Cache cleared for {documentReference}");
+            builder.AppendContentNewline($"Cache cleared for {documentReference}");
         }
         else
         {
             var channelGame = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameForChannelAsync(context.Channel));
             if (channelGame == null)
             {
-                outcome.SetSimpleReply("No game id given or game found for this channel");
+                builder.AppendContentNewline("No game id given or game found for this channel");
                 return;
             }
             
             cache.Clear(channelGame);
-            outcome.SetSimpleReply($"Cache cleared for {channelGame.DocumentId}");
+            builder.AppendContentNewline($"Cache cleared for {channelGame.DocumentId}");
         }
     }
 
@@ -87,6 +85,7 @@ public class BotManagementCommands
         var outcome = context.Outcome();
         cache.ClearAll();
         
-        outcome.SetSimpleReply("Cache cleared for all games");
+        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
+            .AppendContentNewline("Cache cleared for all games");
     }
 }

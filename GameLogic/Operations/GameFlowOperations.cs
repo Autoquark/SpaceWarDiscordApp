@@ -332,16 +332,25 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public static async Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string interactionId)
     {
         // The interaction might not be for the top event on the stack if, in the process of resolving it, we pushed events onto the stack
-        var triggerList = game.EventStack.Select(x => x.RemainingTriggersToResolve)
-            .FirstOrDefault(x => x.Any(y => y.ResolveInteractionId == interactionId));
+        var relevantEvent = game.EventStack.FirstOrDefault(x =>
+            x.RemainingTriggersToResolve.Any(y => y.ResolveInteractionId == interactionId));
         
-        var triggeredEffect = triggerList?.Find(x => x.ResolveInteractionId == interactionId);
+        var triggeredEffect = relevantEvent?.RemainingTriggersToResolve.Find(x => x.ResolveInteractionId == interactionId);
         if (triggeredEffect == null)
         {
             throw new Exception("Triggered effect not found or is not in response to top event on stack");
         }
         
-        triggerList!.Remove(triggeredEffect);
+        relevantEvent!.TriggerIdsResolved.Add(triggeredEffect.TriggerId);
+        
+        // Reevaluate triggers for currently resolving player as this trigger may have changed the game state and caused
+        // triggers to become available or unavailable. We use GameEvent.TriggerIdsResolved to ensure that we don't resolve
+        // the same triggered effect multiple times for the same event.
+        var resolvingPlayer = game.GetGamePlayerByGameId(relevantEvent.ResolvingTriggersForPlayerId);
+        relevantEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, relevantEvent, resolvingPlayer).ToList();
+        
+        serviceProvider.AddInteractionsToSetUp(relevantEvent.RemainingTriggersToResolve
+            .Select(x => x.ResolveInteractionData).WhereNonNull());
         
         return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
     }
@@ -536,6 +545,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
     {
         var triggers = player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetTriggeredEffects(game, gameEvent, player))
+            .Where(x => !gameEvent.TriggerIdsResolved.Contains(x.TriggerId))
             .ToList();
 
         foreach (var triggeredEffect in triggers)

@@ -50,8 +50,9 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
                             Event = preMove,
                             EventId = preMove.EventId,
                             IsAttacker = isAttacker.Value
-                        }
-                    }
+                        },
+                        TriggerId = GetTriggerId(0)
+                    },
                 ];
             }
         }

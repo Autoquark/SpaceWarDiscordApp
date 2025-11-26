@@ -7,7 +7,7 @@ public class GameMessageBuilders : IDisposable, IAsyncDisposable
     /// <summary>
     /// Builder for the channel the command was executed in.
     /// </summary>
-    public DiscordMultiMessageBuilder? SourceChannelBuilder { get; set; }
+    public DiscordMultiMessageBuilder SourceChannelBuilder { get; set; }
     
     /// <summary>
     /// Builder for the game channel, if the command/interaction is in the context of a game.

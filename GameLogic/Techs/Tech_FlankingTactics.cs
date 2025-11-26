@@ -37,7 +37,8 @@ public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacti
                         ForGamePlayerId = player.GamePlayerId,
                         Event = preMove,
                         EventId = preMove.EventId,
-                    }
+                    },
+                    TriggerId = GetTriggerId(0)
                 }
             ];
         }

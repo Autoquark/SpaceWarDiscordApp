@@ -54,7 +54,8 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
                                 ForGamePlayerId = player.GamePlayerId,
                                 Event = preMove,
                                 IsAttacker = isAttacker.Value
-                            }
+                            },
+                            TriggerId = GetTriggerId(0)
                         }
                     ];
                 }
