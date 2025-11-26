@@ -44,4 +44,6 @@ public class TriggeredEffect
     // InteractionData to resolve this effect. Used to avoid going via firestore when an effect is created and then
     // resolved immediately.
     public required TriggeredEffectInteractionData? ResolveInteractionData { get; set; }
+
+    public override string ToString() => $"{DisplayName} ({TriggerId})";
 }

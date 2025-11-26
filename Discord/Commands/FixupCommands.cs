@@ -707,4 +707,17 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         outcome.RequiresSave = true;
     }
+
+    [Command("ShowEventStack")]
+    public async Task ShowEventStack(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
+        
+        builder.AppendContentNewline("Event stack:".DiscordHeading3());
+        foreach (var gameEvent in game.EventStack)
+        {
+            builder.AppendContentNewline(gameEvent.ToString());
+        }
+    }
 }

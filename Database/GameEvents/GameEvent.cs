@@ -25,4 +25,7 @@ public abstract class GameEvent : PolymorphicFirestoreModel
     
     [FirestoreProperty]
     public List<string> TriggerIdsResolved { get; set; } = [];
+
+    public override string ToString()
+        => $"{GetType().Name}: {EventId}, RemainingTriggersToResolve: {string.Join(", ", RemainingTriggersToResolve.Select(x => x.ToString()))}";
 }
