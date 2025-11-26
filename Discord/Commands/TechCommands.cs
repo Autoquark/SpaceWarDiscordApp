@@ -44,7 +44,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
     public Task ShowTechDeck(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
         var deckTechs = game.TechDeck.Select(x => Tech.TechsById[x])
             .OrderBy(x => x.DisplayName)
@@ -82,7 +81,6 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
     public Task ShowTechDiscards(CommandContext context, bool fullInfo = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
         var deckTechs = game.TechDiscards.Select(x => Tech.TechsById[x])
             .ToList();
