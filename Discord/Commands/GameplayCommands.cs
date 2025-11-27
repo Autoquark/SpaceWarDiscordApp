@@ -22,17 +22,15 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     public static async Task ShowBoardStateCommand(CommandContext context, bool oldCoords = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
         if (game.Hexes.Count == 0)
         {
-            outcome.RequiresSave = false;
             context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
                 .AppendContentNewline("No map has yet been generated for this game");
             return;
         }
         
-        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         await GameFlowOperations.ShowBoardStateMessageAsync(builder, game, oldCoords);
     }
 
@@ -42,7 +40,6 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     public static async Task Reprompt(CommandContext context)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
-        var outcome = context.Outcome();
 
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);

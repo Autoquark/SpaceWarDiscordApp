@@ -54,6 +54,9 @@ public static class GuildOperations
         foreach (var (discordMessageBuilder, message) in builder.Builders.Cast<DiscordMessageBuilder>()
                      .ZipLongest(messages))
         {
+            // Sometimes we get rate limited due to too many edits to this specific channel
+            await Task.Delay(500);
+            
             // We need fewer messages now, delete this one
             if (discordMessageBuilder == null)
             {

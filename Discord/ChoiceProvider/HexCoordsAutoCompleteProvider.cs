@@ -9,7 +9,6 @@ public class HexCoordsAutoCompleteProvider : IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
-        //TODO: Allow filtering further (e.g. only hexes with planets). Probably get config from context.Parameter.Attributes
         var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
             transaction.GetGameForChannelAsync(context.Channel));
 
@@ -18,8 +17,19 @@ public class HexCoordsAutoCompleteProvider : IAutoCompleteProvider
             return [];
         }
 
-        return Filter(game.Hexes).Select(x =>
-            new DiscordAutoCompleteChoice(x.Coordinates.ToString(), x.Coordinates.ToCoordsString()));
+        var matches =  Filter(game.Hexes).ToList();
+
+        if (context.UserInput != null)
+        {
+            var partialMatch = matches.Where(x => x.Coordinates.ToHexNumberString().StartsWith(context.UserInput))
+                .ToList();
+            if (partialMatch.Count != 0)
+            {
+                matches = partialMatch.ToList();
+            }
+        }
+        
+        return matches.Select(x => new DiscordAutoCompleteChoice(x.Coordinates.ToString(), x.Coordinates.ToCoordsString()));
     }
 
     protected virtual IEnumerable<BoardHex> Filter(IEnumerable<BoardHex> boardHexes) => boardHexes;

@@ -65,6 +65,26 @@ public readonly partial record struct HexCoordinates
         yield return new HexCoordinates(Q, R + 1);
     }
 
+    public static bool TryFromHexNumber(int hexNumber, out HexCoordinates result)
+    {
+        var radius = hexNumber / 100;
+        var index = hexNumber % 100;
+        var sectionIndex = index / radius;
+        if (sectionIndex > 5)
+        {
+            result = default;
+            return false;
+        }
+        var distanceIntoSection = index % radius;
+        result = new HexCoordinates(0, 0)
+                     // Go out from the centre to the start of the appropriate section of the ring
+                     + Enum.GetValues<HexDirection>()[sectionIndex].ToHexOffset() * radius
+                     // Go into the section (around the ring) by the excess distance
+                     + Enum.GetValues<HexDirection>()[(sectionIndex + 2) % 6].ToHexOffset() * distanceIntoSection;
+        
+        return true;
+    }
+
     public int ToHexNumber()
     {
         var radius = new[] {Q, R, S}.Select(Math.Abs).Max();
@@ -134,6 +154,9 @@ public readonly partial record struct HexCoordinates
     
     public static HexCoordinates operator *(int value, HexCoordinates coordinates)
         => new(coordinates.Q * value, coordinates.R * value);
+    
+    public static HexCoordinates operator *(HexCoordinates coordinates, int value)
+        => value * coordinates;
 
     public static HexCoordinates operator +(HexCoordinates coordinates, HexDirection direction)
         => coordinates + direction.ToHexOffset();
