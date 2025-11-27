@@ -157,7 +157,6 @@ public abstract class Tech
     public virtual PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new()
         {
             TechId = Id,
-            Game = game.DocumentId!
         };
     
     protected virtual bool IsSimpleActionAvailable(Game game, GamePlayer player)

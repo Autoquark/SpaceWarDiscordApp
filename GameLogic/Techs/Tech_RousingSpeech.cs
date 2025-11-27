@@ -24,7 +24,6 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
     public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech()
     {
         TechId = Id,
-        Game = game.DocumentId!
     };
 
     public override string GetTechStatusLine(Game game, GamePlayer player)

@@ -11,7 +11,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_StandardisedArmaments : Tech, IInteractionHandler<UseStandardisedArmamentsInteraction>
 {
     public Tech_StandardisedArmaments() : base("standardised-armaments", "Standardised Armaments",
-        "Free Action, Once per turn: Choose a ready planet you control. Exhaust it and add 1 forces.",
+        "Choose a ready planet you control. Exhaust it and add 1 forces.",
         "Regulation 4.7.9: The barrel of the gun is to have no more than 10 degrees of curvature.",
         [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
     {

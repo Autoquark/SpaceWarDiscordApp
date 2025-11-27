@@ -41,15 +41,22 @@ public class BotManagementCommands
     [Command("NewChannelForGame")]
     public static async Task NewChannelForGame(CommandContext context, string gameId)
     {
-        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var game = await Program.FirestoreDb.RunTransactionAsync(transaction =>
+            transaction.GetGameAsync(transaction.Database.Games().Document(gameId)));
 
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
+        
+        if (game == null)
+        {
+            builder.AppendContentNewline("Game not found");
+            return;
+        }
 
         var channel = await context.Guild!.CreateChannelAsync(game.Name, DiscordChannelType.Text);
         game.GameChannelId = channel.Id;
         await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.Set(game));
 
-        builder.AppendContentNewline($"Created channel {channel.Mention}");
+        builder.AppendContentNewline($"Created new channel {channel.Mention} for existing game");
     }
 
     [Command("ClearGameCache")]

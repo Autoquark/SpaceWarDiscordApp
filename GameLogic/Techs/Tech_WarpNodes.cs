@@ -30,7 +30,6 @@ public class Tech_WarpNodes : Tech,
     public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_WarpNodes
     {
         TechId = Id,
-        Game = game.DocumentId!
     };
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
