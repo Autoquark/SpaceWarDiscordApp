@@ -714,8 +714,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
-        builder.AppendContentNewline("Event stack:".DiscordHeading3());
-        foreach (var gameEvent in game.EventStack)
+        builder.AppendContentNewline("Event stack (top to bottom):".DiscordHeading3());
+        foreach (var gameEvent in Enumerable.Reverse(game.EventStack))
         {
             builder.AppendContentNewline(gameEvent.ToString());
         }

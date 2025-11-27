@@ -571,9 +571,23 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         return builder;
     }
 
-    protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider) =>
-        (await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, 
-            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!, serviceProvider, Tech))
+    protected async Task<DiscordMultiMessageBuilder> PerformMoveAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player, string? triggerToMarkResolved, IServiceProvider serviceProvider)
+    {
+        // Immediately exhaust any tech used to perform the move, so that they can't trigger off events that resolve before the MovementFlowComplete
+        // (e.g. Graduation Cannon -> Material Repurposing would otherwise prompt to use graduation cannon again off the produce)
+        if (!string.IsNullOrEmpty(ExhaustTechId))
+        {
+            player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
+        }
+
+        if (!string.IsNullOrEmpty(MarkUsedTechId))
+        {
+            player.GetPlayerTechById(MarkUsedTechId).UsedThisTurn = true;
+        }
+        
+        return (await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            (await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, player.PlannedMove!,
+                serviceProvider, Tech))
             .Append(new GameEvent_MovementFlowComplete<T>
             {
                 PlayerGameId = player.GamePlayerId,
@@ -581,6 +595,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 Sources = player.PlannedMove!.Sources.ToList(),
                 Destination = player.PlannedMove!.Destination
             })))!;
+    }
 
     protected virtual List<BoardHex> GetAllowedMoveSources(Game game, GamePlayer player, BoardHex? destination)
         => ((RequireAdjacency && destination != null)
@@ -592,16 +607,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
-        if (!string.IsNullOrEmpty(ExhaustTechId))
-        {
-            player.GetPlayerTechById(ExhaustTechId).IsExhausted = true;
-        }
-
-        if (!string.IsNullOrEmpty(MarkUsedTechId))
-        {
-            player.GetPlayerTechById(MarkUsedTechId).UsedThisTurn = true;
-        }
-
+        
         if (ActionType.HasValue)
         {
             await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
