@@ -276,7 +276,7 @@ public static class InteractionDispatcher
         {
             if (currentEvent is GameEvent_PlayerChoice<TInteractionData> choiceEvent)
             {
-                await (Task<DiscordMultiMessageBuilder?>) typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceEventResolvedAsync))!
+                await (Task<DiscordMultiMessageBuilder?>) typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceInteractionAsync))!
                     .MakeGenericMethod(currentEvent.GetType(), typeof(TInteractionData))
                     .Invoke(null, [builder, choiceEvent, interaction, game, serviceProvider])!;
                 return new SpaceWarInteractionOutcome(true);

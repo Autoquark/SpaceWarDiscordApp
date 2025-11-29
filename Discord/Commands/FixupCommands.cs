@@ -209,6 +209,37 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
     }
 
+    [Command("ShowTechPurchase")]
+    [Description("Prompts for the given player to purchase a tech")]
+    public static async Task ShowTechPurchase(CommandContext context,
+        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var outcome = context.Outcome();
+        var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
+        
+        var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        if (gamePlayer == null)
+        {
+            builders.SourceChannelBuilder.AppendContentNewline("Unknown player");
+            outcome.RequiresSave = false;
+            return;
+        }
+
+        if (gamePlayer.Science < GameConstants.UniversalTechCost)
+        {
+            builders.SourceChannelBuilder.AppendContentNewline($"{await gamePlayer.GetNameAsync(false)} cannot afford any techs right now");
+            outcome.RequiresSave = false;
+            return;
+        }
+
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builders.GameChannelBuilder, game,
+            context.ServiceProvider, new GameEvent_TechPurchaseDecision
+            {
+                PlayerGameId = gamePlayer.GamePlayerId,
+            });
+    }
+
     [Command("DiscardUniversalTech")]
     [Description("Puts a universal tech into the tech discards.")]
     public static async Task DiscardUniversalTech(CommandContext context,

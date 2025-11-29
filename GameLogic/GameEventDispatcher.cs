@@ -63,7 +63,7 @@ public static class GameEventDispatcher
             .Invoke(handler, [builder, gameEvent, game, serviceProvider])!;
     }
 
-    public static async Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceEventResolvedAsync<TEvent, TInteractionData>(
+    public static async Task<DiscordMultiMessageBuilder?> HandlePlayerChoiceInteractionAsync<TEvent, TInteractionData>(
         DiscordMultiMessageBuilder? builder, TEvent gameEvent, TInteractionData choice, Game game, IServiceProvider serviceProvider)
         where TInteractionData : InteractionData
         where TEvent : GameEvent_PlayerChoice<TInteractionData>
@@ -74,11 +74,11 @@ public static class GameEventDispatcher
             throw new Exception("Handler not found");
         }
         
-        Debug.Assert(game.EventStack[^1] is TEvent);
+        var choiceEvent = (TEvent) game.EventStack[^1];
         if (await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>)handler)
             .HandlePlayerChoiceEventInteractionAsync(builder, gameEvent, choice, game, serviceProvider))
         {
-            game.EventStack.RemoveAt(game.EventStack.Count - 1);
+            game.EventStack.Remove(choiceEvent);
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
         }
 

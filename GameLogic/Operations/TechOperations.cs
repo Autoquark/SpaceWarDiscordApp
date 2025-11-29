@@ -259,7 +259,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             
             builder?.AppendContentNewline($"{name} has purchased {tech.DisplayName} for {choice.Cost} Science ({originalScience} -> {player.Science})");
             
-            await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            GameFlowOperations.PushGameEvents(game,
                 new GameEvent_PlayerGainTech
                 {
                     TechId = choice.TechId,
