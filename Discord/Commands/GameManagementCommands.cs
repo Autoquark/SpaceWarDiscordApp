@@ -180,6 +180,22 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, interactionId, "Join Game"));
     }
 
+    [Command("LeaveGame")]
+    [Description("Leave a game during setup")]
+    [RequireGamePlayer]
+    public static async Task LeaveGameCommand(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        
+        var player = game.GetGamePlayerByDiscordId(context.User.Id);
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!;
+        builder.AppendContentNewline($"{await player.GetNameAsync(false)} left the game");
+        
+        game.Players.RemoveAll(x => x.DiscordUserId == context.User.Id);
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
+    }
+
     [Command("AddDummyPlayer")]
     [Description("Adds a dummy player to the game. Dummy players can be controlled by anyone in the game.")]
     public static async Task AddDummyPlayerToGameCommand(CommandContext context, string name = "")

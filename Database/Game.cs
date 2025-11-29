@@ -111,10 +111,12 @@ public class Game : FirestoreDocument
     public bool IsScoringTurn => Players.Count == 2 || CurrentTurnPlayerIndex == ScoringTokenPlayerIndex;
 
     public GamePlayer GetGamePlayerByGameId(int id) => Players.First(x => x.GamePlayerId == id);
-    public GamePlayer GetGamePlayerForInteraction(InteractionData.InteractionData interaction) => GetGamePlayerByGameId(interaction.ForGamePlayerId);
     public GamePlayer? TryGetGamePlayerByGameId(int id) => Players.FirstOrDefault(x => x.GamePlayerId == id);
 
+    public GamePlayer GetGamePlayerByDiscordId(ulong id) => Players.First(x => x.DiscordUserId == id);
     public GamePlayer? TryGetGamePlayerByDiscordId(ulong id) => Players.FirstOrDefault(x => x.DiscordUserId == id);
+    
+    public GamePlayer GetGamePlayerForInteraction(InteractionData.InteractionData interaction) => GetGamePlayerByGameId(interaction.ForGamePlayerId);
     
     public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
     public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);
