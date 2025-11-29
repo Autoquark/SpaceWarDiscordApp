@@ -37,6 +37,9 @@ public class Game : FirestoreDocument
     public ulong PinnedTechMessageId { get; set; } = 0;
     
     [FirestoreProperty]
+    public ulong ChatThreadId { get; set; } = 0;
+    
+    [FirestoreProperty]
     public List<BoardHex> Hexes { get; set; } = [];
     
     /// <summary>

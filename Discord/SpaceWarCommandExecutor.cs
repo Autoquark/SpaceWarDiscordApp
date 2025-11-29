@@ -38,6 +38,19 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             type = type.BaseType;
         }
         
+        var requiresPlayerAttribute = context.Command.Attributes.OfType<RequireGamePlayerAttribute>().FirstOrDefault();
+        type = context.Command.Method!.DeclaringType;
+        while(type != null && requiresPlayerAttribute == null)
+        {
+            requiresPlayerAttribute = type.GetCustomAttribute<RequireGamePlayerAttribute>();
+            type = type.BaseType;
+        }
+
+        if (requiresPlayerAttribute != null && requiresGameAttribute == null)
+        {
+            throw new Exception("RequireGamePlayerAttribute must be on a command that requires a game channel");
+        }
+        
         var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
 
         SemaphoreSlim? semaphore = null;
@@ -61,6 +74,12 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 if (contextData.Game == null)
                 {
                     await context.EditResponseAsync("This command can only be used from a game channel");
+                    return;
+                }
+
+                if (requiresPlayerAttribute != null && contextData.Game.TryGetGamePlayerByDiscordId(context.User.Id) == null)
+                {
+                    await context.EditResponseAsync("You must be a player in this game to use that command");
                     return;
                 }
 
@@ -156,7 +175,12 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                         contextData.GlobalData.InteractionGroupId), cancellationToken: cancellationToken);
             }
 
-            if (!builders.SourceChannelBuilder.IsEmpty())
+            if (builders.SourceChannelBuilder.IsEmpty())
+            {
+                // Delete the deferred response if we didn't send any messages in the source channel
+                await context.DeleteResponseAsync();
+            }
+            else
             {
                 var first = builders.SourceChannelBuilder.Builders[0];
                 await context.EditResponseAsync(first);
@@ -166,12 +190,12 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                     await context.FollowupAsync(followupBuilder);
                 }
             }
-            
+
             foreach (var (playerId, playerBuilder) in builders.PlayerPrivateThreadBuilders
                          .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
             {
                 var thread =
-                    await GameFlowOperations.GetOrCreatePlayerPrivateThread(contextData.Game!, contextData.Game!.GetGamePlayerByGameId(playerId), builders);
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(contextData.Game!, contextData.Game!.GetGamePlayerByGameId(playerId), builders);
 
                 foreach (var discordMessageBuilder in playerBuilder.Builders)
                 {

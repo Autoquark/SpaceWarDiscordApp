@@ -17,6 +17,8 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     IPlayerChoiceEventHandler<GameEvent_PlayersChooseStartingTech, ChoosePlayerStartingTechInteraction>,
     IInteractionHandler<RepromptInteraction>
 {
+    private static readonly string[] BoopStrings = ["Ping!", "Boop!", "Over here!", "Hello!", "Oi!", "Yoo-hoo!"];
+    
     [Command("ShowBoard")]
     [RequireGameChannel(RequireGameChannelMode.ReadOnly)]
     public static async Task ShowBoardStateCommand(CommandContext context, bool oldCoords = false)
@@ -43,6 +45,21 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
 
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, context.ServiceProvider);
+    }
+
+    [Command("PrivateThread")]
+    [Description("Pings you from your private thread in case you can't find it")]
+    // Require save because we might create the private thread
+    [RequireGameChannel(RequireGameChannelMode.RequiresSave)]
+    [RequireGamePlayer]
+    public static async Task PrivateThread(CommandContext context)
+    {
+        var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
+        var player = game.TryGetGamePlayerByDiscordId(context.User.Id)!;
+        var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
+        await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(game, player, builders);
+        
+        builders.PlayerPrivateThreadBuilders[player.GamePlayerId].AppendContentNewline($"{await player.GetNameAsync(true, false)} {BoopStrings.Random()}");
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,

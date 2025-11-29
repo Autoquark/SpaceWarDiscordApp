@@ -20,7 +20,11 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         SimpleActionType = ActionType.Free;
         CheckTriggersWhenExhausted = true;
     }
-    
+
+    protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
+        => base.IsSimpleActionAvailable(game, player) &&
+        GetThisTech<PlayerTech_RousingSpeech>(player).TurnsActiveRemaining == 0;
+
     public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech()
     {
         TechId = Id,

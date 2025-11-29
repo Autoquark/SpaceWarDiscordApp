@@ -28,8 +28,15 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
             ForGamePlayerId = player.GamePlayerId
         }));
 
+        var cancelId = serviceProvider.AddInteractionToSetUp(new RepromptInteraction
+        {
+            ForGamePlayerId = player.GamePlayerId,
+            Game = game.DocumentId
+        });
+
         builder?.AppendContentNewline("Choose a ready planet to produce on:");
         builder?.AppendHexButtons(game, candidates, interactionIds);
+        builder?.AppendCancelButton(cancelId);
 
         return new SpaceWarInteractionOutcome(false);
     }

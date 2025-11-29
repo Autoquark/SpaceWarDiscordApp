@@ -556,9 +556,35 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return triggers;
     }
 
+    public static async Task<DiscordThreadChannel> GetOrCreateChatThreadAsync(Game game)
+    {
+        DiscordThreadChannel? chatThread = null;
+
+        if (game.ChatThreadId != 0)
+        {
+            chatThread = (DiscordThreadChannel)await Program.DiscordClient.GetChannelAsync(game.ChatThreadId);
+        }
+
+        if (chatThread! == null!)
+        {
+            var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
+            
+            chatThread = await gameChannel.CreateThreadAsync("Game Chat", DiscordAutoArchiveDuration.Week, DiscordChannelType.PublicThread);
+
+            foreach (var player in game.Players.Where(x => !x.IsDummyPlayer))
+            {
+                await chatThread.AddThreadMemberAsync(await gameChannel.Guild.GetMemberAsync(player.DiscordUserId));
+            }
+            
+            await chatThread.SendMessageAsync("You can use this thread to talk to the other players without bot messages getting in the way.");
+        }
+        
+        return chatThread;
+    }
+
     // Don't take service provider as we need to call this from a point in SpaceWarCommandExecutor.ExecuteAsync where our service provider
     // is disposed, just take messageBuilders directly
-    public static async Task<DiscordChannel> GetOrCreatePlayerPrivateThread(Game game, GamePlayer player, GameMessageBuilders messageBuilders)
+    public static async Task<DiscordThreadChannel> GetOrCreatePlayerPrivateThreadAsync(Game game, GamePlayer player, GameMessageBuilders messageBuilders)
     {
         DiscordThreadChannel? privateThread = null;
         
@@ -567,7 +593,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             privateThread = (DiscordThreadChannel)await Program.DiscordClient.GetChannelAsync(player.PrivateThreadId);
         }
 
-        if (privateThread == null)
+        if (privateThread! == null!)
         {
             var gameChannel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
             var playerName = await player.GetNameAsync(false, false);
@@ -794,6 +820,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                     break;
             }
         }
+        
+        // Create the chat thread
+        await GetOrCreateChatThreadAsync(game);
         
         return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }

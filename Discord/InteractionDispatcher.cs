@@ -217,7 +217,7 @@ public static class InteractionDispatcher
                          .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
             {
                 var thread =
-                    await GameFlowOperations.GetOrCreatePlayerPrivateThread(game, game.GetGamePlayerByGameId(playerId), builders);
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(game, game.GetGamePlayerByGameId(playerId), builders);
 
                 foreach (var discordMessageBuilder in playerBuilder.Builders.Cast<DiscordMessageBuilder>()
                              .Where(x => x.Components.Count > 0))
