@@ -17,14 +17,14 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
     {
     }
 
-    public override int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => hex.Planet!.Production == 1 ? 1 : 0;
+    public override int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => IsHexAffected(hex) ? 1 : 0;
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
         if (gameEvent is GameEvent_BeginProduce beginProduce)
         {
             var hex = game.GetHexAt(beginProduce.Location);
-            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && hex.Planet.Production <= 1)
+            if (hex.Planet?.OwningPlayerId == player.GamePlayerId && IsHexAffected(hex))
             {
                 return
                 [
@@ -61,4 +61,6 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
         
         return new SpaceWarInteractionOutcome(true);
     }
+    
+    private static bool IsHexAffected(BoardHex hex) => hex.Planet?.Production <= 1;
 }

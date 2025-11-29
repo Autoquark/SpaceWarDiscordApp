@@ -278,7 +278,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         {
             DiscordUserId = userId,
             GamePlayerId = game.Players.Max(x => x.GamePlayerId) + 1,
-            PlayerColour = PlayerColours[game.Players.Count % PlayerColours.Count]
+            PlayerColour = PlayerColours.First(x => game.Players.All(y => y.PlayerColour != x))
         });
         
         var user = await Program.DiscordClient.GetUserAsync(userId);

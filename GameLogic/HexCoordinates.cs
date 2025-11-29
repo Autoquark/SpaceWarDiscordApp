@@ -67,6 +67,12 @@ public readonly partial record struct HexCoordinates
 
     public static bool TryFromHexNumber(int hexNumber, out HexCoordinates result)
     {
+        if (hexNumber == 0)
+        {
+            result = new HexCoordinates(0, 0);
+            return true;
+        }
+        
         var radius = hexNumber / 100;
         var index = hexNumber % 100;
         var sectionIndex = index / radius;
