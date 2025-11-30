@@ -136,20 +136,10 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
                 .WithAllowedMentions(movingPlayer, defender);
         }
 
-        // Stage 3: Apply planet capacity limit
-        var totalPostCapacityLimit = Math.Min(GameConstants.MaxForcesPerPlanet, totalPreCapacityLimit);
-        var lossToCapacityLimit = Math.Max(0, totalPreCapacityLimit - totalPostCapacityLimit);
+        // Stage 3: If exceeding capacity, queue event to remove excess forces
+        destinationHex.Planet.SetForces(totalPreCapacityLimit, movingPlayer.GamePlayerId);
 
-        if (lossToCapacityLimit > 0)
-        {
-            builder?.AppendContentNewline($"{moverName} lost {lossToCapacityLimit} forces that were exceeding the planet capacity");
-        }
-        
-        // Stage 4: Save back to game state
-        if (totalPostCapacityLimit > 0)
-        {
-            destinationHex.Planet.SetForces(totalPostCapacityLimit, movingPlayer.GamePlayerId);
-        }
+        ProduceOperations.CheckPlanetCapacity(game, destinationHex);
 
         if (movingPlayer == game.CurrentTurnPlayer)
         {
@@ -167,7 +157,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
 
         builder?.AppendContentNewline(
             newOwner != null
-                ? $"{await newOwner.GetNameAsync(true)} now has {newOwner.PlayerColourInfo.GetDieEmoji(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
+                ? $"{await newOwner.GetNameAsync(true)} now has {newOwner.PlayerColourInfo.GetDieEmojiOrNumber(destinationHex.Planet.ForcesPresent)} present on {destinationHex.Coordinates}"
                 : $"All forces destroy each other, leaving {destinationHex.Coordinates} unoccupied");
 
         if (newOwner != null && newOwner.GamePlayerId != oldOwner)

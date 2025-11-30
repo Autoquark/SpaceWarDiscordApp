@@ -92,4 +92,5 @@ public class PlayerColourInfo
     
     public DiscordEmoji BlankDieEmoji => Program.AppEmojisByName[$"{Name}_blank"];
     public DiscordEmoji GetDieEmoji(int number) => Program.AppEmojisByName[$"{Name}_{number}"];
+    public string GetDieEmojiOrNumber(int number) => number <= 6 ? GetDieEmoji(number) : $"{number} forces";
 }

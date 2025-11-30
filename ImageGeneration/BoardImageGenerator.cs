@@ -96,6 +96,8 @@ public static class BoardImageGenerator
     private static readonly Font PlayerAreaNameFont;
     private static readonly Font SectionHeaderFont;
     private static readonly Font TechCostFont;
+    // Fallback font for indicating number of forces if there's more than 6
+    private static readonly Font ForcesNumberFont;
     
     // Recap graphics
     private static readonly float PreviousMoveArrowOffset = HexInnerDiameter * 0.2f; 
@@ -176,6 +178,7 @@ public static class BoardImageGenerator
             PlayerAreaNameFont = family.CreateFont(48, FontStyle.Bold);
             SectionHeaderFont = family.CreateFont(72, FontStyle.Bold);
             TechCostFont = SectionHeaderFont;
+            ForcesNumberFont = family.CreateFont(128, FontStyle.Bold);
 
             const string alphabet = "abcdefghijklmnopqrstuvwxyz";
             
@@ -748,8 +751,24 @@ public static class BoardImageGenerator
                     var recolorBrush = new RecolorBrush(Color.White, colourInfo.ImageSharpColor, 0.5f);
                     
                     // Draw die in centre of hex to represent forces
-                    using var dieImage = ColourlessDieIcons[hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
-                    image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
+                    if (hex.ForcesPresent <= 6)
+                    {
+                        using var dieImage = ColourlessDieIcons[hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
+                        image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
+                    }
+                    // Sometimes we can have more than 6 forces present if resolution is paused for a player decision between forces moving/being produced
+                    // and excess forces being removed (e.g. Fungible Anatomy). In this case fall back to just printing a number on the hex
+                    else
+                    {
+                        var textOptions = new RichTextOptions(ForcesNumberFont)
+                        {
+                            TextAlignment = TextAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Origin = hexCentre
+                        };
+                        image.Mutate(x => x.DrawText(textOptions, hex.ForcesPresent.ToString(), colourInfo.ImageSharpColor));
+                    }
 
                     var owningPlayer = game.GetGamePlayerByGameId(hex.Planet.OwningPlayerId);
                     

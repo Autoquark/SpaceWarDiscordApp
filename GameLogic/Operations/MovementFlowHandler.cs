@@ -606,8 +606,6 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     public virtual async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
-        var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
-        
         if (ActionType.HasValue)
         {
             await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
