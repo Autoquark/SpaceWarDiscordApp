@@ -1,4 +1,6 @@
 using DSharpPlus.Entities;
+using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SpaceWarDiscordApp.Database;
@@ -90,5 +92,73 @@ public class GameManagementOperations
         {
             await message.ModifyAsync(builder);
         }
+    }
+
+    public static async Task SaveRollbackStateAsync(Game game)
+    {
+        if (game.RollbackStates.Any(x =>
+                x.CurrentTurnGamePlayerId == game.CurrentTurnPlayer.GamePlayerId && x.TurnNumber == game.TurnNumber))
+        {
+            return;
+        }
+
+        var deleteOldest = game.RollbackStates.Count >= 3;
+        
+        var backupRef = await Program.FirestoreDb.RunTransactionAsync(transaction =>
+        {
+            var backupRef = transaction.Database.GameBackups().Document();
+            transaction.Set(backupRef, game);
+
+            if (deleteOldest)
+            {
+                transaction.Delete(game.RollbackStates[0].GameDocument);
+            }
+            
+            return backupRef;
+        });
+
+        if (deleteOldest)
+        {
+            game.RollbackStates.RemoveAt(0);
+        }
+        
+        game.RollbackStates.Add(new RollbackState
+        {
+            CurrentTurnGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
+            GameDocument = backupRef,
+            TurnNumber = game.TurnNumber
+        });
+    }
+
+    public static async Task<Game> RollBackGameAsync(Game game, RollbackState state, IServiceProvider serviceProvider)
+    {
+        if (!game.RollbackStates.Contains(state))
+        {
+            throw new ArgumentException("Given state is not associated with this game!");
+        }
+        
+        var newGame = await Program.FirestoreDb.RunTransactionAsync(async transaction =>
+        {
+            var backup = (await transaction.GetSnapshotAsync(state.GameDocument))
+                .ConvertTo<Game>();
+            
+            // The available game states in the DB remain what they were, but exclude showing the user anything that's now in the future
+            backup.RollbackStates = game.RollbackStates.Where(x => x.TurnNumber <= backup.TurnNumber).ToList();
+
+            backup.DocumentId = game.DocumentId;
+            transaction.Set(game.DocumentId, backup);
+            return backup;
+        });
+        
+        // Clear old game object from the cache
+        ClearGameCache(game.DocumentId!, serviceProvider);
+
+        return newGame;
+    }
+
+    public static void ClearGameCache(DocumentReference gameRef, IServiceProvider serviceProvider)
+    {
+        var cache = serviceProvider.GetRequiredService<GameCache>();
+        cache.Clear(gameRef);
     }
 }

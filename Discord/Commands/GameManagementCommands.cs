@@ -17,7 +17,9 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel(RequireGameChannelMode.RequiresSave, GamePhase.Setup)]
 public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>,
-    IInteractionHandler<SetMapGeneratorInteraction>
+    IInteractionHandler<SetMapGeneratorInteraction>,
+    IInteractionHandler<ShowRollBackConfirmInteraction>,
+    IInteractionHandler<RollBackGameInteraction>
 {
     private class NounProjectImageCredit
     {
@@ -335,5 +337,48 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         {
             DeleteOriginalMessage = true
         };
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowRollBackConfirmInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        var rollbackInteractionId = serviceProvider.AddInteractionToSetUp(new RollBackGameInteraction
+        {
+            BackupGameDocument = interactionData.BackupGameDocument,
+            ForGamePlayerId = interactionData.ForGamePlayerId,
+            Game = game.DocumentId
+        });
+
+        var sourceBuilder = serviceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
+        var state = game.RollbackStates.FirstOrDefault(x => x.GameDocument.Equals(interactionData.BackupGameDocument));
+
+        if (state == null)
+        {
+            sourceBuilder.AppendContentNewline("That backup state seems to no longer exist");
+            return new SpaceWarInteractionOutcome(false);
+        }
+
+        var turnPlayerName = await game.GetGamePlayerByGameId(state.CurrentTurnGamePlayerId).GetNameAsync(false, false);
+
+        sourceBuilder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, rollbackInteractionId,
+            $"Confirm roll back to start of turn {state.TurnNumber} ({turnPlayerName}'s turn)"));
+
+        return new SpaceWarInteractionOutcome(false);
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RollBackGameInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        var newGame = await GameManagementOperations.RollBackGameAsync(game,
+            game.RollbackStates.First(x => x.GameDocument.Equals(interactionData.BackupGameDocument)),
+            serviceProvider);
+        
+        var turnPlayerName = await game.CurrentTurnPlayer.GetNameAsync(false, false);
+        builder!.AppendContentNewline($"Rolled back game to start of turn {newGame.TurnNumber} ({turnPlayerName}'s turn)".DiscordHeading2());
+
+        var hasEvents = newGame.EventStack.Count > 0;
+        await GameFlowOperations.ContinueResolvingEventStackAsync(builder, newGame, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(hasEvents);
     }
 }

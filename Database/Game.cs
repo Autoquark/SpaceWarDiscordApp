@@ -105,6 +105,12 @@ public class Game : FirestoreDocument
     [FirestoreProperty]
     public List<GameEvent> EventStack { get; set; } = [];
     
+    /// <summary>
+    /// List of saved states for this game that we can roll back to. Latest state is last.
+    /// </summary>
+    [FirestoreProperty]
+    public List<RollbackState> RollbackStates { get; set; } = [];
+    
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     
     public GamePlayer ScoringTokenPlayer => Players[ScoringTokenPlayerIndex];

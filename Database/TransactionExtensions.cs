@@ -29,7 +29,7 @@ public static class TransactionExtensions
     }
 
     public static async Task<Game?> GetGameAsync(this Transaction transaction, DocumentReference gameRef)
-        => (await transaction.GetSnapshotAsync(gameRef)) .ConvertTo<Game>();
+        => (await transaction.GetSnapshotAsync(gameRef)).ConvertTo<Game>();
 
     public static async Task<T> GetInteractionDataAsync<T>(this Transaction transaction, Guid interactionId)
         where T : InteractionData.InteractionData

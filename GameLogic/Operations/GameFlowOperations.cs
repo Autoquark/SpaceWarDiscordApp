@@ -69,6 +69,20 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
         });
+        
+        // If this is the start of the turn, don't show the rollback state we just created
+        var relevantRollbacks = game.AnyActionTakenThisTurn
+            ? game.RollbackStates
+            : game.RollbackStates.Where(x => x.TurnNumber < game.TurnNumber).ToList();
+
+        var rollbackInteractionIds = serviceProvider.AddInteractionsToSetUp(relevantRollbacks.Select(x =>
+            new ShowRollBackConfirmInteraction
+            {
+                BackupGameDocument = x.GameDocument,
+                Game = game.DocumentId,
+                // Anyone can trigger a rollback e.g. previous player might want to redo their turn
+                ForGamePlayerId = -1
+            }));
 
         var endTurnInteractionId = serviceProvider.AddInteractionToSetUp(new EndTurnInteraction
         {
@@ -124,7 +138,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                         .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second, DiscordButtonStyle.Secondary)));
         }
         
-        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn"));
+        builder.AppendButtonRows(new []{new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn")}
+            .Concat(
+                relevantRollbacks.Zip(rollbackInteractionIds)
+                .Select(x => 
+                    new DiscordButtonComponent(DiscordButtonStyle.Danger,
+                        x.Second,
+                        $"Roll back to start of turn {x.First.TurnNumber} ({game.GetGamePlayerByGameId(x.First.CurrentTurnGamePlayerId).GetNameAsync(false, false).GetAwaiter().GetResult()}'s turn)"))));
 
         return builder;
     }
@@ -239,7 +259,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     }
     
     public async Task<DiscordMultiMessageBuilder> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TurnBegin gameEvent, Game game,
-        IServiceProvider serviceProvider) => await ShowSelectActionMessageAsync(builder, game, serviceProvider);
+        IServiceProvider serviceProvider)
+    {
+        await GameManagementOperations.SaveRollbackStateAsync(game);
+        return await ShowSelectActionMessageAsync(builder, game, serviceProvider);
+    }
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
     {

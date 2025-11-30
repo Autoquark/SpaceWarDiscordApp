@@ -62,13 +62,12 @@ public class BotManagementCommands
     [Command("ClearGameCache")]
     public static async Task ClearGameCache(CommandContext context, string? gameId = null)
     {
-        var cache = context.ServiceProvider.GetRequiredService<GameCache>();
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         
         if (gameId != null)
         {
             var documentReference = Program.FirestoreDb.Games().Document(gameId);
-            cache.Clear(documentReference);
+            GameManagementOperations.ClearGameCache(documentReference, context.ServiceProvider);
             builder.AppendContentNewline($"Cache cleared for {documentReference}");
         }
         else
@@ -80,7 +79,7 @@ public class BotManagementCommands
                 return;
             }
             
-            cache.Clear(channelGame);
+            GameManagementOperations.ClearGameCache(channelGame.DocumentId!, context.ServiceProvider);
             builder.AppendContentNewline($"Cache cleared for {channelGame.DocumentId}");
         }
     }

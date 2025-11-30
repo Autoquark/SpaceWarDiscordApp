@@ -231,9 +231,14 @@ static class Program
             await Task.Delay(100);
         }
         await _updateEmojiTask;
-        foreach (var guild in arg.Guilds.Values)
+
+        // We keep getting rate limited by discord on editing the channel in the test server
+        if (!IsTestEnvironment)
         {
-            await GuildOperations.UpdateServerTechListingAsync(guild);
+            foreach (var guild in arg.Guilds.Values)
+            {
+                await GuildOperations.UpdateServerTechListingAsync(guild);
+            }
         }
     }
     
