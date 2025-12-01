@@ -72,11 +72,11 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var previousOwner = game.TryGetGamePlayerByGameId(hex.Planet.OwningPlayerId);
         hex.Planet.SetForces(newAmount, newOwner?.GamePlayerId ?? GamePlayer.GamePlayerIdNone);
         
-        var previousString = previous == 0 ? "(was empty)" : $"(was {previousOwner!.PlayerColourInfo.GetDieEmoji(previous)})";
+        var previousString = previous == 0 ? "(was empty)" : $"(was {previousOwner!.PlayerColourInfo.GetDieEmojiOrNumber(previous)})";
 
         context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
             .AppendContentNewline(newOwner != null
-                ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmoji(hex.ForcesPresent)} {previousString}"
+                ? $"Set forces at {coordinates} to {newOwner.PlayerColourInfo.GetDieEmojiOrNumber(hex.ForcesPresent)} {previousString}"
                 : $"Removed all forces from {coordinates} {previousString}");
     }
     

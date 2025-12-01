@@ -71,7 +71,7 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
             {
                 throw new Exception();
             }
-
+            
             sourceHex.Planet.SubtractForces(source.Amount);
             totalMoving += source.Amount;
             builder?.AppendContentNewline($"Moving {source.Amount} from {source.Source}");
@@ -115,30 +115,48 @@ public class MovementOperations : IEventResolvedHandler<GameEvent_PreMove>, IEve
             }
 
             // Apply combat strength effects
+            var attackerCombatStrengthLoss = 0;
+            var defenderCombatStrengthLoss = 0;
             if (attackerCombatStrength > defenderCombatStrength)
             {
                 var difference = attackerCombatStrength - defenderCombatStrength;
-                destinationHex.Planet.SubtractForces(Math.Min(difference, destinationHex.Planet.ForcesPresent));
+                defenderCombatStrengthLoss = Math.Min(difference, destinationHex.Planet.ForcesPresent);
                 builder?.AppendContentNewline($"{defenderName} loses {difference} forces before combat due to {moverName}'s superior Combat Strength");
             }
             else if (defenderCombatStrength > attackerCombatStrength)
             {
                 var difference = defenderCombatStrength - attackerCombatStrength;
-                totalPreCapacityLimit -= Math.Min(difference, totalPreCapacityLimit);
+                attackerCombatStrengthLoss = Math.Min(difference, totalPreCapacityLimit);
+                totalPreCapacityLimit -= attackerCombatStrengthLoss;
                 builder?.AppendContentNewline($"{moverName} loses {difference} forces before combat due to {defenderName}'s superior Combat Strength");
             }
             
-            var combatLoss = Math.Min(totalPreCapacityLimit, destinationHex.ForcesPresent);
+            var combatLoss = Math.Min(totalPreCapacityLimit, destinationHex.ForcesPresent - defenderCombatStrengthLoss);
             totalPreCapacityLimit -= combatLoss;
-            destinationHex.Planet.SubtractForces(combatLoss);
+            
+            // Can't call DestroyForces for attackers as that would attempt to remove forces from the planet, which would
+            // actually remove defending forces. We still report the destruction as occurring on the planet though 
+            GameFlowOperations.PushGameEvents(game, new GameEvent_PostForcesDestroyed
+            {
+                Amount = combatLoss + attackerCombatStrengthLoss,
+                Location = destinationHex.Coordinates,
+                OwningPlayerGameId = movingPlayer.GamePlayerId,
+                ResponsiblePlayerGameId = defender.GamePlayerId,
+                Reason = ForcesDestructionReason.Combat
+            });
+            GameFlowOperations.DestroyForces(game, destinationHex, combatLoss + defenderCombatStrengthLoss, defender.GamePlayerId, ForcesDestructionReason.Combat);
 
             builder?.AppendContentNewline($"{moverName} and {defenderName} each lose {combatLoss} forces in combat")
                 .WithAllowedMentions(movingPlayer, defender);
         }
 
-        // Stage 3: If exceeding capacity, queue event to remove excess forces
-        destinationHex.Planet.SetForces(totalPreCapacityLimit, movingPlayer.GamePlayerId);
+        // After resolving combat, if the attacker has forces left, put their remaining forces onto the planet
+        if (totalPreCapacityLimit > 0)
+        {
+            destinationHex.Planet.SetForces(totalPreCapacityLimit, movingPlayer.GamePlayerId);
+        }
 
+        // Stage 3: If exceeding capacity, queue event to remove excess forces
         ProduceOperations.CheckPlanetCapacity(game, destinationHex);
 
         if (movingPlayer == game.CurrentTurnPlayer)

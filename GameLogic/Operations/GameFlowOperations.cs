@@ -21,7 +21,8 @@ using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>,
+    IEventResolvedHandler<GameEvent_PostForcesDestroyed>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game, bool oldCoords = false)
     {
@@ -71,9 +72,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         });
         
         // If this is the start of the turn, don't show the rollback state we just created
-        var relevantRollbacks = game.AnyActionTakenThisTurn
-            ? game.RollbackStates
-            : game.RollbackStates.Where(x => x.TurnNumber < game.TurnNumber).ToList();
+        var relevantRollbacks = (game.AnyActionTakenThisTurn
+                ? game.RollbackStates
+                : game.RollbackStates.Where(x => x.TurnNumber < game.TurnNumber))
+            .Reverse()
+            .ToList();
 
         var rollbackInteractionIds = serviceProvider.AddInteractionsToSetUp(relevantRollbacks.Select(x =>
             new ShowRollBackConfirmInteraction
@@ -137,14 +140,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 .AppendButtonRows(techFreeActions
                         .Select(x => DiscordHelpers.CreateButtonForTechAction(x.First, x.Second, DiscordButtonStyle.Secondary)));
         }
-        
-        builder.AppendButtonRows(new []{new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn")}
-            .Concat(
-                relevantRollbacks.Zip(rollbackInteractionIds)
+
+        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, endTurnInteractionId, "End Turn"));
+        builder.AppendButtonRows(relevantRollbacks.Zip(rollbackInteractionIds)
                 .Select(x => 
                     new DiscordButtonComponent(DiscordButtonStyle.Danger,
                         x.Second,
-                        $"Roll back to start of turn {x.First.TurnNumber} ({game.GetGamePlayerByGameId(x.First.CurrentTurnGamePlayerId).GetNameAsync(false, false).GetAwaiter().GetResult()}'s turn)"))));
+                        $"Roll back to start of turn {x.First.TurnNumber} ({game.GetGamePlayerByGameId(x.First.CurrentTurnGamePlayerId).GetNameAsync(false, false).GetAwaiter().GetResult()}'s turn)")));
 
         return builder;
     }
@@ -849,5 +851,28 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         await GetOrCreateChatThreadAsync(game);
         
         return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
+    }
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PostForcesDestroyed gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        // Nothing to do - this event fires after the forces have already been destroyed, we don't need to remove them here
+        return Task.FromResult(builder);
+    }
+
+    public static void DestroyForces(Game game, BoardHex location, int amount, int responsiblePlayerId, ForcesDestructionReason reason)
+    {
+        if (amount > 0)
+        {
+            PushGameEvents(game, new GameEvent_PostForcesDestroyed
+            {
+                Amount = amount,
+                Location = location.Coordinates,
+                OwningPlayerGameId = location.Planet!.OwningPlayerId,
+                ResponsiblePlayerGameId = responsiblePlayerId,
+                Reason = reason
+            });
+            location.Planet!.SubtractForces(amount);
+        }
     }
 }

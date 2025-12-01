@@ -69,7 +69,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
             throw new Exception();
         }
         
-        hex.Planet!.SubtractForces(1);
+        GameFlowOperations.DestroyForces(game, hex, 1, player.GamePlayerId, ForcesDestructionReason.Tech);
         tech.IsExhausted = true;
         
         var name = await player.GetNameAsync(false);

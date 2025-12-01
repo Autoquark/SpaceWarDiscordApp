@@ -122,6 +122,14 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
         {
             var loss = hex.ForcesPresent - gameEvent.Capacity;
             hex.Planet!.SetForces(gameEvent.Capacity);
+            GameFlowOperations.PushGameEvents(game, new GameEvent_PostForcesDestroyed
+            {
+                Amount = loss,
+                Location = hex.Coordinates,
+                OwningPlayerGameId = hex.Planet!.OwningPlayerId,
+                ResponsiblePlayerGameId = hex.Planet.OwningPlayerId,
+                Reason = ForcesDestructionReason.ExceedingCapacity
+            });
             builder?.AppendContentNewline($"{loss} forces sadly had to be jettisoned into space from {hex.Coordinates} due to exceeding the capacity limit");
         }
         
