@@ -24,13 +24,15 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
-        var targets = game.Hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId).ToList();
+        var targets = game.Hexes.WhereOwnedBy(player).ToList();
 
         if (targets.Count == 0)
         {
             builder.AppendContentNewline("No suitable targets");
             return builder;
         }
+        
+        builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose a planet to deploy {DisplayName}:");
             
         var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
             new UseFreezeDriedForcesInteraction
