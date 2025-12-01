@@ -14,7 +14,7 @@ public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetI
 {
     public Tech_Psysploder() : base("psysploder", "Psysploder",
         "Destroy any number of your forces on a planet, and an equal number of enemy forces on each adjacent planet.",
-        "Sometimes the idea of a giant space laser is more powerful than an actual giant space laser. And by 'idea' I mean 'massive cardboard cutout'.",
+        "Some argue that the use of the psysploder in warefare is unethical. Personally I think those people exhibit deeply flawed thinking, which is probably why their heads keep exploding.",
         [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
