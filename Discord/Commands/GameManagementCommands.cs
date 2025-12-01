@@ -373,7 +373,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             game.RollbackStates.First(x => x.GameDocument.Equals(interactionData.BackupGameDocument)),
             serviceProvider);
         
-        var turnPlayerName = await game.CurrentTurnPlayer.GetNameAsync(false, false);
+        var turnPlayerName = await newGame.CurrentTurnPlayer.GetNameAsync(false, false);
         builder!.AppendContentNewline($"Rolled back game to start of turn {newGame.TurnNumber} ({turnPlayerName}'s turn)".DiscordHeading2());
 
         var hasEvents = newGame.EventStack.Count > 0;
