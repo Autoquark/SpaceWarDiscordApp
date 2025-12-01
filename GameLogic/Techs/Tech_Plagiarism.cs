@@ -47,15 +47,18 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
             Game = game.DocumentId
         });
 
-        builder.AppendButtonRows(targets.Zip(interactionIds)
-            .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.DisplayName))
-            .Append(new DiscordButtonComponent(DiscordButtonStyle.Danger, cancelId, "Cancel")));
+        builder.AppendButtonRows(cancelId, targets.Zip(interactionIds)
+            .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.DisplayName)));
         
         return builder;
     }
 
     private IEnumerable<string> GetTargetTechIds(Game game, GamePlayer player)
-        => game.Players.Except(player).SelectMany(x => x.Techs).Select(x => x.TechId).Distinct();
+        => game.Players.Except(player)
+            .SelectMany(x => x.Techs)
+            .Select(x => x.TechId)
+            .Distinct()
+            .Except(player.Techs.Select(x => x.TechId));
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, PlagiariseTechInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
