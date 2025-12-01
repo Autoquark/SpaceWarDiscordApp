@@ -14,7 +14,7 @@ public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetI
 {
     public Tech_Psysploder() : base("psysploder", "Psysploder",
         "Destroy any number of your forces on a planet, and an equal number of enemy forces on each adjacent planet.",
-        "Some argue that the use of the psysploder in warefare is unethical. Personally I think those people exhibit deeply flawed thinking, which is probably why their heads keep exploding.",
+        "Some argue that the use of the psysploder in warfare is unethical. Personally I think those people exhibit deeply flawed thinking, which is probably why their heads keep exploding.",
         [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
