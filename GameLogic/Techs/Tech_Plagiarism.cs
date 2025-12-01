@@ -61,7 +61,8 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
-        builder?.AppendContentNewline($"{await player.GetNameAsync(false)} plagiarised {interactionData.TechId}!");
+        var tech = TechsById[interactionData.TechId];
+        builder?.AppendContentNewline($"{await player.GetNameAsync(false)} plagiarised {tech.DisplayName}!");
         
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             new GameEvent_PlayerGainTech
