@@ -11,9 +11,9 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_Annexation : Tech, IInteractionHandler<UseAnnexationInteraction>
 {
     public Tech_Annexation() : base("annexation", "Annexation",
-        "Action, Exhaust: Produce on a ready neutral planet that is next to one you control (exhaust it as usual. If it has neutral forces on it, combat will occur.)",
+        "Produce on a ready neutral planet that is next to one you control (exhaust it as usual. If it has neutral forces on it, combat will occur.)",
         "Congratulations! You have been freed from the shackles of your inefficient, corrupt former government. Please fill out your new citizenship forms in triplicate, being sure to attach the appropriate processing fee.",
-        [TechKeyword.Exhaust])
+        [TechKeyword.Action, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Main;

@@ -8,7 +8,10 @@ public static class GameLogicExtensions
         => hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId);
     
     public static IEnumerable<BoardHex> WhereNotOwnedBy(this IEnumerable<BoardHex> hexes, GamePlayer player)
-        => hexes.Where(x => x.Planet?.OwningPlayerId != player.GamePlayerId);
+        => hexes.WhereNotOwnedBy(player.GamePlayerId);
+    
+    public static IEnumerable<BoardHex> WhereNotOwnedBy(this IEnumerable<BoardHex> hexes, int playerId)
+        => hexes.Where(x => x.Planet?.OwningPlayerId != playerId);
 
     public static IEnumerable<BoardHex> WhereForcesPresent(this IEnumerable<BoardHex> hexes)
         => hexes.Where(x => x.AnyForcesPresent);

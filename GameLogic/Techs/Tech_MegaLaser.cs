@@ -20,22 +20,20 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
     {
         HasSimpleAction = true;
     }
+    
+    private IEnumerable<BoardHex> GetTargets(Game game, GamePlayer player) => game.Hexes
+        .WhereOwnedBy(player)
+        .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
+        .DistinctBy(x => x.Coordinates)
+        .WhereForcesPresent();
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) =>
-        base.IsSimpleActionAvailable(game, player) && game.Hexes
-            .WhereOwnedBy(player)
-            .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
-            .DistinctBy(x => x.Coordinates)
-            .Any(x => x.ForcesPresent > 0);
+        base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any(x => x.ForcesPresent > 0);
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
-        var planets = game.Hexes.WhereOwnedBy(player)
-            .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x))
-            .DistinctBy(x => x.Coordinates)
-            .Where(x => x.ForcesPresent > 0)
-            .ToList();
+        var planets = GetTargets(game, player).ToList();
 
         if (planets.Count == 0)
         {

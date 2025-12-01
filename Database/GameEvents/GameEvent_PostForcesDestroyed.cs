@@ -30,4 +30,7 @@ public class GameEvent_PostForcesDestroyed : GameEvent
     
     [FirestoreProperty]
     public required ForcesDestructionReason Reason { get; set; }
+
+    [FirestoreProperty]
+    public string? TechId { get; set; } = null;
 }

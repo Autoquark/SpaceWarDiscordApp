@@ -19,6 +19,17 @@ public enum TechKeyword
     SingleUse
 }
 
+public static class TechKeywordExtensions
+{
+    public static ActionType GetCorrespondingActionType(TechKeyword keyword) =>
+        keyword switch
+        {
+            TechKeyword.Action => ActionType.Main,
+            TechKeyword.FreeAction => ActionType.Free,
+            _ => throw new ArgumentOutOfRangeException(nameof(keyword), keyword, null)
+        };
+}
+
 public abstract class Tech
 {
     static Tech()
@@ -45,6 +56,11 @@ public abstract class Tech
         if (!_techsById.TryAdd(id, this))
         {
             throw new ArgumentException($"Tech {id} already exists");
+        }
+
+        if (HasSimpleAction && !DescriptionKeywords.Contains(SimpleActionType.GetCorrespondingKeyword()))
+        {
+            throw new ArgumentException($"Tech {id} has a simple action but no corresponding action keyword");
         }
     }
     

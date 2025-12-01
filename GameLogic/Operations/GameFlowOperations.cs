@@ -860,19 +860,23 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return Task.FromResult(builder);
     }
 
-    public static void DestroyForces(Game game, BoardHex location, int amount, int responsiblePlayerId, ForcesDestructionReason reason)
+    public static int DestroyForces(Game game, BoardHex location, int amount, int responsiblePlayerId, ForcesDestructionReason reason, string? techId = null)
     {
         if (amount > 0)
         {
+            amount = Math.Min(amount, location.ForcesPresent);
             PushGameEvents(game, new GameEvent_PostForcesDestroyed
             {
                 Amount = amount,
                 Location = location.Coordinates,
                 OwningPlayerGameId = location.Planet!.OwningPlayerId,
                 ResponsiblePlayerGameId = responsiblePlayerId,
-                Reason = reason
+                Reason = reason,
+                TechId = techId
             });
             location.Planet!.SubtractForces(amount);
         }
+
+        return amount;
     }
 }

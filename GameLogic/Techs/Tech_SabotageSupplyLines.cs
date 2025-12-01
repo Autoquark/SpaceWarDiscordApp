@@ -30,7 +30,7 @@ public class Tech_SabotageSupplyLines : Tech
 
         foreach (var boardHex in targets)
         {
-            GameFlowOperations.DestroyForces(game, boardHex, 1, player.GamePlayerId, ForcesDestructionReason.Tech);
+            GameFlowOperations.DestroyForces(game, boardHex, 1, player.GamePlayerId, ForcesDestructionReason.Tech, Id);
             player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
             {
                 Coordinates = boardHex.Coordinates

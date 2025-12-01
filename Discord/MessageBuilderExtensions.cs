@@ -33,19 +33,33 @@ public static class MessageBuilderExtensions
         
         return builder;
     }
+    
+    public static TBuilder AppendButtonRows<TBuilder>(this TBuilder builder,
+        params IEnumerable<DiscordButtonComponent> buttons)
+        where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        builder.AppendButtonRows(null, buttons);
+        return builder;
+    }
 
     /// <summary>
     /// Appends the given buttons to the builder, split across as many action rows as needed
     /// </summary>
     public static TBuilder AppendButtonRows<TBuilder>(this TBuilder builder,
+        string? cancelId,
         params IEnumerable<DiscordButtonComponent> buttons)
         where TBuilder : BaseDiscordMessageBuilder<TBuilder>
     {
-        ((IDiscordMessageBuilder)builder).AppendButtonRows(buttons);
+        ((IDiscordMessageBuilder)builder).AppendButtonRows(cancelId, buttons);
         return builder;
     }
 
     public static IDiscordMessageBuilder AppendButtonRows(this IDiscordMessageBuilder builder,
+        params IEnumerable<DiscordButtonComponent> buttons)
+        => builder.AppendButtonRows(null, buttons);
+
+    public static IDiscordMessageBuilder AppendButtonRows(this IDiscordMessageBuilder builder,
+        string? cancelId,
         params IEnumerable<DiscordButtonComponent> buttons)
     {
         foreach (var group in buttons.ZipWithIndices().GroupBy(x => x.index / 5))
@@ -66,11 +80,20 @@ public static class MessageBuilderExtensions
     }
     
     public static IDiscordMessageBuilder AppendHexButtons(this IDiscordMessageBuilder builder, Game game,
-        IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds)
-        => builder.AppendButtonRows(hexes.Zip(interactionIds)
+        IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds, string? cancelId = null)
+    {
+        var buttons = hexes.Zip(interactionIds)
             .OrderBy(x => x.First.Coordinates.ToHexNumber())
-            .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
-    
+            .Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second));
+
+        if (cancelId != null)
+        {
+            buttons = buttons.Append(MakeCancelButton(cancelId));
+        }
+
+        return builder.AppendButtonRows(buttons);
+    }
+
     public static IDiscordMessageBuilder AppendCancelButton(this IDiscordMessageBuilder builder, string interactionId)
         => builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Cancel"));
 
@@ -106,4 +129,6 @@ public static class MessageBuilderExtensions
 
         return builder;
     }
+    
+    private static DiscordButtonComponent MakeCancelButton(string interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Cancel");
 }

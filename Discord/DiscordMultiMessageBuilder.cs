@@ -153,11 +153,17 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         CurrentBuilder.AppendButtonRows(buttons);
         return this;
     }
+    
+    public DiscordMultiMessageBuilder AppendButtonRows(string cancelId, IEnumerable<DiscordButtonComponent> buttons)
+    {
+        CurrentBuilder.AppendButtonRows(cancelId, buttons);
+        return this;
+    }
 
     public DiscordMultiMessageBuilder AppendHexButtons(Game game, IEnumerable<BoardHex> hexes,
-        IEnumerable<string> interactionIds)
+        IEnumerable<string> interactionIds, string? cancelId = null)
     {
-        CurrentBuilder.AppendHexButtons(game, hexes, interactionIds);
+        CurrentBuilder.AppendHexButtons(game, hexes, interactionIds, cancelId);
         return this;   
     }
 

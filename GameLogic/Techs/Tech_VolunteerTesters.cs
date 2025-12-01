@@ -75,7 +75,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         ArgumentNullException.ThrowIfNull(builder);
         var hex = game.GetHexAt(interactionData.Target);
 
-        GameFlowOperations.DestroyForces(game, hex, 1, interactionData.ForGamePlayerId, ForcesDestructionReason.Tech);
+        GameFlowOperations.DestroyForces(game, hex, 1, interactionData.ForGamePlayerId, ForcesDestructionReason.Tech, Id);
         var player = game.GetGamePlayerForInteraction(interactionData);
         
         var name = await player.GetNameAsync(false);

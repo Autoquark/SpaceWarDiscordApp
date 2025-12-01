@@ -30,7 +30,7 @@ public class Tech_Bioweapon : Tech
         
         foreach (var hex in affected)
         {
-            GameFlowOperations.DestroyForces(game, hex, 1, player.GamePlayerId, ForcesDestructionReason.Tech);
+            GameFlowOperations.DestroyForces(game, hex, 1, player.GamePlayerId, ForcesDestructionReason.Tech, Id);
             player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
             {
                 Coordinates = hex.Coordinates

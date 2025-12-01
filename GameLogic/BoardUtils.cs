@@ -6,7 +6,7 @@ public static class BoardUtils
 {
     public static ISet<BoardHex> GetStandardMoveSources(Game game, BoardHex destination, GamePlayer movingPlayer)
         => GetNeighbouringHexes(game, destination)
-            .Where(x => x.Planet?.OwningPlayerId == movingPlayer.GamePlayerId)
+            .WhereOwnedBy(movingPlayer)
             .ToHashSet();
 
     public static ISet<BoardHex> GetNeighbouringHexes(Game game, HexCoordinates hex) =>
