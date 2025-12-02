@@ -304,7 +304,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             player.IsEliminated = true;
             
             var name = await player.GetNameAsync(true);
-            builder?.AppendContentNewline($"{name} has been eliminated!".DiscordBold())
+            builder?.AppendContentNewline($"{name} has been eliminated!".DiscordHeading2())
                 .WithAllowedMentions(player);
 
             if (game.ScoringTokenPlayer == player)
