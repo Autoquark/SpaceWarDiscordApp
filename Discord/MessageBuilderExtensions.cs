@@ -62,6 +62,11 @@ public static class MessageBuilderExtensions
         string? cancelId,
         params IEnumerable<DiscordButtonComponent> buttons)
     {
+        if (cancelId != null)
+        {
+            buttons = buttons.Append(MakeCancelButton(cancelId));
+        }
+        
         foreach (var group in buttons.ZipWithIndices().GroupBy(x => x.index / 5))
         {
             builder.AddActionRowComponent(group.Select(x => x.item));
