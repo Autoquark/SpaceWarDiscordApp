@@ -15,6 +15,13 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
+        if (game.EventStack.Count > 0)
+        {
+            builder?.AppendContentNewline("You can't click this right now because the game is waiting on a different decision:");
+            await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+            return new SpaceWarInteractionOutcome(false);
+        }
+        
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var candidates = game.Hexes
             .Where(x => x.Planet?.OwningPlayerId == interactionData.ForGamePlayerId && !x.Planet.IsExhausted)

@@ -97,6 +97,13 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         Game game,
         IServiceProvider serviceProvider)
     {
+        if (game.EventStack.Count > 0 && ActionType.HasValue)
+        {
+            builder?.AppendContentNewline("You can't click this right now because the game is waiting on a different decision:");
+            await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+            return new SpaceWarInteractionOutcome(false);
+        }
+        
         ArgumentNullException.ThrowIfNull(builder);
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         await BeginPlanningMoveAsync(builder, game, player, serviceProvider);
