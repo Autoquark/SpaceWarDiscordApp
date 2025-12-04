@@ -12,7 +12,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteraction>
 {
     public Tech_Plagiarism() : base("plagiarism", "Plagiarism",
-        "Gain a tech that at least one other player owns.",
+        "Gain a tech that at least one other player owns (this will cycle the tech market).",
         "I think you'll find that the addition of an air freshener renders our giant space laser legally distinct under intergalactic patent conventions.",
         [TechKeyword.FreeAction, TechKeyword.SingleUse])
     {
@@ -71,7 +71,8 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
             new GameEvent_PlayerGainTech
             {
                 TechId = interactionData.TechId,
-                PlayerGameId = interactionData.ForGamePlayerId
+                PlayerGameId = interactionData.ForGamePlayerId,
+                CycleMarket = true
             },
             new GameEvent_PlayerLoseTech
             {

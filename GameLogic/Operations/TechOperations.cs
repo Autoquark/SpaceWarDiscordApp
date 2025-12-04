@@ -264,6 +264,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                 {
                     TechId = choice.TechId,
                     PlayerGameId = gameEvent.PlayerGameId,
+                    CycleMarket = true
                 });
         }
         
@@ -309,7 +310,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
         var tech = Tech.TechsById[gameEvent.TechId];
         
-        player.Techs.Add(tech.CreatePlayerTech(game, player));
+        player.Techs.Add(gameEvent.PlayerTech ?? tech.CreatePlayerTech(game, player));
         
         var index = game.TechMarket.IndexOf(tech.Id);
         if (index != -1)
@@ -318,8 +319,11 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         }
 
         builder.OrDefault(x => ShowTechDetails(x, tech.Id));
-        
-        await CycleTechMarketAsync(builder, game);
+
+        if (gameEvent.CycleMarket)
+        {
+            await CycleTechMarketAsync(builder, game);
+        }
         
         await UpdatePinnedTechMessage(game);
         

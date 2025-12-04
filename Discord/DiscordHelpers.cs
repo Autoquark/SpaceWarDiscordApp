@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord;
@@ -21,6 +22,13 @@ public static partial class DiscordHelpers
         DiscordButtonStyle style = DiscordButtonStyle.Primary)
     {
         return new DiscordButtonComponent(style, interactionId, techAction.DisplayName, !techAction.IsAvailable); //TODO: emojis on techs?   
+    }
+
+    public static async Task<DiscordButtonComponent> CreateButtonForPlayerAsync(Game game, GamePlayer player, string interactionId,
+        DiscordButtonStyle style = DiscordButtonStyle.Primary)
+    {
+        return new DiscordButtonComponent(style, interactionId, await player.GetNameAsync(false, false),
+            emoji: new DiscordComponentEmoji(player.PlayerColourInfo.BlankDieEmoji));
     }
 
     // Replaces icon tokens with the appropriate discord emoji

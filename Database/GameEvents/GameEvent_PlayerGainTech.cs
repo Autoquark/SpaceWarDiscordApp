@@ -14,4 +14,14 @@ public class GameEvent_PlayerGainTech : GameEvent
     
     [FirestoreProperty]
     public required string TechId { get; set; } = "";
+    
+    [FirestoreProperty]
+    public required bool CycleMarket { get; set; }
+    
+    /// <summary>
+    /// Optionally allows passing the PlayerTech object instead of allowing one to be created, allowing exhaustion status
+    /// or other tech-specific data to be set.
+    /// </summary>
+    [FirestoreProperty]
+    public PlayerTech? PlayerTech { get; set; } = null;
 }
