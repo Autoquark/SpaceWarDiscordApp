@@ -34,7 +34,7 @@ public static class BoardImageGenerator
         {SummaryTableColumn.ScoringToken, InfoTableSingleIconColumnWidth},
         {SummaryTableColumn.PlayerName, 600},
         {SummaryTableColumn.Science, InfoTableSingleIconColumnWidth},
-        {SummaryTableColumn.Vp, InfoTableSingleIconColumnWidth},
+        {SummaryTableColumn.Vp, InfoTableSingleIconColumnWidth * 2},
         {SummaryTableColumn.Stars, InfoTableSingleIconColumnWidth * 2},
         //{InfoTableColumn.TechStatus, 1200},
     };
@@ -407,7 +407,7 @@ public static class BoardImageGenerator
                 summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Science, row, textOptions, player.Science.ToString(), brush, InfoTextOutlinePen);
                 
                 // VP
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, player.VictoryPoints.ToString(), brush, InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, $"{player.VictoryPoints} / {GameConstants.VpToWin}", brush, InfoTextOutlinePen);
                 
                 // Stars
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
