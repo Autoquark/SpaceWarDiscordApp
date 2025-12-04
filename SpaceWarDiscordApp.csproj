@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <!--<PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02507" />-->
+      <PackageReference Include="AsyncKeyedLock" Version="7.1.8" />
       <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02543" />
       <PackageReference Include="DSharpPlus.Analyzers" Version="5.0.0-nightly-02543" />
       <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02543" />

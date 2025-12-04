@@ -53,7 +53,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         
         var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
 
-        SemaphoreSlim? semaphore = null;
+        IDisposable? disposable = null;
         try
         {
             var requiresGame = requiresGameAttribute != null &&
@@ -84,12 +84,9 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 }
 
                 var syncManager = context.Client.ServiceProvider.GetRequiredService<GameSyncManager>();
-                semaphore = syncManager.GetSemaphoreForGame(contextData.Game);
-                if (!semaphore.Wait(0, cancellationToken))
+                disposable = await syncManager.Locker.LockOrNullAsync(contextData.Game.DocumentId!, 0, cancellationToken);
+                if (disposable is null)
                 {
-                    // Prevents trying to release the semaphore, since we did not acquire it
-                    semaphore = null;
-                    
                     await context.EditResponseAsync(
                         "An operation is already in progress for this game. Please wait for it to finish before trying again.");
                     return;
@@ -230,7 +227,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
         finally
         {
             // If we acquired a game access semaphore ensure we release it 
-            semaphore?.Release();
+            disposable?.Dispose();
         }
     }
 }
