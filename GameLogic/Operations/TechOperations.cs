@@ -184,7 +184,8 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             .ToList<(string techId, int cost)>();
         
         var name = await player.GetNameAsync(true);
-        builder.AppendContentNewline($"{name}, you may purchase a tech:")
+        builder.NewMessage()
+            .AppendContentNewline($"{name}, you may purchase a tech:")
             .WithAllowedMentions(player);
         
         var universalIds = serviceProvider.AddInteractionsToSetUp(availableUniversal.Select(x =>
