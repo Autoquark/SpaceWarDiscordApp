@@ -25,6 +25,7 @@ public class Tech_MassRecruitment : Tech
         foreach (var boardHex in targets)
         {
             boardHex.Planet!.AddForces(1);
+            boardHex.Planet.IsExhausted = true;
             ProduceOperations.CheckPlanetCapacity(game, boardHex);
         }
         
