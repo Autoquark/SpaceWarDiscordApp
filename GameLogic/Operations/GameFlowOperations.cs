@@ -22,7 +22,7 @@ using SpaceWarDiscordApp.ImageGeneration;
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>,
-    IEventResolvedHandler<GameEvent_PostForcesDestroyed>
+    IEventResolvedHandler<GameEvent_PostForcesDestroyed>, IInteractionHandler<ShowBoardInteraction>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game, bool oldCoords = false)
     {
@@ -476,6 +476,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                         x.IsMandatory ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary,
                         x.ResolveInteractionId, x.DisplayName)));
 
+                var secondRowButtons = new List<DiscordButtonComponent>();
                 // If there are no mandatory triggers left, the player can decline remaining optional triggers
                 if (resolvingEvent.RemainingTriggersToResolve.All(x => !x.IsMandatory))
                 {
@@ -484,8 +485,17 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                         Game = game.DocumentId,
                         ForGamePlayerId = resolvingEvent.ResolvingTriggersForPlayerId
                     });
-                    builder?.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
+                    secondRowButtons.Add(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
                 }
+
+                var showBoardId = serviceProvider.AddInteractionToSetUp(new ShowBoardInteraction
+                {
+                    ForGamePlayerId = -1,
+                    Game = game.DocumentId
+                });
+                
+                secondRowButtons.Add(new DiscordButtonComponent(DiscordButtonStyle.Secondary, showBoardId, "Show Board"));
+                builder?.AddActionRowComponent(secondRowButtons);
 
                 break;
             }
@@ -878,5 +888,15 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
 
         return amount;
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowBoardInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        if (builder != null)
+        {
+            await ShowBoardStateMessageAsync(builder, game);
+        }
+        return new SpaceWarInteractionOutcome(false);
     }
 }
