@@ -175,7 +175,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 : GetAllowedMoveSources(game, player, null);
             foreach (var sourceHex in allowedSources)
             {
-                destinationsSet.UnionWith(BoardUtils.GetNeighbouringHexes(game, sourceHex));
+                destinationsSet.UnionWith(GetAllowedDestinationsForSource(game, sourceHex));
             }
 
             destinations = destinationsSet;
@@ -609,6 +609,9 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 ? BoardUtils.GetStandardMoveSources(game, destination, player)
                 : game.Hexes.WhereOwnedBy(player))
             .Except(destination)!.ToList<BoardHex>();
+
+    protected virtual ISet<BoardHex> GetAllowedDestinationsForSource(Game game, BoardHex source)
+        => BoardUtils.GetNeighbouringHexes(game, source);
 
     public virtual async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
         IServiceProvider serviceProvider)
