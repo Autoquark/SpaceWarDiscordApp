@@ -7,7 +7,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_HopDrive : Tech
 {
     public Tech_HopDrive() : base("hopDrive", "Hop Drive",
-        "Action: Move any number of your forces from one planet to another that is exactly 2 hexes away.",
+        "Move any number of your forces from one planet to another that is exactly 2 hexes away.",
         "Trust me, with this thing it's much better to arrive than to travel. In fact, if you want my advice, stay at home.",
         [TechKeyword.Action])
     {
