@@ -13,7 +13,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
 {
     public Tech_OptimisedWorkSchedules() : base("optimisedWorkSchedules", 
         "Optimised Work Schedules",
-        "Produce from an exhausted planet", 
+        "Produce from an exhausted planet you control", 
         "October will continue indefinitely until production quotas are met",
         [TechKeyword.Action, TechKeyword.Exhaust])
     {
