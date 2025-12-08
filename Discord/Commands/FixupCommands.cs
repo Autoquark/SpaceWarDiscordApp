@@ -89,24 +89,26 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
         var gamePlayer = player == -1 ? game.TryGetGamePlayerByDiscordId(context.User.Id) : game.TryGetGamePlayerByGameId(player);
+        var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
+        
         if (gamePlayer == null)
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync("Unknown player");
+            builders.SourceChannelBuilder.AppendContentNewline("Unknown player");
             return;
         }
 
         if (gamePlayer.Techs.Any(x => x.TechId == techId))
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync("Player already has that tech");
+            builders.SourceChannelBuilder.AppendContentNewline("Player already has that tech");
             return;
         }
 
         if (!Tech.TechsById.TryGetValue(techId, out var tech))
         {
             outcome.RequiresSave = false;
-            await context.RespondAsync("Unknown tech");
+            builders.SourceChannelBuilder.AppendContentNewline("Unknown tech");
             return;
         }
         
@@ -114,7 +116,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         await TechOperations.UpdatePinnedTechMessage(game);
         
-        context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
+        builders.GameChannelBuilder!
             .AppendContentNewline($"Granted {tech.DisplayName} to {await gamePlayer.GetNameAsync(true)}")
             .WithAllowedMentions(gamePlayer);
     }

@@ -78,8 +78,7 @@ public static class GameEventDispatcher
         if (await ((IPlayerChoiceEventHandler<TEvent, TInteractionData>)handler)
             .HandlePlayerChoiceEventInteractionAsync(builder, gameEvent, choice, game, serviceProvider))
         {
-            game.EventStack.Remove(choiceEvent);
-            await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+            await GameFlowOperations.PlayerChoiceEventResolvedAsync(game, builder, serviceProvider, gameEvent.EventId);
         }
 
         return builder;

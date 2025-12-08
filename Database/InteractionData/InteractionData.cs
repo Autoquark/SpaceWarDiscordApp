@@ -13,7 +13,7 @@ public abstract class InteractionData : PolymorphicFirestoreDocument
     public required DocumentReference? Game { get; set; }
     
     /// <summary>
-    /// Optional reference to a GameEvent_PlayerChoice that is resolved by this interaction
+    /// Optional reference to a GameEvent_PlayerChoice that this interaction relates to (it may not directly resolve it, name is legacy)
     /// </summary>
     [FirestoreProperty]
     public string? ResolvesChoiceEventId { get; set; }

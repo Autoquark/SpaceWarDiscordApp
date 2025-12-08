@@ -20,7 +20,7 @@ public class Tech_WarpNodes : Tech,
 {
     public Tech_WarpNodes() : base("warpNodes", 
         "Warp Nodes", 
-        "Choose a planet you control. Move any number of forces to any number of adjacent planets.", 
+        "Choose a planet you control. Make any number of moves from that planet only to a different adjacent planet.", 
         "They're nodes that are made out of warp. I really don't know how I can make this any simpler",
         [TechKeyword.Action])
     {
@@ -94,27 +94,16 @@ public class Tech_WarpNodes : Tech,
             playerTech.MovedTo.Add(interactionData.Destination);
         }
         
-        // After resolving this move: If we could perform another Warp Nodes move, reprompt
-        // otherwise, action is complete
-        if (source.Planet?.ForcesPresent > 0 
-            && source.Planet.OwningPlayerId == player.GamePlayerId
-            && playerTech.MovedTo.Count < BoardUtils.GetNeighbouringHexes(game, source).Count)
+        // If it's not actually possible to make more moves, this new event will immediately mark itself resolved
+        events.Add(new GameEvent_ChooseWarpNodesDestination
         {
-            events.Add(new GameEvent_ChooseWarpNodesDestination
-            {
-                PlayerGameId = interactionData.ForGamePlayerId,
-                Source = playerTech.Source,
-            });
-        }
-        else
-        {
-            events.Add(new GameEvent_ActionComplete
-            {
-                ActionType = ActionType.Main
-            });
-        }
+            PlayerGameId = interactionData.ForGamePlayerId,
+            Source = playerTech.Source,
+        });
         
-        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider, events);
+        GameFlowOperations.PushGameEvents(game, events);
+        
+        await GameFlowOperations.PlayerChoiceEventResolvedAsync(game, builder, serviceProvider, interactionData.ChoiceEventToResolve);
         
         return new SpaceWarInteractionOutcome(true);
     }
@@ -132,7 +121,20 @@ public class Tech_WarpNodes : Tech,
             // Can't move to the same planet more than once per usage of Warp Nodes
             .Where(x => !playerTech.MovedTo.Contains(x.Coordinates))
             .ToList();
-        
+
+        // If it's no longer possible to make more moves, mark the event as resolved
+        if (source.Planet?.ForcesPresent == 0
+            || source.Planet?.OwningPlayerId != player.GamePlayerId
+            || destinations.Count == 0)
+        {
+            GameFlowOperations.PushGameEvents(game, new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType
+            });
+            await GameFlowOperations.PlayerChoiceEventResolvedAsync(game, builder, serviceProvider, gameEvent.EventId);
+            return builder;
+        }
+
         var interactionIds = serviceProvider.AddInteractionsToSetUp(
             destinations.Select<BoardHex, HexCoordinates?>(x => x.Coordinates)
                 // Add null for declining further moves
@@ -180,13 +182,15 @@ public class Tech_WarpNodes : Tech,
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId,
             Amount = x,
-            Destination = choice.Destination.Value
+            Destination = choice.Destination.Value,
+            ChoiceEventToResolve = gameEvent.EventId
         }));
         
         builder?.AppendContentNewline($"{name}, choose amount of forces to move:")
             .WithAllowedMentions(player)
             .AppendButtonRows(interactionIds.ZipWithIndices().Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.item, x.index.ToString())));
 
-        return true;
+        // The choice event will be marked resolved by the interaction handler for WarpNodes_ChooseAmountInteraction
+        return false;
     }
 }

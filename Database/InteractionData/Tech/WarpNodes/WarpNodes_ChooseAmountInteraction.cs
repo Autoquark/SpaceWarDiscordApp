@@ -11,4 +11,7 @@ public class WarpNodes_ChooseAmountInteraction : InteractionData
     
     [FirestoreProperty]
     public required int Amount { get; set; }
+    
+    [FirestoreProperty]
+    public required string ChoiceEventToResolve { get; set; }
 }

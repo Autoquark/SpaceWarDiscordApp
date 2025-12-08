@@ -355,6 +355,19 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
     }
 
+    public static async Task<DiscordMultiMessageBuilder?> PlayerChoiceEventResolvedAsync(Game game,
+        DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string eventId)
+    {
+        var relevantEvent = game.EventStack.FirstOrDefault(x => x.EventId == eventId);
+        if (relevantEvent is not GameEvent_PlayerChoice)
+        {
+            throw new Exception("Event not found or is not a player choice event");
+        }
+        
+        game.EventStack.Remove(relevantEvent);
+        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
+    }
+
     public static async Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string interactionId)
     {
         // The interaction might not be for the top event on the stack if, in the process of resolving it, we pushed events onto the stack
@@ -522,9 +535,15 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                     {
                         await GameEventDispatcher.ShowPlayerChoicesForEvent(builder, choiceEvent, game,
                             serviceProvider);
-                    }
 
-                    break;
+                        // If showing the choices caused the stack to change, continue resolving
+                        if (game.EventStack.Count == 0 || game.EventStack[^1] != resolvingEvent)
+                        {
+                            continue;
+                        }
+                        
+                        break;
+                    }
                 }
                 // No more players to resolve, pop this event from the stack and resolve its OnResolve
                 else
