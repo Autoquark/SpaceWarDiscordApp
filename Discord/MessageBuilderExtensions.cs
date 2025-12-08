@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -96,6 +97,27 @@ public static class MessageBuilderExtensions
             buttons = buttons.Append(MakeCancelButton(cancelId));
         }
 
+        return builder.AppendButtonRows(buttons);
+    }
+
+    public static async Task<IDiscordMessageBuilder> AppendPlayerButtonsAsync(this IDiscordMessageBuilder builder,
+        IEnumerable<GamePlayer> players, IEnumerable<string> interactionIds, string? cancelId = null)
+    {
+        IEnumerable<DiscordButtonComponent> buttons = await Task.WhenAll(players.Zip(interactionIds,
+                async (p, i) => (Player: p, Name: await p.GetNameAsync(false, false), Id: i))
+            .ToAsyncEnumerable()
+            .OrderByAwait(async x => (await x).Name)
+            .Select(async x =>
+            {
+                var (player, name, id) = await x;
+                return await DiscordHelpers.CreateButtonForPlayerAsync(player, id);
+            }).ToEnumerable());
+
+        if (cancelId != null)
+        {
+            buttons = buttons.Append(MakeCancelButton(cancelId));
+        }
+        
         return builder.AppendButtonRows(buttons);
     }
 

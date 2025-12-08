@@ -163,6 +163,7 @@ static class Program
         RegisterEverything(new ProduceOperations());
         RegisterEverything(new MovementOperations());
         RegisterEverything(new TechOperations());
+        RegisterEverything(new RefreshOperations());
         
         // Create tech singletons
         foreach (var techType in Assembly.GetExecutingAssembly()

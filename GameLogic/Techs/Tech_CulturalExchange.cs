@@ -56,10 +56,7 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
 
         builder.AppendContentNewline(
             $"{await player.GetNameAsync(true)}, choose a player whose very culturally significant weapons technologies you would like to respectfully learn more about:");
-        builder.AppendButtonRows(cancelId,
-            interactionIds
-                .Zip(targetPlayers)
-                .Select(x => DiscordHelpers.CreateButtonForPlayerAsync(game, x.Second, x.First).GetAwaiter().GetResult()));
+        await builder.AppendPlayerButtonsAsync(targetPlayers, interactionIds, cancelId);
         
         return builder;
     }
@@ -130,7 +127,7 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
         gainedCulturalExchangePlayerTech.IsExhausted = true;
         
         builder?.AppendContentNewline(
-            $"{await player.GetNameAsync(false)} acquires {targetTech.DisplayName} frmo {await targetPlayer.GetNameAsync(true)} as part of a cultural exchange!");
+            $"{await player.GetNameAsync(false)} acquires {targetTech.DisplayName} from {await targetPlayer.GetNameAsync(true)} as part of a cultural exchange!");
 
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             new GameEvent_PlayerGainTech

@@ -109,7 +109,7 @@ public abstract class Tech
         return [result];
     }
 
-    public bool ShouldIncludeInGame(Game game) => IncludeInGames;
+    public virtual bool ShouldIncludeInGame(Game game) => IncludeInGames;
     
     /// <summary>
     /// Called for each planet controlled by each player owning this tech to get any combat strength bonus that
@@ -123,7 +123,7 @@ public abstract class Tech
     /// </summary>
     public virtual int GetDisplayedProductionBonus(Game game, BoardHex hex, GamePlayer player) => 0;
 
-    public virtual string GetTechStatusLine(Game game, GamePlayer player)
+    public virtual Task<string> GetTechStatusLineAsync(Game game, GamePlayer player)
     {
         // If tech is limited use, show whether it is available
         if (DescriptionKeywords.Intersect([TechKeyword.Exhaust, TechKeyword.OncePerTurn]).Any())
@@ -131,14 +131,14 @@ public abstract class Tech
             var playerTech = player.GetPlayerTechById(Id);
             return playerTech switch
             {
-                { IsExhausted: true } => "Exhausted",
-                { UsedThisTurn: true } => "Used",
-                _ => "Ready"
+                { IsExhausted: true } => Task.FromResult("Exhausted"),
+                { UsedThisTurn: true } => Task.FromResult("Used"),
+                _ => Task.FromResult("Ready")
             };
         }
 
         // If tech is entirely passive, status line is blank
-        return "";
+        return Task.FromResult("");
     }
 
     /// <summary>
@@ -185,6 +185,7 @@ public abstract class Tech
     
     protected PlayerTech GetThisTech(GamePlayer player) => player.GetPlayerTechById<PlayerTech>(Id);
     protected T GetThisTech<T>(GamePlayer player) where T : PlayerTech => player.GetPlayerTechById<T>(Id);
+    protected T? TryGetThisTech<T>(GamePlayer player) where T : PlayerTech => player.TryGetPlayerTechById<T>(Id);
     
     /// <summary>
     /// Gets a trigger ID that is unique to this tech and index. Used to prevent duplicate resolution of triggers

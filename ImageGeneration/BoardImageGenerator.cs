@@ -490,7 +490,7 @@ public static class BoardImageGenerator
                             playerTech.GetTech().DisplayName, InfoTextBrush);
                         
                         playerTechTable.DrawTextInCell(context, 1, index + 1, techTableTextOptions,
-                            playerTech.GetTech().GetTechStatusLine(game, player), InfoTextBrush);
+                            playerTech.GetTech().GetTechStatusLineAsync(game, player).GetAwaiter().GetResult(), InfoTextBrush);
                     }
                 });
                 

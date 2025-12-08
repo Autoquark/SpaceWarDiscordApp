@@ -20,10 +20,12 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
             return new SpaceWarInteractionOutcome(false);
         }
-        
-        await RefreshOperations.Refresh(builder, game, game.GetGamePlayerByGameId(interactionData.ForGamePlayerId));
 
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_FullRefresh
+            {
+                GamePlayerId = interactionData.ForGamePlayerId
+            },
             new GameEvent_ActionComplete
             {
                 ActionType = ActionType.Main,

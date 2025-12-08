@@ -2,15 +2,18 @@ using System.Diagnostics.CodeAnalysis;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
+using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public static class RefreshOperations
+public class RefreshOperations : IEventResolvedHandler<GameEvent_FullRefresh>, IEventResolvedHandler<GameEvent_TechRefreshed>
 {
-    public static async Task<DiscordMultiMessageBuilder?> Refresh(DiscordMultiMessageBuilder? builder, Game game, GamePlayer player)
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_FullRefresh gameEvent, Game game,
+        IServiceProvider serviceProvider)
     {
+        var player = game.GetGamePlayerByGameId(gameEvent.GamePlayerId);
         var name = await player.GetNameAsync(false);
         builder?.AppendContentNewline($"{name} is refreshing");
 
@@ -31,6 +34,11 @@ public static class RefreshOperations
             {
                 playerTech.IsExhausted = false;
                 refreshedTechs.Add(playerTech);
+                GameFlowOperations.PushGameEvents(game, new GameEvent_TechRefreshed
+                {
+                    TechId = playerTech.TechId,
+                    PlayerGameId = player.GamePlayerId
+                });
             }
         }
 
@@ -60,5 +68,12 @@ public static class RefreshOperations
         }
 
         return builder;
+    }
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TechRefreshed gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        // Don't need to do anything, this event is just for triggers
+        return Task.FromResult(builder);
     }
 }

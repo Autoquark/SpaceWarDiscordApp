@@ -24,7 +24,7 @@ public static partial class DiscordHelpers
         return new DiscordButtonComponent(style, interactionId, techAction.DisplayName, !techAction.IsAvailable); //TODO: emojis on techs?   
     }
 
-    public static async Task<DiscordButtonComponent> CreateButtonForPlayerAsync(Game game, GamePlayer player, string interactionId,
+    public static async Task<DiscordButtonComponent> CreateButtonForPlayerAsync(GamePlayer player, string interactionId,
         DiscordButtonStyle style = DiscordButtonStyle.Primary)
     {
         return new DiscordButtonComponent(style, interactionId, await player.GetNameAsync(false, false),

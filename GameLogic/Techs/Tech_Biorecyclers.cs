@@ -34,10 +34,10 @@ public class Tech_Biorecyclers : Tech, IInteractionHandler<PutForcesOnBiorecycle
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
         => base.IsSimpleActionAvailable(game, player) && GetThisTech<PlayerTech_Biorecyclers>(player).Forces > 0;
 
-    public override string GetTechStatusLine(Game game, GamePlayer player)
+    public override async Task<string> GetTechStatusLineAsync(Game game, GamePlayer player)
     {
         var tech = GetThisTech<PlayerTech_Biorecyclers>(player);
-        return base.GetTechStatusLine(game, player) + $"{tech.Forces} forces";
+        return await base.GetTechStatusLineAsync(game, player) + $"{tech.Forces} forces";
     }
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,

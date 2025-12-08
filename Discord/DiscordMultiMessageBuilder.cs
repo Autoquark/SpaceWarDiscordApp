@@ -167,6 +167,13 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         return this;   
     }
 
+    public async Task<DiscordMultiMessageBuilder> AppendPlayerButtonsAsync(IEnumerable<GamePlayer> players,
+        IEnumerable<string> interactionIds, string? cancelId = null)
+    {
+        await CurrentBuilder.AppendPlayerButtonsAsync(players, interactionIds, cancelId);
+        return this;
+    }
+
     public DiscordMultiMessageBuilder AppendCancelButton(string interactionId)
     {
         CurrentBuilder.AppendCancelButton(interactionId);

@@ -30,10 +30,10 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         TechId = Id,
     };
 
-    public override string GetTechStatusLine(Game game, GamePlayer player)
+    public override async Task<string> GetTechStatusLineAsync(Game game, GamePlayer player)
     {
         var playerTech = GetThisTech<PlayerTech_RousingSpeech>(player);
-        return base.GetTechStatusLine(game, player) + (playerTech.TurnsActiveRemaining > 0 ? " [Active]" : " [Inactive]");
+        return await base.GetTechStatusLineAsync(game, player) + (playerTech.TurnsActiveRemaining > 0 ? " [Active]" : " [Inactive]");
     }
 
     public override int GetDisplayedCombatStrengthBonus(Game game, BoardHex hex, GamePlayer player)

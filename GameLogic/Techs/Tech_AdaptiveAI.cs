@@ -25,10 +25,10 @@ public class Tech_AdaptiveAI : Tech, IInteractionHandler<ApplyAdaptiveAIBonusInt
         TechId = Id
     };
 
-    public override string GetTechStatusLine(Game game, GamePlayer player)
+    public override async Task<string> GetTechStatusLineAsync(Game game, GamePlayer player)
     {
         var tech = GetThisTech<PlayerTech_AdaptiveAI>(player);
-        return base.GetTechStatusLine(game, player) + $"{(tech.Progress / ForcesPerPlusOne):+#0} ({tech.Progress % ForcesPerPlusOne}/{ForcesPerPlusOne})";
+        return await base.GetTechStatusLineAsync(game, player) + $"{(tech.Progress / ForcesPerPlusOne):+#0} ({tech.Progress % ForcesPerPlusOne}/{ForcesPerPlusOne})";
     }
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
