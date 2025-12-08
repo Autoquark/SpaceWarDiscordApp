@@ -121,8 +121,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             ForGamePlayerId = -1,
             EphemeralResponse = true
         });
-        
-        var builder = new DiscordMessageBuilder().EnableV2Components();
+
+        var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         builder.AppendContentNewline($"Game created. Game channel is {gameChannel.Mention}.")
             .AppendContentNewline("Anyone can join the game by clicking 'join game'. When all players have joined, click 'start game' to begin: ")
             .AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Success, joinGameInteraction.InteractionId, "Join Game"));
@@ -133,7 +133,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             Game = game.DocumentId
         };
         
-        await context.RespondAsync(builder);
         await gameChannel.SendMessageAsync($"Welcome to your new game, {Program.TextInfo.ToTitleCase(name)} {context.User.Mention}. To invite specific players use /invite from this channel.");
         await gameChannel.SendMessageAsync(x => x.AppendContentNewline("Anyone can join by clicking this button:")
             .AppendButtonRows(new DiscordButtonComponent(DiscordButtonStyle.Success, startGameInteraction.InteractionId, "Start Game")
@@ -263,16 +262,17 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     {
         ArgumentNullException.ThrowIfNull(builder);
         
+        var builders = serviceProvider.GetRequiredService<GameMessageBuilders>();
         var userId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().User.Id;
         if (game.TryGetGamePlayerByDiscordId(userId) != null)
         {
-            builder.AppendContentNewline("You are already in this game!");
+            builders.SourceChannelBuilder.AppendContentNewline("You are already in this game!");
             return new SpaceWarInteractionOutcome(false);
         }
 
         if (game.Phase != GamePhase.Setup)
         {
-            builder.AppendContentNewline("You can't join this game because it has already started");
+            builders.SourceChannelBuilder.AppendContentNewline("You can't join this game because it has already started");
             return new SpaceWarInteractionOutcome(false);
         }
         
@@ -289,14 +289,11 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         // in game channel
         if (interactionData.ForDiscordUserId == 0)
         {
-            builder.AppendContentNewline("Game joined!");
+            builders.SourceChannelBuilder.AppendContentNewline("Game joined!");
         }
         
-        var replyBuilder = new DiscordMessageBuilder().EnableV2Components()
+        builders.GameChannelBuilder!.AppendContentNewline($"{user.Mention} joined the game!")
             .WithAllowedMention(new UserMention(userId));
-        replyBuilder.AppendContentNewline($"{user.Mention} joined the game!");
-        
-        await Program.DiscordClient.SendMessageAsync(await Program.DiscordClient.GetChannelAsync(game.GameChannelId), replyBuilder);
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
         
