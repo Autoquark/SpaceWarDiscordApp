@@ -1,0 +1,102 @@
+using DSharpPlus.Entities;
+using Google.Cloud.Firestore;
+using Microsoft.Extensions.DependencyInjection;
+using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.InteractionData;
+using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.InteractionData.Tech.FreezeDriedForces;
+using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Discord.Commands;
+using SpaceWarDiscordApp.GameLogic.Operations;
+using System.Linq;
+
+namespace SpaceWarDiscordApp.GameLogic.Techs;
+
+public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
+{
+    public Tech_CreativeAI() : base(
+        "creative_ai",
+        "Creative AI",
+        "You may discard a tech from the tech market. Cycle the tech market.",
+        "So far it's come up with 'edible spaceships' and 'exploding helmets'. Actually, that second one might have some potential...",
+        [TechKeyword.FreeAction, TechKeyword.Exhaust])
+    {
+        HasSimpleAction = true;
+        SimpleActionType = ActionType.Free;
+    }
+
+    public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
+        IServiceProvider serviceProvider)
+    {
+        var availableMarket = game.TechMarket.Select(x => x)
+            .Where(x => x != null && player.TryGetPlayerTechById(x) == null)!
+            .ToList<string>();
+
+        if (availableMarket.Count == 0)
+        {
+            builder.AppendContentNewline("No suitable targets");
+            return builder;
+        }
+        
+        builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose a tech to discard:");
+
+        var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket
+            .Select(x => new DiscardTechInteraction
+            {
+                Game = game.DocumentId,
+                TechId = x,
+                ForGamePlayerId = player.GamePlayerId,
+                EditOriginalMessage = true,
+            }));
+
+        builder.AppendButtonRows(availableMarket
+            .Zip(marketIds, (x, y) => (techId: x, interactionId: y))
+            .Select(x => new DiscordButtonComponent(
+                DiscordButtonStyle.Primary,
+                x.interactionId,
+                $"{Tech.TechsById[x.techId].DisplayName}")));
+
+        return builder;
+    }
+
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+        DiscardTechInteraction interactionData, Game game, IServiceProvider serviceProvider)
+    {
+        if (interactionData.TechId != null)
+        {
+            var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
+            var name = await player.GetNameAsync(false);
+            var tech = Tech.TechsById[interactionData.TechId];
+
+            builder?.AppendContentNewline($"{name} has discarded {tech.DisplayName}");
+
+            player.GetPlayerTechById(Id).IsExhausted = true;
+
+            var index = game.TechMarket.IndexOf(tech.Id);
+            if (index != -1)
+            {
+                game.TechMarket[index] = null;
+            }
+
+            await TechOperations.CycleTechMarketAsync(builder, game);
+
+            await TechOperations.UpdatePinnedTechMessage(game);
+        }
+
+        await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
+            new GameEvent_ActionComplete
+            {
+                ActionType = SimpleActionType,
+            });
+        
+        return new SpaceWarInteractionOutcome(true);
+    }
+}
+
+[FirestoreData]
+public class DiscardTechInteraction : InteractionData
+{
+    [FirestoreProperty]
+    public required string TechId { get; set; }
+}
