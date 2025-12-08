@@ -93,7 +93,8 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
-        if (gameEvent is GameEvent_PostProduce postProduce && postProduce.PlayerGameId == player.GamePlayerId)
+        var thisTech = GetThisTech(player);
+        if (gameEvent is GameEvent_PostProduce postProduce && postProduce.PlayerGameId == player.GamePlayerId && thisTech.IsExhausted)
         {
             return
             [
