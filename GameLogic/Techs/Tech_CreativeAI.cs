@@ -37,7 +37,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
             return builder;
         }
         
-        builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose a tech to discard:");
+        builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose a tech to creatively discard:");
 
         var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket
             .Select(x => new CreativeAITechInteraction
@@ -71,15 +71,14 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         CreativeAITechInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
+        var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
+        
         if (interactionData.TechId != null)
         {
-            var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
             var name = await player.GetNameAsync(false);
             var tech = Tech.TechsById[interactionData.TechId];
 
-            builder?.AppendContentNewline($"{name} has discarded {tech.DisplayName} from the tech market");
-
-            player.GetPlayerTechById(Id).IsExhausted = true;
+            builder?.AppendContentNewline($"{name}'s Creative AI has discarded {tech.DisplayName} from the tech market");
 
             var index = game.TechMarket.IndexOf(tech.Id);
             if (index != -1)
@@ -87,6 +86,8 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
                 game.TechMarket[index] = null;
             }
         } // Or decline
+        
+        player.GetPlayerTechById(Id).IsExhausted = true;
 
         await TechOperations.CycleTechMarketAsync(builder, game);
 

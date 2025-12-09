@@ -36,7 +36,8 @@ public class Tech_ConnectFour : Tech
                     var neighbour = game.TryGetHexAt(coordinates);
                     if (neighbour != null && neighbour.Planet?.OwningPlayerId == player.GamePlayerId)
                     {
-                        if (step == 4) { 
+                        if (step == 4)
+                        { 
                             return true;
                         }
                     } else
@@ -53,7 +54,7 @@ public class Tech_ConnectFour : Tech
         IServiceProvider serviceProvider)
     {
         var name = await player.GetNameAsync(false);
-        builder.AppendContentNewline($"{name} gains 1 VP via Connect Four!");
+        builder.AppendContentNewline($"{name} gains 1 VP via the ancient rite of Connect Four!");
 
         player.VictoryPoints++;
         player.GetPlayerTechById(Id).IsExhausted = true;
