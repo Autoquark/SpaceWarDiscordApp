@@ -636,10 +636,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         return chatThread;
     }
-
-    // Don't take service provider as we need to call this from a point in SpaceWarCommandExecutor.ExecuteAsync where our service provider
-    // is disposed, just take messageBuilders directly
-    public static async Task<DiscordThreadChannel> GetOrCreatePlayerPrivateThreadAsync(Game game, GamePlayer player, GameMessageBuilders messageBuilders)
+    
+    public static async Task<DiscordThreadChannel> GetOrCreatePlayerPrivateThreadAsync(Game game, GamePlayer player)
     {
         DiscordThreadChannel? privateThread = null;
         
@@ -663,9 +661,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 await privateThread.AddThreadMemberAsync(playerMember);
             }
 
-            messageBuilders.PlayerPrivateThreadBuilders[player.GamePlayerId]
-                .AppendContentNewline(
-                    $"{await player.GetNameAsync(true)}, this is your private thread for {game.Name}, visible only to you (and server admins, but they promise not to cheat). Any secret information or choices will be presented here.");
+            await privateThread.SendMessageAsync($"{await player.GetNameAsync(true)}, this is your private thread for {game.Name}, visible only to you (and server admins, but they promise not to cheat). Any secret information or choices will be presented here.");
 
             player.PrivateThreadId = privateThread.Id;
         }

@@ -192,7 +192,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                          .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
             {
                 var thread =
-                    await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(contextData.Game!, contextData.Game!.GetGamePlayerByGameId(playerId), builders);
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(contextData.Game!, contextData.Game!.GetGamePlayerByGameId(playerId));
 
                 foreach (var discordMessageBuilder in playerBuilder.Builders)
                 {

@@ -57,7 +57,6 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var player = game.TryGetGamePlayerByDiscordId(context.User.Id)!;
         var builders = context.ServiceProvider.GetRequiredService<GameMessageBuilders>();
-        await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(game, player, builders);
         
         builders.PlayerPrivateThreadBuilders[player.GamePlayerId].AppendContentNewline($"{await player.GetNameAsync(true, false)} {BoopStrings.Random()}");
     }
