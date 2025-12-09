@@ -18,7 +18,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
     public Tech_CreativeAI() : base(
         "creative_ai",
         "Creative AI",
-        "Discard a tech from the tech market. Cycle the tech market.",
+        "You may discard a tech from the tech market. Cycle the tech market.",
         "So far it's come up with 'edible spaceships' and 'exploding helmets'. Actually, that second one might have some potential...",
         [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
@@ -55,6 +55,16 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
                 x.interactionId,
                 $"{Tech.TechsById[x.techId].DisplayName}")));
 
+        var declineId = serviceProvider.AddInteractionToSetUp(new CreativeAITechInteraction
+        {
+            Game = game.DocumentId,
+            TechId = null,
+            ForGamePlayerId = player.GamePlayerId,
+            EditOriginalMessage = false,
+        });
+
+        builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
+
         return builder;
     }
 
@@ -76,11 +86,11 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
             {
                 game.TechMarket[index] = null;
             }
+        } // Or decline
 
-            await TechOperations.CycleTechMarketAsync(builder, game);
+        await TechOperations.CycleTechMarketAsync(builder, game);
 
-            await TechOperations.UpdatePinnedTechMessage(game);
-        }
+        await TechOperations.UpdatePinnedTechMessage(game);
 
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             new GameEvent_ActionComplete

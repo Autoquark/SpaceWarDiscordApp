@@ -8,5 +8,5 @@ namespace SpaceWarDiscordApp.Database.InteractionData.Tech.CreativeAI;
 public class CreativeAITechInteraction : InteractionData
 {
     [FirestoreProperty]
-    public required string TechId { get; set; }
+    public required string? TechId { get; set; }
 }
