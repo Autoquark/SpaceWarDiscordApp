@@ -5,7 +5,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.FreezeDriedForces;
+using SpaceWarDiscordApp.Database.InteractionData.Tech.CreativeAI;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -13,12 +13,12 @@ using System.Linq;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
+public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteraction>
 {
     public Tech_CreativeAI() : base(
         "creative_ai",
         "Creative AI",
-        "You may discard a tech from the tech market. Cycle the tech market.",
+        "Discard a tech from the tech market. Cycle the tech market.",
         "So far it's come up with 'edible spaceships' and 'exploding helmets'. Actually, that second one might have some potential...",
         [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
@@ -29,9 +29,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
-        var availableMarket = game.TechMarket.Select(x => x)
-            .Where(x => x != null && player.TryGetPlayerTechById(x) == null)!
-            .ToList<string>();
+        var availableMarket = game.TechMarket.Select(x => x).WhereNonNull().ToList();
 
         if (availableMarket.Count == 0)
         {
@@ -42,7 +40,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
         builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose a tech to discard:");
 
         var marketIds = serviceProvider.AddInteractionsToSetUp(availableMarket
-            .Select(x => new DiscardTechInteraction
+            .Select(x => new CreativeAITechInteraction
             {
                 Game = game.DocumentId,
                 TechId = x,
@@ -61,7 +59,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
     }
 
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
-        DiscardTechInteraction interactionData, Game game, IServiceProvider serviceProvider)
+        CreativeAITechInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.TechId != null)
         {
@@ -69,7 +67,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
             var name = await player.GetNameAsync(false);
             var tech = Tech.TechsById[interactionData.TechId];
 
-            builder?.AppendContentNewline($"{name} has discarded {tech.DisplayName}");
+            builder?.AppendContentNewline($"{name} has discarded {tech.DisplayName} from the tech market");
 
             player.GetPlayerTechById(Id).IsExhausted = true;
 
@@ -92,11 +90,4 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<DiscardTechInteraction>
         
         return new SpaceWarInteractionOutcome(true);
     }
-}
-
-[FirestoreData]
-public class DiscardTechInteraction : InteractionData
-{
-    [FirestoreProperty]
-    public required string TechId { get; set; }
 }
