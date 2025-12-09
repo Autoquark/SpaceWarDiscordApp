@@ -760,9 +760,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
             if (game.StartingTechHands.Count > 0)
             {
+                var unchosen = game.StartingTechHands.SelectMany(x => x.Techs)
+                    .Except(game.Players.SelectMany(x => x.StartingTechs))
+                    .ToList();
+                
+                game.TechDiscards.AddRange(unchosen);
+                
                 gameBuilder.AppendContentNewline("The following techs were not chosen and have been discarded: " +
-                                                 string.Join(", ", game.StartingTechHands.SelectMany(x => x.Techs)
-                                                     .Except(game.Players.SelectMany(x => x.StartingTechs))
+                                                 string.Join(", ", unchosen
                                                      .ToTechsById()
                                                      .Select(x => x.DisplayName)));
             }
