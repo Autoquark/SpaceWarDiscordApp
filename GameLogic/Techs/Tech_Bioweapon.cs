@@ -39,8 +39,6 @@ public class Tech_Bioweapon : Tech
         
         builder.AppendContentNewline(stringBuilder.ToString());
         
-        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
-        
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             new GameEvent_PlayerLoseTech
             {

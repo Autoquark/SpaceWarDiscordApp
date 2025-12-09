@@ -59,7 +59,10 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         player.GetPlayerTechById(Id).IsExhausted = true;
-        game.GetHexAt(interactionData.Target).Planet!.SetForces(0);
+
+        var hex = game.GetHexAt(interactionData.Target);
+        GameFlowOperations.DestroyForces(game, hex, hex.Planet!.ForcesPresent, player.GamePlayerId, ForcesDestructionReason.Tech, Id);
+        
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
         {
             Coordinates = interactionData.Target

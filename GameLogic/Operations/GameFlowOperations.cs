@@ -882,11 +882,11 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
     }
 
-    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PostForcesDestroyed gameEvent, Game game,
+    public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PostForcesDestroyed gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
-        // Nothing to do - this event fires after the forces have already been destroyed, we don't need to remove them here
-        return Task.FromResult(builder);
+        await CheckForPlayerEliminationsAsync(builder, game);
+        return builder;
     }
 
     public static int DestroyForces(Game game, BoardHex location, int amount, int responsiblePlayerId, ForcesDestructionReason reason, string? techId = null)

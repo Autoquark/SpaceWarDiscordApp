@@ -80,8 +80,6 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
             Coordinates = hex.Coordinates
         });
         
-        await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
-        
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             new GameEvent_ActionComplete
             {

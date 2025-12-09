@@ -65,6 +65,7 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
         }
         
         // Replace all forces on the hex with the same number of our forces
+        // This doesn't count as destroying any forces, we are converting them
         hex.Planet!.SetForces(hex.Planet!.ForcesPresent, player.GamePlayerId);
         
         player.CurrentTurnEvents.Add(new PlanetTargetedTechEventRecord
