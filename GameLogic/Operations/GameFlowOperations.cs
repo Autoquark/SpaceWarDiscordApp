@@ -758,6 +758,15 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 }
             }
 
+            if (game.StartingTechHands.Count > 0)
+            {
+                gameBuilder.AppendContentNewline("The following techs were not chosen and have been discarded: " +
+                                                 string.Join(", ", game.StartingTechHands.SelectMany(x => x.Techs)
+                                                     .Except(game.Players.SelectMany(x => x.StartingTechs))
+                                                     .ToTechsById()
+                                                     .Select(x => x.DisplayName)));
+            }
+
             await TechOperations.UpdatePinnedTechMessage(game);
         }
         else

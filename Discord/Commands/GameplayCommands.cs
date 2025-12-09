@@ -140,7 +140,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
                     }));
                     
                     playerBuilder.NewMessage();
-                    playerBuilder.AppendContentNewline($"{await player.GetNameAsync(true)}, please choose a starting tech:");
+                    playerBuilder.AppendContentNewline($"{await player.GetNameAsync(true)}, please choose a starting tech. Techs not chosen will be put into the discard pile:");
 
                     foreach (var tech in hand)
                     {

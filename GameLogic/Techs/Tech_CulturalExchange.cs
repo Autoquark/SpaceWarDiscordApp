@@ -13,7 +13,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExchangeTargetPlayerInteraction>, IInteractionHandler<UseCulturalExchangeInteraction>
 {
     public Tech_CulturalExchange() : base("culturalExchange", "Cultural Exchange",
-        "Swap this tech for one of another player's techs. The exhaustion status of both techs is preserved. The target player must not own Culture Exchange already. Does not cycle the tech market.",
+        "Swap this tech for one of another player's techs. The exhaustion status of both techs is preserved. The target player must not own Cultural Exchange already. Does not cycle the tech market.",
         "Why yes, we would love to observe your traditional uranium enrichment ceremony.",
         [TechKeyword.FreeAction, TechKeyword.Exhaust])
     {
