@@ -65,7 +65,7 @@ public static class MessageBuilderExtensions
     {
         if (cancelId != null)
         {
-            buttons = buttons.Append(MakeCancelButton(cancelId));
+            buttons = buttons.Append(DiscordHelpers.CreateCancelButton(cancelId));
         }
         
         foreach (var group in buttons.ZipWithIndices().GroupBy(x => x.index / 5))
@@ -94,7 +94,7 @@ public static class MessageBuilderExtensions
 
         if (cancelId != null)
         {
-            buttons = buttons.Append(MakeCancelButton(cancelId));
+            buttons = buttons.Append(DiscordHelpers.CreateCancelButton(cancelId));
         }
 
         return builder.AppendButtonRows(buttons);
@@ -115,7 +115,7 @@ public static class MessageBuilderExtensions
 
         if (cancelId != null)
         {
-            buttons = buttons.Append(MakeCancelButton(cancelId));
+            buttons = buttons.Append(DiscordHelpers.CreateCancelButton(cancelId));
         }
         
         return builder.AppendButtonRows(buttons);
@@ -157,5 +157,5 @@ public static class MessageBuilderExtensions
         return builder;
     }
     
-    private static DiscordButtonComponent MakeCancelButton(string interactionId) => new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Cancel");
+    
 }

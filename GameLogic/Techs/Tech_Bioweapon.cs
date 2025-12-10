@@ -43,7 +43,8 @@ public class Tech_Bioweapon : Tech
             new GameEvent_PlayerLoseTech
             {
                 TechId = Id,
-                PlayerGameId = player.GamePlayerId
+                PlayerGameId = player.GamePlayerId,
+                Reason = LoseTechReason.SingleUse
             },
             new GameEvent_ActionComplete
             {

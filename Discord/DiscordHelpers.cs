@@ -30,6 +30,9 @@ public static partial class DiscordHelpers
         return new DiscordButtonComponent(style, interactionId, await player.GetNameAsync(false, false),
             emoji: new DiscordComponentEmoji(player.PlayerColourInfo.BlankDieEmoji));
     }
+    
+    public static DiscordButtonComponent CreateCancelButton(string interactionId) => new(DiscordButtonStyle.Danger, interactionId, "Cancel");
+    public static DiscordButtonComponent CreateShowBoardButton(string interactionId) => new(DiscordButtonStyle.Secondary, interactionId, "Show Board");
 
     // Replaces icon tokens with the appropriate discord emoji
     public static string ReplaceIconTokens(this string text)

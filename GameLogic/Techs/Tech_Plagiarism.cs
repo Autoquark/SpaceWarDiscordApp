@@ -77,7 +77,8 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
             new GameEvent_PlayerLoseTech
             {
                 TechId = Id,
-                PlayerGameId = player.GamePlayerId
+                PlayerGameId = player.GamePlayerId,
+                Reason = LoseTechReason.SingleUse
             },
             new GameEvent_ActionComplete
             {

@@ -116,6 +116,8 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
             return new SpaceWarInteractionOutcome(false);
         }
         
+        // Don't use the standard gain/lose tech events as we are doing a special swap that preserves exhaustion status
+        
         var targetTech = TechsById[interactionData.TechId];
         var gainedPlayerTech = targetTech.CreatePlayerTech(game, player);
         gainedPlayerTech.IsExhausted = targetPlayerTech.IsExhausted;

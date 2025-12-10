@@ -510,7 +510,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                     Game = game.DocumentId
                 });
                 
-                secondRowButtons.Add(new DiscordButtonComponent(DiscordButtonStyle.Secondary, showBoardId, "Show Board"));
+                secondRowButtons.Add(DiscordHelpers.CreateShowBoardButton(showBoardId));
                 builder?.AddActionRowComponent(secondRowButtons);
 
                 break;

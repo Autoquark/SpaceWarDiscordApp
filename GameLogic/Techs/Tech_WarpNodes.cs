@@ -20,7 +20,7 @@ public class Tech_WarpNodes : Tech,
 {
     public Tech_WarpNodes() : base("warpNodes", 
         "Warp Nodes", 
-        "Choose a planet you control. Make any number of moves from that planet only to a different adjacent planet.", 
+        "Choose a planet you control. Make any number of moves from that planet only to different adjacent planets.", 
         "They're nodes that are made out of warp. I really don't know how I can make this any simpler",
         [TechKeyword.Action])
     {

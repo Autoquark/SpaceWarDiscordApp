@@ -83,7 +83,8 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
             new GameEvent_PlayerLoseTech
             {
                 TechId = Id,
-                PlayerGameId = player.GamePlayerId
+                PlayerGameId = player.GamePlayerId,
+                Reason = LoseTechReason.SingleUse
             },
             new GameEvent_ActionComplete
             {
