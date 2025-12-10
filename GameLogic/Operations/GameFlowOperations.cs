@@ -185,10 +185,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         var endingTurnPlayer = game.CurrentTurnPlayer;
-        endingTurnPlayer.LastTurnEvents.Clear();
-        var currentTurnActions = endingTurnPlayer.CurrentTurnEvents.ToList();
-        endingTurnPlayer.CurrentTurnEvents.Clear();
-        endingTurnPlayer.LastTurnEvents.AddRange(currentTurnActions);
 
         foreach (var playerTech in endingTurnPlayer.Techs)
         {
@@ -242,6 +238,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
         do
         {
+            // Clear old event records even for eliminated players
+            game.CurrentTurnPlayer.LastTurnEvents.Clear();
+            game.CurrentTurnPlayer.LastTurnEvents.Clear();
+            var currentTurnActions = game.CurrentTurnPlayer.CurrentTurnEvents.ToList();
+            game.CurrentTurnPlayer.CurrentTurnEvents.Clear();
+            game.CurrentTurnPlayer.LastTurnEvents.AddRange(currentTurnActions);
+            
             game.CurrentTurnPlayerIndex = (game.CurrentTurnPlayerIndex + 1) % game.Players.Count;
         }
         while (game.CurrentTurnPlayer.IsEliminated);
