@@ -19,4 +19,7 @@ public class GameRules : FirestoreDocument
 
     [FirestoreProperty]
     public string MapGeneratorId { get; set; } = DefaultMapGenerator.StaticId;
+    
+    [FirestoreProperty]
+    public int MaxPlayers { get; set; } = 6;
 }

@@ -2,6 +2,7 @@ using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
+using Raffinert.FuzzySharp.Extensions;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData.GameRules;
@@ -21,12 +22,28 @@ public class GameManagementOperations
             message = await channel.TryGetMessageAsync(game.SetupMessageId);
         }
 
-        // Starting tech rule
         var builder = new DiscordMessageBuilder().EnableV2Components()
-            .AppendContentNewline("Game Setup".DiscordHeading1())
-            .AppendContentNewline("Starting Tech:".DiscordHeading2());
+            .AppendContentNewline("Game Setup".DiscordHeading1());
         
-        var interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<StartingTechRule>().Select(x => new SetStartingTechRuleInteraction
+        // Player count
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(CollectionExtensions.Between(2, 6).Select(x =>
+            new SetMaxPlayerCountInteraction
+            {
+                Game = game.DocumentId,
+                ForGamePlayerId = -1,
+                MaxPlayerCount = x
+            }));
+
+        builder.AppendContentNewline("Max Players:".DiscordHeading2())
+            .AppendButtonRows(interactionIds.Index().Select(x =>
+                new DiscordButtonComponent(
+                    game.Rules.MaxPlayers == x.Index + 2 ? DiscordButtonStyle.Success : DiscordButtonStyle.Primary, x.Item, (x.Index + 2).ToString())));
+        
+        // Starting tech rule
+        
+        builder.AppendContentNewline("Starting Tech:".DiscordHeading2());
+        
+        interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<StartingTechRule>().Select(x => new SetStartingTechRuleInteraction
         {
             ForGamePlayerId = -1,
             Game = game.DocumentId,

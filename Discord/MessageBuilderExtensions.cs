@@ -76,6 +76,25 @@ public static class MessageBuilderExtensions
         return builder;
     }
 
+    public static TBuilder AppendNumberButtons<TBuilder>(this TBuilder builder, int minInclusive, int maxInclusive,
+        IEnumerable<string> interactionIds) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+        => builder.AppendNumberButtons(CollectionExtensions.Between(minInclusive, maxInclusive), interactionIds);
+
+    public static TBuilder AppendNumberButtons<TBuilder>(this TBuilder builder, IEnumerable<int> values,
+        IEnumerable<string> interactionIds) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
+    {
+        ((IDiscordMessageBuilder)builder).AppendNumberButtons(values, interactionIds);
+        return builder;
+    }
+
+    public static IDiscordMessageBuilder AppendNumberButtons(this IDiscordMessageBuilder builder, IEnumerable<int> values,
+        IEnumerable<string> interactionIds, DiscordButtonStyle style = DiscordButtonStyle.Primary)
+    {
+        var buttons = values.Zip(interactionIds)
+            .Select(x => new DiscordButtonComponent(style, x.Second, x.First.ToString()));
+        return builder.AppendButtonRows(buttons);
+    }
+
     public static TBuilder AppendHexButtons<TBuilder>(this TBuilder builder,
         Game game,
         IEnumerable<BoardHex> hexes, IEnumerable<string> interactionIds)

@@ -19,7 +19,8 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>,
     IInteractionHandler<SetMapGeneratorInteraction>,
     IInteractionHandler<ShowRollBackConfirmInteraction>,
-    IInteractionHandler<RollBackGameInteraction>
+    IInteractionHandler<RollBackGameInteraction>,
+    IInteractionHandler<SetMaxPlayerCountInteraction>
 {
     private class NounProjectImageCredit
     {
@@ -80,7 +81,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     [Command("CreateGame")]
     [RequireGuild]
     [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
-    public static async Task CreateGameCommand(CommandContext context, int dummyPlayers = 0)
+    public static async Task CreateGameCommand(CommandContext context, int maxPlayers = 6, int dummyPlayers = 0)
     {
         var name = $"The {NameAdjectives[Program.Random.Next(0, NameAdjectives.Count)]} {NameNouns[Program.Random.Next(0, NameNouns.Count)]}";
         
@@ -104,6 +105,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             ],
             GameChannelId = gameChannel.Id
         };
+        
+        game.Rules.MaxPlayers = maxPlayers;
 
         for (var i = 0; i < dummyPlayers; i++)
         {
@@ -244,7 +247,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         text.AppendJoin("\n", NounProjectImageCredits.Select(x => $"\"{x.ImageName}\" image by {x.ArtistName} from thenounproject.com"));
         builder.AppendContentNewline(text.ToString());
         builder.AppendContentNewline("Other".DiscordHeading3());
-        builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, to everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
+        builder.AppendContentNewline("Thanks to @Xeddar for hosting and AI shenanigans, @Jamespellis for additional coding, everyone at PlaytestUK Sheffield for playtesting and to you for playing!");
     }
 
     [Command("Lore")]
@@ -267,6 +270,12 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (game.TryGetGamePlayerByDiscordId(userId) != null)
         {
             builders.SourceChannelBuilder.AppendContentNewline("You are already in this game!");
+            return new SpaceWarInteractionOutcome(false);
+        }
+
+        if (game.Players.Count >= game.Rules.MaxPlayers)
+        {
+            builders.SourceChannelBuilder.AppendContentNewline("This game is full!");
             return new SpaceWarInteractionOutcome(false);
         }
 
@@ -328,6 +337,24 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         }
         
         game.Rules.MapGeneratorId = interactionData.GeneratorId;
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+    
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMaxPlayerCountInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the max player count after the game has started");
+            return new SpaceWarInteractionOutcome(false);       
+        }
+
+        game.Rules.MaxPlayers = interactionData.MaxPlayerCount;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true)
