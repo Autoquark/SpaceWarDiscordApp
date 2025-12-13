@@ -19,6 +19,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         [TechKeyword.Action, TechKeyword.Exhaust])
     {
         HasSimpleAction = true;
+        SimpleActionType = ActionType.Main;
     }
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
@@ -54,7 +55,7 @@ public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedFo
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         var name = await player.GetNameAsync(false);
-        builder?.AppendContentNewline($"{name} added 3 forces to {hex.Coordinates} using {DisplayName}");
+        builder?.AppendContentNewline($"{name} has defrosted 3 {DisplayName} on {hex.Coordinates}.");
         
         player.GetPlayerTechById(Id).IsExhausted = true;
         

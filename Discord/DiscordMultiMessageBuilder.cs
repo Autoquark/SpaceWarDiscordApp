@@ -163,7 +163,21 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
     public DiscordMultiMessageBuilder AppendHexButtons(Game game, IEnumerable<BoardHex> hexes,
         IEnumerable<string> interactionIds, string? cancelId = null)
     {
-        CurrentBuilder.AppendHexButtons(game, hexes, interactionIds, cancelId);
+        foreach (var group in hexes.ZipWithIndices()
+                     .Zip(interactionIds, (a, b) => (a.index, hex: a.item, id: b))
+                     .GroupBy(x => x.index / 5))
+        {
+            try
+            {
+                CurrentBuilder.AppendHexButtons(game, group.Select(x => x.hex), group.Select(x => x.id), cancelId);
+            }
+            catch (InvalidOperationException)
+            {
+                NewMessage();
+                CurrentBuilder.AppendHexButtons(game, group.Select(x => x.hex), group.Select(x => x.id), cancelId);
+            }
+        }
+        
         return this;   
     }
 
