@@ -301,7 +301,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             builders.SourceChannelBuilder.AppendContentNewline("Game joined!");
         }
         
-        builders.GameChannelBuilder!.AppendContentNewline($"{user.Mention} joined the game!")
+        builders.GameChannelBuilder!.NewMessage()
+            .AppendContentNewline($"{user.Mention} joined the game!")
             .WithAllowedMention(new UserMention(userId));
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
