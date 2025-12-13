@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
+using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.WarpNodes;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
@@ -146,6 +147,12 @@ public class Tech_WarpNodes : Tech,
                     Destination = x,
                     ResolvesChoiceEventId = gameEvent.EventId
                 })).ToList();
+
+        var showBoardId = serviceProvider.AddInteractionToSetUp(new ShowBoardInteraction
+        {
+            ForGamePlayerId = GamePlayer.GamePlayerIdNone,
+            Game = game.DocumentId
+        });
         
         return builder.AppendContentNewline($"{name}, choose a planet to move to:")
             .WithAllowedMentions(player)
@@ -153,7 +160,8 @@ public class Tech_WarpNodes : Tech,
             .AddActionRowComponent(
                 new DiscordButtonComponent(DiscordButtonStyle.Success, 
                     interactionIds.Last(), 
-                    "Done making Warp Nodes moves"));
+                    "Done making Warp Nodes moves"),
+                DiscordHelpers.CreateShowBoardButton(showBoardId));
     }
 
     public async Task<bool> HandlePlayerChoiceEventInteractionAsync(DiscordMultiMessageBuilder? builder,
