@@ -902,8 +902,16 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return builder;
     }
 
+    /// <summary>
+    /// Pushes an event onto the stack to destroy the given amount of forces from the given hex
+    /// </summary>
     public static int DestroyForces(Game game, BoardHex location, int amount, int responsiblePlayerId, ForcesDestructionReason reason, string? techId = null)
     {
+        if ((reason == ForcesDestructionReason.Tech) == (techId == null))
+        {
+            throw new ArgumentException("Invalid combination of reason and techId");
+        }
+        
         if (amount > 0)
         {
             amount = Math.Min(amount, location.ForcesPresent);
