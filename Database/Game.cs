@@ -110,6 +110,20 @@ public class Game : FirestoreDocument
     /// </summary>
     [FirestoreProperty]
     public List<RollbackState> RollbackStates { get; set; } = [];
+
+    /// <summary>
+    /// Latest time that we pinged the active player because it became their turn OR the game has been waiting for them
+    /// for a long time (e.g. 24h)
+    /// </summary>
+    [FirestoreProperty]
+    public DateTime LastTurnProdTime { get; set; } = DateTime.UtcNow;
+    
+    /// <summary>
+    /// Latest time that we pinged the active player because they started taking their turn but didn't finish
+    /// within a short time (e.g. 15 mins)
+    /// </summary>
+    [FirestoreProperty]
+    public DateTime LatestUnfinishedTurnProdTime { get; set; } = DateTime.UtcNow;
     
     public GamePlayer CurrentTurnPlayer => Players[CurrentTurnPlayerIndex];
     

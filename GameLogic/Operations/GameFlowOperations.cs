@@ -43,7 +43,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
-        var transientState = serviceProvider.GetRequiredService<TransientGameState>(); 
+        var transientState = serviceProvider.GetRequiredService<PerOperationGameState>(); 
         if (transientState.HavePrintedSelectActionMessage || game.Phase == GamePhase.Finished)
         {
             return builder;
@@ -266,6 +266,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public async Task<DiscordMultiMessageBuilder> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TurnBegin gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
+        game.LastTurnProdTime = DateTime.UtcNow;
+        ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().NonDbGameState!);
+        
         await GameManagementOperations.SaveRollbackStateAsync(game);
         return await ShowSelectActionMessageAsync(builder, game, serviceProvider);
     }
@@ -399,7 +402,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder?> ContinueResolvingEventStackAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
-        var transientState = serviceProvider.GetRequiredService<TransientGameState>();
+        var transientState = serviceProvider.GetRequiredService<PerOperationGameState>();
         if (transientState.IsResolvingStack)
         {
             return builder;
@@ -719,6 +722,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         game.AnyActionTakenThisTurn = true;
+        game.LatestUnfinishedTurnProdTime = DateTime.UtcNow;
+        ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().NonDbGameState!);
+        
         return await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider);
     }
 

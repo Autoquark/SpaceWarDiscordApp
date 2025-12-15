@@ -1,16 +1,26 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database;
 
 public class GameCache
 {
-    private readonly ConcurrentDictionary<DocumentReference, Game> _gamesByDocumentRef = new();
-    private readonly ConcurrentDictionary<ulong, Game> _gamesByChannelId = new();
+    private readonly ConcurrentDictionary<DocumentReference, (Game game, NonDbGameState nonDbGameState)> _gamesByDocumentRef = new();
+    private readonly ConcurrentDictionary<ulong, (Game game, NonDbGameState nonDbGameState)> _gamesByChannelId = new();
 
-    public Game? GetGame(DocumentReference documentRef) => _gamesByDocumentRef.GetValueOrDefault(documentRef);
-    public Game? GetGame(DiscordChannel channel)
+    public (Game game, NonDbGameState nonDbGameState)? GetGame(DocumentReference documentRef) => _gamesByDocumentRef.GetValueOrDefault(documentRef);
+    public bool GetGame(DocumentReference documentRef, [NotNullWhen(true)] out Game? game, [NotNullWhen(true)] out NonDbGameState? nonDbGameState)
+    {
+        var tuple = _gamesByDocumentRef.GetValueOrDefault(documentRef);
+        game = tuple.game;
+        nonDbGameState = tuple.nonDbGameState;
+        return game != null!;
+    }
+
+    public (Game game, NonDbGameState nonDbGameState)? GetGame(DiscordChannel channel)
     {
         if (channel is DiscordThreadChannel threadChannel)
         {
@@ -19,24 +29,27 @@ public class GameCache
         return _gamesByChannelId.GetValueOrDefault(channel.Id);
     }
 
-    public void AddOrUpdateGame(Game game)
+    public void AddOrUpdateGame(Game game, NonDbGameState nonDbGameState)
     {
-        _gamesByDocumentRef[game.DocumentId!] = game;
-        _gamesByChannelId[game.GameChannelId] = game;
+        _gamesByDocumentRef[game.DocumentId!] = (game, nonDbGameState);
+        _gamesByChannelId[game.GameChannelId] = (game, nonDbGameState);
     }
 
     public void Clear(Game game)
     {
         _gamesByDocumentRef.Remove(game.DocumentId!, out _);
-        _gamesByChannelId.Remove(game.GameChannelId, out _);
+        _gamesByChannelId.Remove(game.GameChannelId, out var tuple);
+        
+        tuple.nonDbGameState.TurnProdTimer.Cancel();
+        tuple.nonDbGameState.UnfinishedTurnProdTimer.Cancel();
     }
 
     public void Clear(DocumentReference documentRef)
     {
-        var game = GetGame(documentRef);
-        if (game != null)
+        var tuple = GetGame(documentRef);
+        if (tuple != null)
         {
-            Clear(game);
+            Clear(tuple.Value.game);
         }
     }
     

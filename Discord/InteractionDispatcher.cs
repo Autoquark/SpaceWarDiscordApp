@@ -87,8 +87,7 @@ public static class InteractionDispatcher
         }
 
         var cache = client.ServiceProvider.GetRequiredService<GameCache>();
-        var game = cache.GetGame(interactionData.Game!);
-        if (game == null)
+        if (!cache.GetGame(interactionData.Game!, out var game, out var nonDbGameState))
         {
             game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameAsync(interactionData.Game!));
         }
@@ -96,6 +95,12 @@ public static class InteractionDispatcher
         if (game == null)
         {
             throw new Exception("Game not found");
+        }
+
+        if (nonDbGameState == null)
+        {
+            nonDbGameState = new NonDbGameState();
+            ProdOperations.UpdateProdTimers(game, nonDbGameState);
         }
 
         if (!interactionData.UserAllowedToTrigger(game, args.Interaction.User))
@@ -108,146 +113,145 @@ public static class InteractionDispatcher
         }
 
         var syncManager = client.ServiceProvider.GetRequiredService<GameSyncManager>();
-        using (var semaphore = await syncManager.Locker.LockOrNullAsync(game.DocumentId!, 0))
+        using var semaphore = await syncManager.Locker.LockOrNullAsync(game.DocumentId!, 0);
+        try
         {
-            try
+            if (semaphore == null)
             {
-                if (semaphore == null)
+                await args.Interaction.CreateFollowupMessageAsync(
+                    new DiscordFollowupMessageBuilder()
+                        .WithContent(
+                            "An operation is already in progress for this game. Please wait for it to finish before trying again.")
+                        .AsEphemeral());
+                return;
+            }
+
+            cache.AddOrUpdateGame(game, nonDbGameState);
+
+            var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
+            var contextData = serviceProvider.GetRequiredService<SpaceWarCommandContextData>();
+            contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
+            contextData.Game = game;
+            contextData.User = args.Interaction.User;
+            contextData.InteractionMessage = args.Interaction.Message;
+            contextData.NonDbGameState = nonDbGameState;
+
+            var builders = serviceProvider.GetRequiredService<GameMessageBuilders>();
+            builders.SourceChannelBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder());
+            builders.GameChannelBuilder = args.Interaction.ChannelId == game.GameChannelId
+                ? builders.SourceChannelBuilder
+                : DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
+            builders.PlayerPrivateThreadBuilders = game.Players.ToDictionary(x => x.GamePlayerId,
+                _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
+            var privateThreadPlayer = game.Players.FirstOrDefault(x => x.PrivateThreadId == args.Interaction.ChannelId);
+            if (privateThreadPlayer != null)
+            {
+                builders.PlayerPrivateThreadBuilders[privateThreadPlayer.GamePlayerId] = builders.SourceChannelBuilder;
+            }
+
+            var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
+
+            var outcome = await HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
+
+            if (outcome.RequiresSave || interactionsToSetUp.Any())
+            {
+                try
                 {
-                    await args.Interaction.CreateFollowupMessageAsync(
-                        new DiscordFollowupMessageBuilder()
-                            .WithContent(
-                                "An operation is already in progress for this game. Please wait for it to finish before trying again.")
-                            .AsEphemeral());
-                    return;
-                }
-
-                cache.AddOrUpdateGame(game);
-
-                var serviceProvider = client.ServiceProvider.CreateScope().ServiceProvider;
-                var contextData = serviceProvider.GetRequiredService<SpaceWarCommandContextData>();
-                contextData.GlobalData = await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
-                contextData.Game = game;
-                contextData.User = args.Interaction.User;
-                contextData.InteractionMessage = args.Interaction.Message;
-
-                var builders = serviceProvider.GetRequiredService<GameMessageBuilders>();
-                builders.SourceChannelBuilder = new DiscordMultiMessageBuilder(new DiscordWebhookBuilder(), () => new DiscordFollowupMessageBuilder());
-                builders.GameChannelBuilder = args.Interaction.ChannelId == game.GameChannelId
-                    ? builders.SourceChannelBuilder
-                    : DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
-                builders.PlayerPrivateThreadBuilders = game.Players.ToDictionary(x => x.GamePlayerId,
-                    _ => DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>());
-                var privateThreadPlayer = game.Players.FirstOrDefault(x => x.PrivateThreadId == args.Interaction.ChannelId);
-                if (privateThreadPlayer != null)
-                {
-                    builders.PlayerPrivateThreadBuilders[privateThreadPlayer.GamePlayerId] = builders.SourceChannelBuilder;
-                }
-
-                var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
-
-                var outcome = await HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
-
-                if (outcome.RequiresSave || interactionsToSetUp.Any())
-                {
-                    try
+                    await Program.FirestoreDb.RunTransactionAsync(transaction =>
                     {
-                        await Program.FirestoreDb.RunTransactionAsync(transaction =>
+                        if (outcome.RequiresSave)
                         {
-                            if (outcome.RequiresSave)
-                            {
-                                transaction.Set(game);
-                            }
-
-                            InteractionsHelper.SetUpInteractions(interactionsToSetUp,
-                                transaction,
-                                contextData.GlobalData.InteractionGroupId);
-                        });
-                    }
-                    catch (RpcException)
-                    {
-                        builders.GameChannelBuilder.AppendContentNewline("ERROR: Failed to save game state. Please report this to the developer.");
-                        throw;
-                    }
-                }
-
-                // Send messages to the source channel as interaction followups - not sure how necessary this is
-                var firstBuilder = builders.SourceChannelBuilder.Builders[0];
-                if (firstBuilder is { Components.Count: > 0 })
-                {
-                    if (outcome.DeleteOriginalMessage)
-                    {
-                        if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
-                        {
-                            await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                            transaction.Set(game);
                         }
-                        else
-                        {
-                            await args.Interaction.CreateFollowupMessageAsync(
-                                new DiscordFollowupMessageBuilder()
-                                    .EnableV2Components()
-                                    .AppendContentNewline(
-                                        $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
-                        }
+
+                        InteractionsHelper.SetUpInteractions(interactionsToSetUp,
+                            transaction,
+                            contextData.GlobalData.InteractionGroupId);
+                    });
+                }
+                catch (RpcException)
+                {
+                    builders.GameChannelBuilder.AppendContentNewline("ERROR: Failed to save game state. Please report this to the developer.");
+                    throw;
+                }
+            }
+
+            // Send messages to the source channel as interaction followups - not sure how necessary this is
+            var firstBuilder = builders.SourceChannelBuilder.Builders[0];
+            if (firstBuilder is { Components.Count: > 0 })
+            {
+                if (outcome.DeleteOriginalMessage)
+                {
+                    if (firstBuilder is DiscordFollowupMessageBuilder followupBuilder)
+                    {
+                        await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
                     }
                     else
                     {
-                        if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
-                        {
-                            await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
-                        }
-                    }
-
-                    foreach (var followupBuilder in builders.SourceChannelBuilder.Builders.Skip(1)
-                                 .Cast<DiscordFollowupMessageBuilder>())
-                    {
-                        await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
+                        await args.Interaction.CreateFollowupMessageAsync(
+                            new DiscordFollowupMessageBuilder()
+                                .EnableV2Components()
+                                .AppendContentNewline(
+                                    $"ERROR: Tried to both delete and edit original message. Please report this to the developer ({interactionData.SubtypeName})"));
                     }
                 }
                 else
                 {
-                    // No response, delete the deferred response placeholder
-                    await args.Interaction.DeleteOriginalResponseAsync();
-                }
-
-                foreach (var (playerId, playerBuilder) in builders.PlayerPrivateThreadBuilders
-                             .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
-                {
-                    var thread =
-                        await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(game, game.GetGamePlayerByGameId(playerId));
-
-                    foreach (var discordMessageBuilder in playerBuilder.Builders.Cast<DiscordMessageBuilder>()
-                                 .Where(x => x.Components.Count > 0))
+                    if (firstBuilder is DiscordWebhookBuilder webhookBuilder)
                     {
-                        await thread.SendMessageAsync(discordMessageBuilder);
+                        await args.Interaction.EditOriginalResponseAsync(webhookBuilder);
                     }
                 }
 
-                if (builders.GameChannelBuilder != builders.SourceChannelBuilder)
+                foreach (var followupBuilder in builders.SourceChannelBuilder.Builders.Skip(1)
+                             .Cast<DiscordFollowupMessageBuilder>())
                 {
-                    var gameChannel = await client.GetChannelAsync(game.GameChannelId);
-                    foreach (var discordMessageBuilder in builders.GameChannelBuilder.Builders.Cast<DiscordMessageBuilder>()
-                                 .Where(x => x.Components.Count > 0))
-                    {
-                        await gameChannel.SendMessageAsync(discordMessageBuilder);
-                    }
+                    await args.Interaction.CreateFollowupMessageAsync(followupBuilder);
                 }
             }
-            catch (Exception e) when (!Program.IsTestEnvironment)
+            else
             {
-                // Force a refetch next command so any half complete operations on the in-memory game object are discarded
-                if (game.DocumentId != null)
-                {
-                    cache.Clear(game.DocumentId);
-                }
-
-                await Program.LogExceptionAsync(game, e);
-
-                await args.Interaction.EditOriginalResponseAsync(
-                    new DiscordWebhookBuilder().WithContent(
-                        "An error occurred. Please try again, or report as a bug if the problem persists"));
-                throw;
+                // No response, delete the deferred response placeholder
+                await args.Interaction.DeleteOriginalResponseAsync();
             }
+
+            foreach (var (playerId, playerBuilder) in builders.PlayerPrivateThreadBuilders
+                         .Where(x => !x.Value.IsEmpty() && x.Value != builders.SourceChannelBuilder))
+            {
+                var thread =
+                    await GameFlowOperations.GetOrCreatePlayerPrivateThreadAsync(game, game.GetGamePlayerByGameId(playerId));
+
+                foreach (var discordMessageBuilder in playerBuilder.Builders.Cast<DiscordMessageBuilder>()
+                             .Where(x => x.Components.Count > 0))
+                {
+                    await thread.SendMessageAsync(discordMessageBuilder);
+                }
+            }
+
+            if (builders.GameChannelBuilder != builders.SourceChannelBuilder)
+            {
+                var gameChannel = await client.GetChannelAsync(game.GameChannelId);
+                foreach (var discordMessageBuilder in builders.GameChannelBuilder.Builders.Cast<DiscordMessageBuilder>()
+                             .Where(x => x.Components.Count > 0))
+                {
+                    await gameChannel.SendMessageAsync(discordMessageBuilder);
+                }
+            }
+        }
+        catch (Exception e) when (!Program.IsTestEnvironment)
+        {
+            // Force a refetch next command so any half complete operations on the in-memory game object are discarded
+            if (game.DocumentId != null)
+            {
+                cache.Clear(game.DocumentId);
+            }
+
+            await Program.LogExceptionAsync(game, e);
+
+            await args.Interaction.EditOriginalResponseAsync(
+                new DiscordWebhookBuilder().WithContent(
+                    "An error occurred. Please try again, or report as a bug if the problem persists"));
+            throw;
         }
     }
 

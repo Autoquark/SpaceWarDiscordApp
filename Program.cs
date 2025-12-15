@@ -68,17 +68,6 @@ static class Program
         var converterRegistry = new ConverterRegistry() { new ImageSharpColorCoordinateConverter() };
         var typeDiscriminator = new TypeDiscriminator();
 
-        /*foreach (var type in Assembly.GetExecutingAssembly().GetTypes()
-                     .Where(x => x.IsAssignableTo(typeof(IPolymorphicFirestoreData))))
-        {
-            var methods = typeof(ConverterRegistry).GetMethods();
-            var typeT = Type.MakeGenericMethodParameter(0);
-            typeof(ConverterRegistry).GetMethod(nameof(ConverterRegistry.Add), 1, BindingFlags.Public | BindingFlags.Instance,
-                    [typeof(IFirestoreTypeDiscriminator<>).MakeGenericType(typeT)])!
-                .MakeGenericMethod(type)
-                .Invoke(converterRegistry, [typeDiscriminator]);
-        }*/
-
         foreach (var type in typeof(TypeDiscriminator).GetInterfaces()
                      .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IFirestoreTypeDiscriminator<>))
                      .Select(x => x.GetGenericArguments()[0]))
@@ -110,7 +99,7 @@ static class Program
             // List of interactions to set up
             x.AddScoped<List<InteractionData>>();
 
-            x.AddScoped<TransientGameState>();
+            x.AddScoped<PerOperationGameState>();
             x.AddScoped<GameMessageBuilders>();
             
             x.AddHttpClient();
@@ -217,8 +206,35 @@ static class Program
         }
         
         await _updateEmojiTask;
-        BotReady = true;
         
+        BotReady = true;
+
+        // Asynchronously iterate over all games and update their prod timers. This also pulls them all into the cache
+        await foreach(var gameDoc in new Query<Game>(FirestoreDb.Games()).WhereEqualTo(x => x.Phase, GamePhase.Play)
+                          .FirestoreQuery.StreamAsync())
+        {
+            using var disposable = await DiscordClient.ServiceProvider.GetRequiredService<GameSyncManager>().Locker
+                .LockOrNullAsync(gameDoc.Reference, TimeSpan.FromMinutes(1));
+
+            // If we can't obtain the lock for some reason, just skip this game
+            if (disposable == null)
+            {
+                continue;
+            }
+
+            var cache = DiscordClient.ServiceProvider.GetRequiredService<GameCache>();
+            
+            if (!cache.GetGame(gameDoc.Reference, out var game, out var nonDbGameState))
+            {
+                game = gameDoc.ConvertTo<Game>();
+                nonDbGameState = new NonDbGameState();
+            }
+            
+            cache.AddOrUpdateGame(game, nonDbGameState);
+            
+            ProdOperations.UpdateProdTimers(game, nonDbGameState);
+        }
+
         Console.WriteLine("Ready to go. Let's play some SpaceWar!");
         
         await Task.Delay(-1);

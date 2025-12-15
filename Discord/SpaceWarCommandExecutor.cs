@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord;
@@ -66,15 +67,24 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 }
                 
                 // Attempt to find the relevant game for this channel and store it in the context data
-                contextData.Game = cache.GetGame(context.Channel)
-                                   ?? await Program.FirestoreDb.RunTransactionAsync(
-                                       transaction => transaction.GetGameForChannelAsync(context.Channel),
-                                       cancellationToken: cancellationToken);
+                var tuple = cache.GetGame(context.Channel);
+
+                // If the game was not found, retrieve game data from DB
+                contextData.Game = tuple?.game ?? await Program.FirestoreDb.RunTransactionAsync(
+                    transaction => transaction.GetGameForChannelAsync(context.Channel),
+                    cancellationToken: cancellationToken);
 
                 if (contextData.Game == null)
                 {
                     await context.EditResponseAsync("This command can only be used from a game channel");
                     return;
+                }
+                
+                // If game wasn't found in cache, create non-DB state 
+                if (tuple == null)
+                {
+                    contextData.NonDbGameState = new NonDbGameState();
+                    ProdOperations.UpdateProdTimers(contextData.Game!, contextData.NonDbGameState);
                 }
 
                 if (requiresPlayerAttribute != null && contextData.Game.TryGetGamePlayerByDiscordId(context.User.Id) == null)
@@ -92,7 +102,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                     return;
                 }
 
-                cache.AddOrUpdateGame(contextData.Game!);
+                cache.AddOrUpdateGame(contextData.Game!, contextData.NonDbGameState!);
 
                 if (requiresGameAttribute!.RequiredPhase != null &&
                     contextData.Game.Phase != requiresGameAttribute.RequiredPhase)

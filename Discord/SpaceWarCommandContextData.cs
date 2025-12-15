@@ -1,5 +1,6 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -9,6 +10,8 @@ namespace SpaceWarDiscordApp.Discord;
 public class SpaceWarCommandContextData
 {
     public Game? Game { get; set; }
+    
+    public NonDbGameState? NonDbGameState { get; set; }
     
     public required GlobalData GlobalData { get; set; }
     
