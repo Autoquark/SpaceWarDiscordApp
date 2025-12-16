@@ -42,7 +42,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates coordinates,
         [Description("New amount of forces. Omit to keep existing number")] int amount = -1,
         [Description("New owner of forces. Omit to keep existing owner or you if there's no existing owner")]
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -84,8 +84,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("grantTech")]
     [Description("Grant a tech to a player")]
     public static async Task GrantTech(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>] string techId,
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -127,8 +127,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     /// </summary>
     [Command("removeTech")]
     public static async Task RemoveTech(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>] string techId,
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -165,7 +165,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("AddUniversalTech")]
     [Description("Adds a universal tech.")]
     public static async Task AddUniversalTech(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>]
         string techId,
         bool removeFromOtherPlaces = true)
     {
@@ -215,7 +215,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("ShowTechPurchase")]
     [Description("Prompts for the given player to purchase a tech")]
     public static async Task ShowTechPurchase(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -246,7 +246,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("DiscardUniversalTech")]
     [Description("Puts a universal tech into the tech discards.")]
     public static async Task DiscardUniversalTech(CommandContext context,
-        [SlashAutoCompleteProvider<UniversalTechIdChoiceProvider>] string techId)
+        [SlashAutoCompleteProvider<UniversalTechAutoCompleteProvider>] string techId)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -279,7 +279,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("discardMarketTech")]
     [Description("Discards a tech from the tech market, leaving an empty slot")]
     public static async Task DiscardMarketTech(CommandContext context,
-        [SlashAutoCompleteProvider<MarketTechIdChoiceProvider>]
+        [SlashAutoCompleteProvider<MarketTechIdAutoCompleteProvider>]
         string techId,
         [Description("Whether to put the card into tech discards or entirely remove it from the game")]
         bool putInDiscard = true)
@@ -313,9 +313,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("setTechExhausted")]
     [Description("Exhausts or unexhausts a player's tech")]
     public static async Task SetTechExhausted(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>]
         string techId,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>]
         int player = -1,
         bool exhausted = true)
     {
@@ -417,7 +417,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("SetPlayerTurn")]
     [Description("Set which player's turn it is")]
     public static async Task SetCurrentTurn(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>]
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
@@ -446,7 +446,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("SetScoringTokenPlayer")]
     [Description("Set which player holds the scoring token")]
     public static async Task SetScoringTokenPlayer(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>]
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
@@ -473,7 +473,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Description("Set a player's science total")]
     public static async Task SetPlayerScience(CommandContext context,
         int science,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1)
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
@@ -501,7 +501,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Description("Set a player's Victory Points")]
     public static async Task SetPlayerVictoryPoints(CommandContext context,
         int vp,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>]
         int player = -1)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
@@ -544,7 +544,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("AddTechToDeck")]
     [Description("Add a tech to the tech deck")]
     public static async Task AddTechToDeck(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId,
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>] string techId,
         bool allowDuplicate = false)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
@@ -568,7 +568,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("AddTechToDiscards")]
     [Description("Add a tech to the tech discards")]
     public static async Task AddTechToDiscards(CommandContext context,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>]
         string techId,
         bool allowDuplicate = false)
     {
@@ -603,7 +603,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     [Command("MoveForces")]
     [Description("Move forces between planets")]
     public async Task MoveForces(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>] int player = -1,
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>] int player = -1,
         [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates? from = null,
         [SlashAutoCompleteProvider<HexCoordsAutoCompleteProvider_WithPlanet>] HexCoordinates? to = null,
         int? amount = null)
@@ -712,9 +712,9 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
     [Command("SetPlayerStartingTech")]
     public async Task SetStartingTech(CommandContext context,
-        [SlashAutoCompleteProvider<GamePlayerIdChoiceProvider>]
+        [SlashAutoCompleteProvider<GamePlayerIdAutoCompleteProvider>]
         int player,
-        [SlashAutoCompleteProvider<TechIdChoiceProvider>]
+        [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>]
         string techId)
     {
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;

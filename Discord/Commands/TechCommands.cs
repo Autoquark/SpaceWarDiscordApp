@@ -28,7 +28,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
     }
 
     [Command("ShowTech")]
-    public Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdChoiceProvider>] string techId)
+    public Task ShowTechDetails(CommandContext context, [SlashAutoCompleteProvider<TechIdAutoCompleteProvider>] string techId)
     {
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
         

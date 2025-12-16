@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 
-public class MarketTechIdChoiceProvider : IAutoCompleteProvider
+public class MarketTechIdAutoCompleteProvider : IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {

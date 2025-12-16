@@ -1,12 +1,12 @@
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
-using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 
-public class UniversalTechIdChoiceProvider : IAutoCompleteProvider
+public class GamePlayerIdAutoCompleteProvider : IAutoCompleteProvider
 {
     public async ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {
@@ -15,12 +15,15 @@ public class UniversalTechIdChoiceProvider : IAutoCompleteProvider
         {
             return [];
         }
-        
+
         var prefix = context.UserInput ?? "";
-        return game.UniversalTechs
-            .Select(x => Tech.TechsById[x])
-            .Where(x => x.DisplayName.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
-            .OrderBy(x => x.DisplayName)
-            .Select(x => new DiscordAutoCompleteChoice(x.DisplayName, x.Id.ToString()));
+
+        var playersWithNames = await Task.WhenAll(
+            game.Players.Select(async player => (player, name: await player.GetNameAsync(false, false)))
+        );
+        
+        return playersWithNames.OrderBy(x => x.name)
+            .Where(x => x.name.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
+            .Select(x => new DiscordAutoCompleteChoice(x.name, x.player.GamePlayerId.ToString()));
     }
 }

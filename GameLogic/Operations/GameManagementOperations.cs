@@ -26,7 +26,7 @@ public class GameManagementOperations
             .AppendContentNewline("Game Setup".DiscordHeading1());
         
         // Player count
-        var interactionIds = serviceProvider.AddInteractionsToSetUp(CollectionExtensions.Between(2, 6).Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(CollectionExtensions.Between(2, GameConstants.MaxPlayerCount).Select(x =>
             new SetMaxPlayerCountInteraction
             {
                 Game = game.DocumentId,

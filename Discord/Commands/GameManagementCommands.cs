@@ -3,12 +3,14 @@ using System.Reflection.Metadata;
 using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
+using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.GameRules;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.DimensionalOrigami;
+using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -84,7 +86,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     [Command("CreateGame")]
     [RequireGuild]
     [RequireGameChannel(RequireGameChannelMode.DoNotRequire)]
-    public static async Task CreateGameCommand(CommandContext context, int maxPlayers = 6, int dummyPlayers = 0)
+    public static async Task CreateGameCommand(CommandContext context, [SlashChoiceProvider<PlayerCountChoiceProvider>] int maxPlayers = 6, int dummyPlayers = 0)
     {
         var name = $"The {NameAdjectives[Program.Random.Next(0, NameAdjectives.Count)]} {NameNouns[Program.Random.Next(0, NameNouns.Count)]}";
         

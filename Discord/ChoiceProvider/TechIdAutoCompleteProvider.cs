@@ -5,7 +5,7 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 
-public class TechIdChoiceProvider : IAutoCompleteProvider
+public class TechIdAutoCompleteProvider : IAutoCompleteProvider
 {
     public ValueTask<IEnumerable<DiscordAutoCompleteChoice>> AutoCompleteAsync(AutoCompleteContext context)
     {

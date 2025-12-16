@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 namespace SpaceWarDiscordApp.Database;
@@ -40,5 +41,5 @@ public class GameRules : FirestoreDocument
     public string MapGeneratorId { get; set; } = DefaultMapGenerator.StaticId;
     
     [FirestoreProperty]
-    public int MaxPlayers { get; set; } = 6;
+    public int MaxPlayers { get; set; } = GameConstants.MaxPlayerCount;
 }
