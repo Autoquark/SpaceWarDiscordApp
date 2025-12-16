@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.Database.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents.Tech;
 
 public enum LoseTechReason
 {

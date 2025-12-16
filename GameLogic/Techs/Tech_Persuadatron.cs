@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Tech;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.Persuadatron;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;

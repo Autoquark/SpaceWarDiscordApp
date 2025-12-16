@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents.Produce;
 
 /// <summary>
 /// When this resolves forces/science points will be added.

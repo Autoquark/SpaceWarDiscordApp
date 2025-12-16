@@ -1,7 +1,7 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 
-namespace SpaceWarDiscordApp.Database.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents.Tech;
 
 /// <summary>
 /// Prompts the given player to purchase a tech if they can afford one, or decline to do so

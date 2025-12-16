@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
+using SpaceWarDiscordApp.Database.GameEvents.Tech;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;

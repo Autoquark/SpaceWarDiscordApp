@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
 
-namespace SpaceWarDiscordApp.Database.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents.Tech;
 
 /// <summary>
 /// When this resolves, the given player gains the given tech. Does not subtract any science points - for a purchase,

@@ -14,7 +14,6 @@ using SpaceWarDiscordApp.Database.InteractionData.Tech;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;

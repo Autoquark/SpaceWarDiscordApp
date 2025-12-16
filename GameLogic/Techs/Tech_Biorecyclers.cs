@@ -5,7 +5,6 @@ using SpaceWarDiscordApp.Database.InteractionData.Tech.Biorecyclers;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;

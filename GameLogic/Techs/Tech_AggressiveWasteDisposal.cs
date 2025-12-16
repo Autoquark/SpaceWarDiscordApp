@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Produce;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;

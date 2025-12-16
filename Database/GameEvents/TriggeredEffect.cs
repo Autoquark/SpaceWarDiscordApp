@@ -1,8 +1,7 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 
-namespace SpaceWarDiscordApp.GameLogic.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents;
 
 /// <summary>
 /// Effect triggered in response to a GameEvent

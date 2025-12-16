@@ -3,6 +3,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Discord;

@@ -3,7 +3,6 @@ using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.ImprovisedWeaponry;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;

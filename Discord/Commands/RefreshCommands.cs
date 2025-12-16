@@ -1,6 +1,7 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Refresh;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;

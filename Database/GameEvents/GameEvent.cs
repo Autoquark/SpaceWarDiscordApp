@@ -1,5 +1,4 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 
 namespace SpaceWarDiscordApp.Database.GameEvents;
 

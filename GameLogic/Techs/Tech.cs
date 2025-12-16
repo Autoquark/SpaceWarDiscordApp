@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Discord;
-using SpaceWarDiscordApp.GameLogic.GameEvents;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 

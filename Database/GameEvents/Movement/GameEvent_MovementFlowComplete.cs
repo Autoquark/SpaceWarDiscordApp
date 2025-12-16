@@ -1,10 +1,10 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.GameLogic;
 
-namespace SpaceWarDiscordApp.Database.GameEvents;
+namespace SpaceWarDiscordApp.Database.GameEvents.Movement;
 
 [FirestoreData]
-public class GameEvent_MovementFlowComplete<T> : GameEvent
+public abstract class GameEvent_MovementFlowComplete : GameEvent
 {
     [FirestoreProperty]
     public required int PlayerGameId { get; set; }
@@ -17,4 +17,9 @@ public class GameEvent_MovementFlowComplete<T> : GameEvent
     
     [FirestoreProperty]
     public required HexCoordinates Destination {get; set;}
+}
+
+[FirestoreData]
+public class GameEvent_MovementFlowComplete<T> : GameEvent_MovementFlowComplete
+{
 }

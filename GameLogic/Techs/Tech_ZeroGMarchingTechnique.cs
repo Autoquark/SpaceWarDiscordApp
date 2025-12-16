@@ -1,5 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 

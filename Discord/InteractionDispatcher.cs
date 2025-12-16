@@ -307,7 +307,7 @@ public static class InteractionDispatcher
             {
                 var eventType = baseType.GetGenericArguments()[0];
                 // Event id check for the remote scenario where the top event on the stack is of the right type, but not actually the event that this trigger is associated with
-                if (currentEvent == null || currentEvent.GetType() != eventType || !eventModifyingInteractionData.EventId.Equals(currentEvent.EventId))
+                if (currentEvent == null || !currentEvent.GetType().IsAssignableTo(eventType) || !eventModifyingInteractionData.EventId.Equals(currentEvent.EventId))
                 {
                     builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
                     return new SpaceWarInteractionOutcome(false);

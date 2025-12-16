@@ -226,7 +226,15 @@ static class Program
             
             if (!cache.GetGame(gameDoc.Reference, out var game, out var nonDbGameState))
             {
-                game = gameDoc.ConvertTo<Game>();
+                try
+                {
+                    game = gameDoc.ConvertTo<Game>();
+                }
+                catch (InvalidOperationException)
+                {
+                    continue;
+                }
+                
                 nonDbGameState = new NonDbGameState();
             }
             
