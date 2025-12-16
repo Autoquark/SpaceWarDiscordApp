@@ -6,6 +6,7 @@ public class EuropeMapGenerator : BaseMapGenerator
 {
     public EuropeMapGenerator() : base("europe", "Space Europe", [3, 4, 5, 6])
     {
+        Description = "It's Europe! In space!";
     }
 
     private void SetPlanetOwnership(List<BoardHex> hexes, int playerId)

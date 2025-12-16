@@ -519,7 +519,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         gamePlayer.VictoryPoints = vp;
         
         // If nobody has now won, unfinish the game if it was finished
-        if (game.Players.All(x => x.VictoryPoints < GameConstants.VpToWin) &&
+        if (game.Players.All(x => x.VictoryPoints < game.Rules.VictoryThreshold) &&
             game.Players.Count(x => !x.IsEliminated) >= 2)
         {
             game.Phase = GamePhase.Play;

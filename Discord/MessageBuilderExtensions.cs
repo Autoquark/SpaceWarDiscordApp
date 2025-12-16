@@ -18,6 +18,7 @@ public static class MessageBuilderExtensions
 
     public static IDiscordMessageBuilder AppendContentNewline(this IDiscordMessageBuilder builder, string content)
     {
+        content = content.ReplaceIconTokens();
         if (builder.Flags.HasFlag(DiscordMessageFlags.IsComponentsV2))
         {
             builder.AddTextDisplayComponent(content);

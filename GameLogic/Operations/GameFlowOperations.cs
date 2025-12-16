@@ -1,45 +1,24 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
-using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Move;
 using SpaceWarDiscordApp.Database.InteractionData.Tech;
-using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
 using SpaceWarDiscordApp.GameLogic.Techs;
-using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
 public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>,
     IEventResolvedHandler<GameEvent_PostForcesDestroyed>, IInteractionHandler<ShowBoardInteraction>
 {
-    public static async Task<DiscordMultiMessageBuilder> ShowBoardStateMessageAsync(DiscordMultiMessageBuilder builder, Game game, bool oldCoords = false)
-    {
-        using var image = BoardImageGenerator.GenerateBoardImage(game, oldCoords);
-        var stream = new MemoryStream();
-        await image.SaveAsPngAsync(stream);
-        stream.Position = 0;
-
-        var name = await game.CurrentTurnPlayer.GetNameAsync(false);
-        builder.NewMessage()
-            .AppendContentNewline(
-                $"Board state for {Program.TextInfo.ToTitleCase(game.Name)} at turn {game.TurnNumber} ({name}'s turn)")
-            .AddFile("board.png", stream)
-            .AddMediaGalleryComponent(new DiscordMediaGalleryItem("attachment://board.png"));
-        
-        return builder;
-    }
-
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
         var transientState = serviceProvider.GetRequiredService<PerOperationGameState>(); 
@@ -105,7 +84,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 UsingPlayerId = game.CurrentTurnPlayer.GamePlayerId
             })).ToList();
         
-        await ShowBoardStateMessageAsync(builder, game);
+        await GameStateOperations.ShowBoardStateMessageAsync(builder, game);
         builder.AppendContentNewline("Your Turn".DiscordHeading2())
             .AppendContentNewline(game.ActionTakenThisTurn ?
                 $"{name}, you have taken your main action this turn but you still have free actions from techs available. Select one or click 'End Turn'"
@@ -189,50 +168,69 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         {
             playerTech.UsedThisTurn = false;
         }
-        
-        if (game.IsScoringTurn)
+
+        switch (game.Rules.ScoringRule)
         {
-            List<(GamePlayer player, int score)> playerScores = game.Players.Where(x => !x.IsEliminated)
-                .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
-                .OrderByDescending(x => x.Item2)
-                .ToList();
-
-            if (playerScores[1].score < playerScores[0].score)
-            {
-                var scoringPlayer = playerScores[0].player;
-
-                // In a 2 player game, you can only score at the end of your opponent's turn
-                if (game.Players.Count > 2 || scoringPlayer != endingTurnPlayer)
+            case ScoringRule.MostStars:
+                if (game.IsScoringTurn)
                 {
-                    scoringPlayer.VictoryPoints++;
-                    var name = await scoringPlayer.GetNameAsync(true);
-                    builder?.AppendContentNewline(
-                            $"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
-                        .WithAllowedMentions(scoringPlayer);
+                    List<(GamePlayer player, int score)> playerScores = game.Players.Where(x => !x.IsEliminated)
+                        .Select(x => (x, GameStateOperations.GetPlayerStars(game, x)))
+                        .OrderByDescending(x => x.Item2)
+                        .ToList();
 
-                    await CheckForVictoryAsync(builder, game);
-                }
-                else
-                {
-                    builder?.AppendContentNewline("Nobody scores this turn (in a 2 player game, you can only score at the end of your opponent's turn)");
-                }
-            }
-            else
-            {
-                var drawnPlayerNames = await playerScores.TakeWhile(x => x.score == playerScores[0].score)
-                    .ToAsyncEnumerable()
-                    .SelectAwait(async x => await x.player.GetNameAsync(false))
-                    .ToListAsync();
-                builder?.AppendContentNewline($"Nobody scores this turn (draw between {string.Join(", ", drawnPlayerNames)})");
-            }
+                    if (playerScores[1].score < playerScores[0].score)
+                    {
+                        var scoringPlayer = playerScores[0].player;
 
-            // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
-            // but don't post any messages about it.
-            if (game.Phase == GamePhase.Finished)
-            {
-                builder = null;
-            }
-            await CycleScoringTokenAsync(builder, game);
+                        // In a 2 player game, you can only score at the end of your opponent's turn
+                        if (game.Players.Count > 2 || scoringPlayer != endingTurnPlayer)
+                        {
+                            scoringPlayer.VictoryPoints++;
+                            var name = await scoringPlayer.GetNameAsync(true);
+                            builder?.AppendContentNewline(
+                                    $"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
+                                .WithAllowedMentions(scoringPlayer);
+
+                            await CheckForVictoryAsync(builder, game);
+                        }
+                        else
+                        {
+                            builder?.AppendContentNewline(
+                                "Nobody scores this turn (in a 2 player game, you can only score at the end of your opponent's turn)");
+                        }
+                    }
+                    else
+                    {
+                        var drawnPlayerNames = await playerScores.TakeWhile(x => x.score == playerScores[0].score)
+                            .ToAsyncEnumerable()
+                            .SelectAwait(async x => await x.player.GetNameAsync(false))
+                            .ToListAsync();
+                        builder?.AppendContentNewline(
+                            $"Nobody scores this turn (draw between {string.Join(", ", drawnPlayerNames)})");
+                    }
+
+                    // If someone appears to have won, still finish the end of turn logic (in case the game is fixed up and continued)
+                    // but don't post any messages about it.
+                    if (game.Phase == GamePhase.Finished)
+                    {
+                        builder = null;
+                    }
+
+                    await CycleScoringTokenAsync(builder, game);
+                }
+
+                break;
+
+            case ScoringRule.Cumulative:
+                var stars = GameStateOperations.GetPlayerStars(game, endingTurnPlayer);
+                endingTurnPlayer.VictoryPoints += stars;
+
+                builder?.AppendContentNewline(
+                    $"{await endingTurnPlayer.GetNameAsync(false)} gains {stars} VP and now has {endingTurnPlayer.VictoryPoints}/{game.Rules.VictoryThreshold} VP");
+                
+                await CheckForVictoryAsync(builder, game);
+                break;
         }
 
         do
@@ -274,7 +272,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
     public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
     {
-        var winner = game.Players.FirstOrDefault(x => x.VictoryPoints == GameConstants.VpToWin);
+        var winner = game.Players.FirstOrDefault(x => x.VictoryPoints >= game.Rules.VictoryThreshold);
         if (winner != null)
         {
             var name = await winner.GetNameAsync(true);
@@ -287,7 +285,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 
             if (builder != null)
             {
-                await ShowBoardStateMessageAsync(builder, game);
+                await GameStateOperations.ShowBoardStateMessageAsync(builder, game);
             }
         }
 
@@ -940,7 +938,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     {
         if (builder != null)
         {
-            await ShowBoardStateMessageAsync(builder, game);
+            await GameStateOperations.ShowBoardStateMessageAsync(builder, game);
         }
         return new SpaceWarInteractionOutcome(false);
     }

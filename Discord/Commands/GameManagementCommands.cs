@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Reflection.Metadata;
 using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
@@ -20,7 +21,9 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     IInteractionHandler<SetMapGeneratorInteraction>,
     IInteractionHandler<ShowRollBackConfirmInteraction>,
     IInteractionHandler<RollBackGameInteraction>,
-    IInteractionHandler<SetMaxPlayerCountInteraction>
+    IInteractionHandler<SetMaxPlayerCountInteraction>,
+    IInteractionHandler<SetScoringRuleInteraction>,
+    IInteractionHandler<SetVictoryThresholdInteraction>
 {
     private class NounProjectImageCredit
     {
@@ -356,6 +359,50 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         }
 
         game.Rules.MaxPlayers = interactionData.MaxPlayerCount;
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+    
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetScoringRuleInteraction interactionData, Game game,
+        IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the scoring rule after the game has started");
+            return new SpaceWarInteractionOutcome(false);       
+        }
+
+        if (game.Rules.ScoringRule == interactionData.Value)
+        {
+            return new SpaceWarInteractionOutcome(false);
+        }
+        
+        game.Rules.ScoringRule = interactionData.Value;
+        game.Rules.VictoryThreshold = GameConstants.DefaultVictoryThresholds[interactionData.Value];
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+    
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetVictoryThresholdInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the victory threshold after the game has started");
+            return new SpaceWarInteractionOutcome(false);       
+        }
+
+        game.Rules.VictoryThreshold = interactionData.VictoryThreshold;
+        
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
         return new SpaceWarInteractionOutcome(true)

@@ -33,7 +33,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         }
         
         var builder = context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder;
-        await GameFlowOperations.ShowBoardStateMessageAsync(builder, game, oldCoords);
+        await GameStateOperations.ShowBoardStateMessageAsync(builder, game, oldCoords);
     }
 
     [Command("Reprompt")]
@@ -96,7 +96,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
     public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(DiscordMultiMessageBuilder builder, GameEvent_PlayersChooseStartingTech gameEvent,
         Game game, IServiceProvider serviceProvider)
     {
-        await GameFlowOperations.ShowBoardStateMessageAsync(builder, game);
+        await GameStateOperations.ShowBoardStateMessageAsync(builder, game);
         
         switch (game.Rules.StartingTechRule)
         {

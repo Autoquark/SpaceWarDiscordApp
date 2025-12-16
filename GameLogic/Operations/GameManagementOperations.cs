@@ -34,10 +34,56 @@ public class GameManagementOperations
                 MaxPlayerCount = x
             }));
 
-        builder.AppendContentNewline("Max Players:".DiscordHeading2())
+        builder.AppendContentNewline("Max Players".DiscordHeading2())
             .AppendButtonRows(interactionIds.Index().Select(x =>
                 new DiscordButtonComponent(
                     game.Rules.MaxPlayers == x.Index + 2 ? DiscordButtonStyle.Success : DiscordButtonStyle.Primary, x.Item, (x.Index + 2).ToString())));
+        
+        // Scoring rule
+        
+        builder.AppendContentNewline("Scoring".DiscordHeading2());
+        builder.AppendContentNewline("Scoring Rule".DiscordHeading3());
+        
+        interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<ScoringRule>().Select(x => new SetScoringRuleInteraction
+        {
+            ForGamePlayerId = -1,
+            Game = game.DocumentId,
+            Value = x,
+        }));
+        
+        builder.AppendButtonRows(
+            Enum.GetValues<ScoringRule>()
+                .Zip(interactionIds, (enumValue, interactionId) => new DiscordButtonComponent(
+                    enumValue == game.Rules.ScoringRule
+                        ? DiscordButtonStyle.Success
+                        : DiscordButtonStyle.Secondary,
+                    interactionId,
+                    Enum.GetName(enumValue)!.InsertSpacesInCamelCase())));
+
+        builder.AppendContentNewline(game.Rules.ScoringRule switch
+        {
+            ScoringRule.Cumulative =>
+                "Each player scores points equal to the number of $star$ they control at the end of their turn. First player to reach the victory threshold wins.",
+            ScoringRule.MostStars =>
+                "Scoring is checked when the player with the scoring token ends their turn. If one player control more $star$ than any other player, they score 1VP. Whether anyone scored or not, the victory token then passes against turn order. First player to reach the victory threshold wins.",
+            _ => "???"
+        });
+        
+        builder.AppendContentNewline("Victory Threshold".DiscordHeading3());
+
+        var values = GameConstants.PossibleVictoryThresholds[game.Rules.ScoringRule];
+        interactionIds = serviceProvider.AddInteractionsToSetUp(values.Select(x => new SetVictoryThresholdInteraction
+            {
+                VictoryThreshold = x,
+                Game = game.DocumentId,
+                ForGamePlayerId = -1
+            }));
+
+        builder.AppendButtonRows(values.Zip(interactionIds)
+            .Select(x =>
+                new DiscordButtonComponent(
+                    game.Rules.VictoryThreshold == x.First ? DiscordButtonStyle.Success : DiscordButtonStyle.Secondary,
+                    x.Second, x.First.ToString())));
         
         // Starting tech rule
         
@@ -63,7 +109,7 @@ public class GameManagementOperations
         {
             StartingTechRule.None => "No starting techs",
             StartingTechRule.IndividualDraft =>
-                "Each player is secretly dealt 3 tech cards and chooses one to keep. Each player will be offered different techs.",
+                "Each player is secretly dealt 3 tech cards and chooses one to keep. Each player will be offered different techs. Unchosen techs are discarded.",
             StartingTechRule.OneUniversal =>
                 "Each player simultaneously and secretly chooses one universal tech to start with. Multiple players can choose the same tech.",
             _ => "???"

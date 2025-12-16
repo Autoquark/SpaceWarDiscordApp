@@ -407,7 +407,7 @@ public static class BoardImageGenerator
                 summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Science, row, textOptions, player.Science.ToString(), brush, InfoTextOutlinePen);
                 
                 // VP
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, $"{player.VictoryPoints} / {GameConstants.VpToWin}", brush, InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, $"{player.VictoryPoints} / {game.Rules.VictoryThreshold}", brush, InfoTextOutlinePen);
                 
                 // Stars
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
