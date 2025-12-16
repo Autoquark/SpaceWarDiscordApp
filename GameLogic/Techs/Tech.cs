@@ -51,7 +51,7 @@ public abstract class Tech
         Description = description;
         FlavourText = flavourText;
         DisplayName = displayName;
-        DescriptionKeywords = descriptionKeywords?.ToList() ?? [];
+        DescriptionKeywords = descriptionKeywords?.Order().ToList() ?? [];
         if (!_techsById.TryAdd(id, this))
         {
             throw new ArgumentException($"Tech {id} already exists");
@@ -191,4 +191,6 @@ public abstract class Tech
     /// when trigger conditions are rechecked for an event.
     /// </summary>
     protected string GetTriggerId(int index) => $"{Id}-{index}";
+
+    public static string StaticId => throw new NotImplementedException();
 }

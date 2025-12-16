@@ -65,7 +65,7 @@ public class GameManagementOperations
             ScoringRule.Cumulative =>
                 "Each player scores points equal to the number of $star$ they control at the end of their turn. First player to reach the victory threshold wins.",
             ScoringRule.MostStars =>
-                "Scoring is checked when the player with the scoring token ends their turn. If one player control more $star$ than any other player, they score 1VP. Whether anyone scored or not, the victory token then passes against turn order. First player to reach the victory threshold wins.",
+                "Scoring is checked when the player with the scoring token ends their turn. If one player controls more $star$ than any other player, they score 1VP. Whether anyone scored or not, the victory token then passes against turn order. First player to reach the victory threshold wins.",
             _ => "???"
         });
         

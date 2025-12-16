@@ -4,7 +4,8 @@ namespace SpaceWarDiscordApp.Database.GameEvents.Tech;
 
 /// <summary>
 /// When this resolves, the given player gains the given tech. Does not subtract any science points - for a purchase,
-/// these will already have been subtracted.
+/// these will already have been subtracted. Will remove the tech from the tech market if it is present. Optionally
+/// cycles the tech market
 /// </summary>
 [FirestoreData]
 public class GameEvent_PlayerGainTech : GameEvent

@@ -2,6 +2,7 @@ using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.GameLogic;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Database;
 
@@ -67,7 +68,8 @@ public class GamePlayer
     public bool IsDummyPlayer => DiscordUserId == 0;
     
     public PlayerColourInfo PlayerColourInfo => PlayerColourInfo.Get(PlayerColour);
-
+    
+    public bool HasTech(string techId) => Techs.Any(x => x.TechId == techId);
     public PlayerTech GetPlayerTechById(string techId) => Techs.First(x => x.TechId == techId);
     public PlayerTech? TryGetPlayerTechById(string techId) => Techs.FirstOrDefault(x => x.TechId == techId);
     public T GetPlayerTechById<T>(string techId) where T : PlayerTech => (T)Techs.First(x => x.TechId == techId);

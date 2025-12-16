@@ -297,13 +297,13 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
     
     private static IEnumerable<string> GetPurchaseableMarketTechsForPlayer(Game game, GamePlayer player) =>
         game.TechMarket.WhereNonNull()
-            .Where(x => player.TryGetPlayerTechById(x) == null)
+            .Where(x => !player.HasTech(x))
             .Where(x => player.Science >= GetMarketSlotCost(game.TechMarket.IndexOf(x)))
             .ToList();
     
     private static IEnumerable<string> GetPurchaseableUniversalTechsForPlayer(Game game, GamePlayer player) =>
         player.Science >= GameConstants.UniversalTechCost
-            ? game.UniversalTechs.Where(x => player.TryGetPlayerTechById(x) == null).ToList() 
+            ? game.UniversalTechs.Where(x => !player.HasTech(x)).ToList() 
             : [];
 
     public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_PlayerGainTech gameEvent, Game game,
