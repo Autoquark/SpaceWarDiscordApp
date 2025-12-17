@@ -24,8 +24,8 @@ public static class BoardImageGenerator
         ScoringToken,
         PlayerName,
         Science,
-        Vp,
         Stars,
+        Vp,
         //TechStatus
     }
 
@@ -34,7 +34,7 @@ public static class BoardImageGenerator
         {SummaryTableColumn.ScoringToken, InfoTableSingleIconColumnWidth},
         {SummaryTableColumn.PlayerName, 600},
         {SummaryTableColumn.Science, InfoTableSingleIconColumnWidth},
-        {SummaryTableColumn.Vp, InfoTableSingleIconColumnWidth * 2},
+        {SummaryTableColumn.Vp, InfoTableSingleIconColumnWidth * 3},
         {SummaryTableColumn.Stars, InfoTableSingleIconColumnWidth * 2},
         //{InfoTableColumn.TechStatus, 1200},
     };
@@ -73,6 +73,7 @@ public static class BoardImageGenerator
     private static readonly Image VpIcon;
     private static readonly Image TopStarsTiedIcon;
     private static readonly Image TopStarsIcon;
+    private static readonly Image ExclamationIcon;
     public static readonly IReadOnlyList<Image> ColourlessDieIcons;
     public static readonly Image BlankDieIconFullSize;
     private static readonly Image PlayerAreaBlankDieIcon;
@@ -150,6 +151,7 @@ public static class BoardImageGenerator
             VpIcon = Image.Load("Icons/trophy-cup.png");
             TopStarsTiedIcon = Image.Load("Icons/noun-chevron-double-up-line-2648903.png");
             TopStarsIcon = Image.Load("Icons/noun-chevron-double-up-2648915.png");
+            ExclamationIcon = Image.Load("Icons/noun-exclamation-7818018.png");
             CurrentTurnPlayerIcon = Image.Load("Icons/noun-arrow-3134187.png");
             
             ColourlessDieIcons = [
@@ -202,6 +204,7 @@ public static class BoardImageGenerator
             
             TopStarsTiedIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
             TopStarsIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
+            ExclamationIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
             CurrentTurnPlayerIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
         
             foreach (var dieIcon in ColourlessDieIcons)
@@ -290,7 +293,12 @@ public static class BoardImageGenerator
         summaryTable.LinePen = new SolidPen(Color.Black, InfoTableLineThickness);
         summaryTable.RowInternalHeights = Enumerable.Repeat(InfoTableRowHeight, game.Players.Count + 1).ToList();
         summaryTable.CellDrawingMargin = InfoTableCellDrawingMargin;
-        foreach (var column in Enum.GetValues<SummaryTableColumn>())
+
+        var summaryTableColumns = Enum.GetValues<SummaryTableColumn>().Where(x =>
+            x != SummaryTableColumn.ScoringToken || GameStateOperations.GameUsesScoringToken(game))
+            .ToList();
+        
+        foreach (var column in summaryTableColumns)
         {
             summaryTable.ColumnInternalWidths.Add(SummaryTableColumnWidths[column]);
         }
@@ -355,25 +363,36 @@ public static class BoardImageGenerator
             // Scoring token column
             //infoTable.DrawTextInCell(context, 0, 0, textOptions, "SCORING", InfoTextBrush);
 
-            if (game.Players.Count != 2)
+            foreach (var summaryTableColumn in summaryTableColumns.Index())
             {
-                var iconCentre = summaryTable
-                    .GetCellInternalRect((int)SummaryTableColumn.ScoringToken, game.ScoringTokenPlayerIndex + 1)
-                    .GetCentre();
-                context.DrawImageCentred(ScoringTokenIcon, iconCentre);
+                switch (summaryTableColumn.Item)
+                {
+                    case SummaryTableColumn.ScoringToken:
+                        var iconCentre = summaryTable
+                            .GetCellInternalRect(summaryTableColumn.Index, game.ScoringTokenPlayerIndex + 1)
+                            .GetCentre();
+                        context.DrawImageCentred(ScoringTokenIcon, iconCentre);
+                        break;
+                    case SummaryTableColumn.PlayerName:
+                        summaryTable.DrawTextInCell(context, summaryTableColumn.Index, 0, textOptions, "PLAYER", InfoTextBrush);
+                        break;
+                    
+                    case SummaryTableColumn.Science:
+                        summaryTable.DrawImageInCell(context, summaryTableColumn.Index, 0, ScienceIcon);
+                        break;
+                    
+                    case SummaryTableColumn.Vp:
+                        summaryTable.DrawImageInCell(context, summaryTableColumn.Index, 0, VpIcon);
+                        break;
+                    
+                    case SummaryTableColumn.Stars:
+                        summaryTable.DrawImageInCell(context, summaryTableColumn.Index, 0, StarIcon);
+                        break;
+                    
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
-
-            // Player name column
-            summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, 0, textOptions, "PLAYER", InfoTextBrush);
-            
-            // Science column
-            summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Science, 0, ScienceIcon);
-            
-            // VP column
-            summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Vp, 0, VpIcon);
-            
-            // Stars column
-            summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Stars, 0, StarIcon);
             
             // Fill in rows
             var playerStars = game.Players.Select(player => (player, stars: GameStateOperations.GetPlayerStars(game, player)))
@@ -393,31 +412,38 @@ public static class BoardImageGenerator
                 if (game.CurrentTurnPlayer == player)
                 {
                     textOptions.Font = InfoTableFontBold;
-                    summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.PlayerName, row, CurrentTurnPlayerIcon, HorizontalAlignment.Left);
+                    summaryTable.DrawImageInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.PlayerName), row, CurrentTurnPlayerIcon, HorizontalAlignment.Left);
                     textOptions.Font = InfoTableFont;
                     offset = new Size(CurrentTurnPlayerIcon.Width + 12, 0);
                 }
                 
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.PlayerName, row, textOptions, playerNames[player], brush: brush, offset: offset, outlinePen: InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.PlayerName), row, textOptions, playerNames[player], brush: brush, offset: offset, outlinePen: InfoTextOutlinePen);
                 
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
                 textOptions.Font = InfoTableFont;
                 
                 // Science
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Science, row, textOptions, player.Science.ToString(), brush, InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.Science), row, textOptions, player.Science.ToString(), brush, InfoTextOutlinePen);
                 
                 // VP
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Vp, row, textOptions, $"{player.VictoryPoints} / {game.Rules.VictoryThreshold}", brush, InfoTextOutlinePen);
+                summaryTable.DrawTextInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.Vp), row, textOptions, $"{player.VictoryPoints} / {game.Rules.VictoryThreshold}", brush, InfoTextOutlinePen);
                 
                 // Stars
                 textOptions.HorizontalAlignment = HorizontalAlignment.Center;
                 
                 var stars = playerStars.First(x => x.player == player).stars;
-                summaryTable.DrawTextInCell(context, (int)SummaryTableColumn.Stars, row, textOptions, stars.ToString(), brush, InfoTextOutlinePen, 0.333f);
-                if (stars == playerStars[0].stars)
+                summaryTable.DrawTextInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.Stars), row, textOptions, stars.ToString(), brush, InfoTextOutlinePen, 0.333f);
+                if (stars == playerStars[0].stars && game.Rules.ScoringRule == ScoringRule.MostStars)
                 {
-                    summaryTable.DrawImageInCell(context, (int)SummaryTableColumn.Stars, row,
+                    summaryTable.DrawImageInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.Stars), row,
                         starsTied ? TopStarsTiedIcon : TopStarsIcon, HorizontalAlignment.Center, 1, 0.666f);
+                }
+                else if (game.Rules.ScoringRule == ScoringRule.Cumulative
+                         && player.VictoryPoints + stars >= game.Rules.VictoryThreshold
+                         && !player.IsEliminated)
+                {
+                    summaryTable.DrawImageInCell(context, summaryTableColumns.IndexOf(SummaryTableColumn.Stars), row,
+                        ExclamationIcon, HorizontalAlignment.Center, 1, 0.666f);
                 }
 
                 // If player is eliminated, strikethrough entire row in their colour

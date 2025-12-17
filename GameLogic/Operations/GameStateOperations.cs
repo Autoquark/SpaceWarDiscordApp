@@ -33,4 +33,6 @@ public static class GameStateOperations
         
         return builder;
     }
+    
+    public static bool GameUsesScoringToken(Game game) => game.Players.Count != 2 && game.Rules.ScoringRule == ScoringRule.MostStars; 
 }
