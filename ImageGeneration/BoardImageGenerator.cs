@@ -14,6 +14,7 @@ using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using Path = SixLabors.ImageSharp.Drawing.Path;
+// ReSharper disable AccessToModifiedClosure
 
 namespace SpaceWarDiscordApp.ImageGeneration;
 
@@ -79,6 +80,8 @@ public static class BoardImageGenerator
     private static readonly Image PlayerAreaBlankDieIcon;
     private static readonly Image CurrentTurnPlayerIcon;
     private static readonly Image ScienceCostIcon;
+    private static readonly Image DrawPileIcon;
+    private static readonly Image DiscardPileIcon;
 
     private static readonly IDictionary<string, Image> IconSubstitutions;
     
@@ -128,6 +131,7 @@ public static class BoardImageGenerator
 
     private static readonly int SectionHeaderHeight;
     private const int ScienceCostIconSize = 80;
+    private const int DiscardPileIconSize = 80;
     private const int SpacingBelowSectionHeader = 50;
     
     // Player tech table
@@ -153,6 +157,8 @@ public static class BoardImageGenerator
             TopStarsIcon = Image.Load("Icons/noun-chevron-double-up-2648915.png");
             ExclamationIcon = Image.Load("Icons/noun-exclamation-7818018.png");
             CurrentTurnPlayerIcon = Image.Load("Icons/noun-arrow-3134187.png");
+            DrawPileIcon = Image.Load("Icons/noun-deck-3644800.png");
+            DiscardPileIcon = Image.Load("Icons/noun-discard-pile-3644798.png");
             
             ColourlessDieIcons = [
                 Image.Load("Icons/dice-six-faces-one.png"),
@@ -197,6 +203,8 @@ public static class BoardImageGenerator
             PlayerAreaBlankDieIcon = BlankDieIconFullSize.Clone(x => x.Resize(0, PlayerAreaTitleHeight - playerAreaTitleSpacer));
         
             ScienceCostIcon = ScienceIcon.Clone(x => x.Resize(ScienceCostIconSize, 0));
+            DrawPileIcon = DrawPileIcon.Clone(x => x.Resize(0, DiscardPileIconSize));
+            DiscardPileIcon = DiscardPileIcon.Clone(x => x.Resize(DiscardPileIconSize, 0));
             ScienceIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
             StarIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
             ScoringTokenIcon.Mutate(x => x.Resize(PlanetIconSize, 0));
@@ -340,8 +348,8 @@ public static class BoardImageGenerator
         
         // Tech Market
         sectionTopLeft = DrawSectionHeader("Tech Market", image, sectionTopLeft);
-        
         sectionTopLeft = DrawMarketTechs(game, image, sectionTopLeft, maxMarketTechDescriptionHeight);
+        
         sectionTopLeft += verticalMargin;
         
         // Draw summary table
@@ -578,6 +586,24 @@ public static class BoardImageGenerator
                 height = Math.Max(height, size.Height);
             }
         });
+        
+        var iconLocation = topLeft + new Size(0, maxDescriptionHeight / 2);
+        image.Mutate(context => context.DrawImageCentred(DrawPileIcon, iconLocation));
+        var textOptions = new RichTextOptions(SectionHeaderFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
+        };
+        image.Mutate(context => context.DrawText(textOptions, game.TechDeck.Count.ToString(), InfoTextBrush));
+        
+        iconLocation = topLeft + new Size(TechBoxWidth * 3 + Margin * 4, maxDescriptionHeight / 2);
+        textOptions = new RichTextOptions(SectionHeaderFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
+        };
+        image.Mutate(context => context.DrawImageCentred(DiscardPileIcon, iconLocation));
+        image.Mutate(context => context.DrawText(textOptions, game.TechDiscards.Count.ToString(), InfoTextBrush));
 
         return topLeft + new Size(0, height);
     }

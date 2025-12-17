@@ -18,7 +18,8 @@ public class Tech_ConnectFour : Tech
     
     public override bool ShouldIncludeInGame(Game game) => base.ShouldIncludeInGame(game) && game.Rules.ScoringRule != ScoringRule.Cumulative;
 
-    protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) {
+    protected override bool IsSimpleActionAvailable(Game game, GamePlayer player)
+    {
         if (!base.IsSimpleActionAvailable(game, player))
         {
             return false;
@@ -42,13 +43,15 @@ public class Tech_ConnectFour : Tech
                         { 
                             return true;
                         }
-                    } else
+                    }
+                    else
                     {
                         break;
                     }
                 }
             }
         }
+        
         return false;
     }
 
