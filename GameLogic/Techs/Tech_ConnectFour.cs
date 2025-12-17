@@ -15,6 +15,8 @@ public class Tech_ConnectFour : Tech
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
     }
+    
+    public override bool ShouldIncludeInGame(Game game) => base.ShouldIncludeInGame(game) && game.Rules.ScoringRule != ScoringRule.Cumulative;
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) {
         if (!base.IsSimpleActionAvailable(game, player))

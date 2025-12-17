@@ -15,8 +15,10 @@ public class Tech_ScientificSuperiority : Tech
         HasSimpleAction = true;
     }
 
+    public override bool ShouldIncludeInGame(Game game) => base.ShouldIncludeInGame(game) && game.Rules.ScoringRule != ScoringRule.Cumulative;
+
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player)
-        && GameStateOperations.GetPlayerScienceIconsControlled(game, player) > game.Players.Except(player).Max(x => GameStateOperations.GetPlayerScienceIconsControlled(game, x));
+                                                                                     && GameStateOperations.GetPlayerScienceIconsControlled(game, player) > game.Players.Except(player).Max(x => GameStateOperations.GetPlayerScienceIconsControlled(game, x));
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
