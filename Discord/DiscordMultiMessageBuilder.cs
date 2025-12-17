@@ -64,16 +64,7 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
 
     public DiscordMultiMessageBuilder AppendContentNewline(string content)
     {
-        try
-        {
-            CurrentBuilder.AddTextDisplayComponent(content);
-        }
-        catch (InvalidOperationException)
-        {
-            NewMessage();
-            CurrentBuilder.AddTextDisplayComponent(content);
-        }
-
+        DoWithNewMessageIfNecessary(x => x.AddTextDisplayComponent(content));
         return this;
     }
     
@@ -91,16 +82,7 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
 
     public DiscordMultiMessageBuilder AddContainerComponent(DiscordContainerComponent component)
     {
-        try
-        {
-            CurrentBuilder.AddContainerComponent(component);
-        }
-        catch (InvalidOperationException)
-        {
-            NewMessage();
-            CurrentBuilder.AddContainerComponent(component);
-        }
-        
+        DoWithNewMessageIfNecessary(x => x.AddContainerComponent(component));
         return this;
     }
 
@@ -135,16 +117,7 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
     public DiscordMultiMessageBuilder AddActionRowComponent(params IEnumerable<DiscordButtonComponent> buttons)
     {
         buttons = buttons.ToList();
-        try
-        {
-            CurrentBuilder.AddActionRowComponent(buttons);
-        }
-        catch (InvalidOperationException)
-        {
-            NewMessage();
-            CurrentBuilder.AddActionRowComponent(buttons);
-        }
-        
+        DoWithNewMessageIfNecessary(x => x.AddActionRowComponent(buttons));
         return this;
     }
 
@@ -154,32 +127,24 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         return this;
     }
     
-    public DiscordMultiMessageBuilder AppendButtonRows(string cancelId, IEnumerable<DiscordButtonComponent> buttons)
+    public DiscordMultiMessageBuilder AppendButtonRows(string? cancelId, IEnumerable<DiscordButtonComponent> buttons)
     {
-        CurrentBuilder.AppendButtonRows(cancelId, buttons);
+        var groups = buttons.Index()
+            .GroupBy(x => x.Index / 5)
+            .ToList();
+        
+        foreach (var (index, group) in groups.Index())
+        {
+            DoWithNewMessageIfNecessary(builder =>
+                builder.AppendButtonRows(index == groups.Count - 1 ? cancelId : null, group.Select(x => x.Item)));
+        }
+        
         return this;
     }
 
     public DiscordMultiMessageBuilder AppendHexButtons(Game game, IEnumerable<BoardHex> hexes,
         IEnumerable<string> interactionIds, string? cancelId = null)
-    {
-        foreach (var group in hexes.ZipWithIndices()
-                     .Zip(interactionIds, (a, b) => (a.index, hex: a.item, id: b))
-                     .GroupBy(x => x.index / 5))
-        {
-            try
-            {
-                CurrentBuilder.AppendHexButtons(game, group.Select(x => x.hex), group.Select(x => x.id), cancelId);
-            }
-            catch (InvalidOperationException)
-            {
-                NewMessage();
-                CurrentBuilder.AppendHexButtons(game, group.Select(x => x.hex), group.Select(x => x.id), cancelId);
-            }
-        }
-        
-        return this;   
-    }
+    => AppendButtonRows(cancelId, hexes.Zip(interactionIds).Select(x => DiscordHelpers.CreateButtonForHex(game, x.First, x.Second)));
 
     public async Task<DiscordMultiMessageBuilder> AppendPlayerButtonsAsync(IEnumerable<GamePlayer> players,
         IEnumerable<string> interactionIds, string? cancelId = null)
@@ -191,6 +156,21 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
     public DiscordMultiMessageBuilder AppendCancelButton(string interactionId)
     {
         CurrentBuilder.AppendCancelButton(interactionId);
+        return this;
+    }
+
+    public DiscordMultiMessageBuilder? DoWithNewMessageIfNecessary(Action<IDiscordMessageBuilder> action)
+    {
+        try
+        {
+            action(CurrentBuilder);
+        }
+        catch (InvalidOperationException )
+        {
+            NewMessage();
+            action(CurrentBuilder);
+        }
+
         return this;
     }
 }
