@@ -11,6 +11,8 @@ public class ProdOperations
     {
         if (game.Phase != GamePhase.Play)
         {
+            nonDbGameState.TurnProdTimer.Cancel();
+            nonDbGameState.UnfinishedTurnProdTimer.Cancel();
             return;
         }
 

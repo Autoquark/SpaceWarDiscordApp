@@ -192,7 +192,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                                     $"**{name} scores and is now on {scoringPlayer.VictoryPoints}/6 VP!**")
                                 .WithAllowedMentions(scoringPlayer);
 
-                            await CheckForVictoryAsync(builder, game);
+                            await CheckForVictoryAsync(builder, game, serviceProvider);
                         }
                         else
                         {
@@ -229,7 +229,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 builder?.AppendContentNewline(
                     $"{await endingTurnPlayer.GetNameAsync(false)} gains {stars} VP and now has {endingTurnPlayer.VictoryPoints}/{game.Rules.VictoryThreshold} VP");
                 
-                await CheckForVictoryAsync(builder, game);
+                await CheckForVictoryAsync(builder, game, serviceProvider);
                 break;
         }
 
@@ -270,7 +270,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return await ShowSelectActionMessageAsync(builder, game, serviceProvider);
     }
 
-    public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game)
+    public static async Task<DiscordMultiMessageBuilder?> CheckForVictoryAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
     {
         var winner = game.Players.FirstOrDefault(x => x.VictoryPoints >= game.Rules.VictoryThreshold);
         if (winner != null)
@@ -282,6 +282,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 .AppendContentNewline("If you want to continue, fix up the game state so there is no longer a winner and use /reprompt to continue playing")
                 .WithAllowedMentions(game.Players);
             game.Phase = GamePhase.Finished;
+            
+            // Cancel any active prod timers
+            ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<NonDbGameState>());
 
             if (builder != null)
             {
