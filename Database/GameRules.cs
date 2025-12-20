@@ -42,4 +42,7 @@ public class GameRules : FirestoreDocument
     
     [FirestoreProperty]
     public int MaxPlayers { get; set; } = GameConstants.MaxPlayerCount;
+
+    [FirestoreProperty]
+    public bool SingleUseTechCanBeUniversal { get; set; } = true;
 }

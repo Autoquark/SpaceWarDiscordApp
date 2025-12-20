@@ -85,9 +85,13 @@ public class GameManagementOperations
                     game.Rules.VictoryThreshold == x.First ? DiscordButtonStyle.Success : DiscordButtonStyle.Secondary,
                     x.Second, x.First.ToString())));
         
+        // Tech
+        
+        builder.AppendContentNewline("Tech".DiscordHeading2());
+        
         // Starting tech rule
         
-        builder.AppendContentNewline("Starting Tech:".DiscordHeading2());
+        builder.AppendContentNewline("Starting Tech".DiscordHeading3());
         
         interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<StartingTechRule>().Select(x => new SetStartingTechRuleInteraction
         {
@@ -115,8 +119,25 @@ public class GameManagementOperations
             _ => "???"
         });
         
+        // Single use tech rules
+        builder.AppendContentNewline("Tech Settings".DiscordHeading3());
+
+        var interactionId = serviceProvider.AddInteractionToSetUp(new SetSingleUseTechCanBeUniversal
+        {
+            Game = game.DocumentId,
+            ForGamePlayerId = -1,
+            Value = !game.Rules.SingleUseTechCanBeUniversal
+        });
+
+        builder.AppendButtonRows(new DiscordButtonComponent(
+            game.Rules.SingleUseTechCanBeUniversal ? DiscordButtonStyle.Success : DiscordButtonStyle.Secondary,
+            interactionId,
+            game.Rules.SingleUseTechCanBeUniversal
+                ? "Single-use techs can be universals: ON"
+                : "Single-use techs can be universals: OFF"));
+        
         // Map generator
-        builder.AppendContentNewline("Map Generator:".DiscordHeading2());
+        builder.AppendContentNewline("Map Generator".DiscordHeading2());
 
         interactionIds = serviceProvider.AddInteractionsToSetUp(BaseMapGenerator.GetAllGenerators().Select(x =>
             new SetMapGeneratorInteraction

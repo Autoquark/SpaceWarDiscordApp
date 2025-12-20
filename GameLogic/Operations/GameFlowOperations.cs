@@ -827,7 +827,18 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         // Select universal techs at random
         for (var i = 0; i < GameConstants.UniversalTechCount; i++)
         {
-            game.UniversalTechs.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
+            // Draw cards until we get a suitable universal tech
+            var drawn = new List<Tech>();
+            do
+            {
+                drawn.Add(TechOperations.DrawTechFromDeckSilent(game)!);
+            } while (!drawn[^1].CanBeUniversalForGame(game));
+            
+            game.UniversalTechs.Add(drawn[^1].Id);
+            
+            // Return unsuitable cards drawn to the deck and shuffle
+            game.TechDeck.AddRange(drawn[0..^1].Select(x => x.Id));
+            game.TechDeck.Shuffle();
         }
 
         for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)

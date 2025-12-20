@@ -108,6 +108,8 @@ public abstract class Tech
         return [result];
     }
 
+    public virtual bool CanBeUniversalForGame(Game game) => ShouldIncludeInGame(game) && game.Rules.SingleUseTechCanBeUniversal || !DescriptionKeywords.Contains(TechKeyword.SingleUse);
+    
     public virtual bool ShouldIncludeInGame(Game game) => IncludeInGames;
     
     /// <summary>

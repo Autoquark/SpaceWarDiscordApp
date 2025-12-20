@@ -25,7 +25,8 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     IInteractionHandler<RollBackGameInteraction>,
     IInteractionHandler<SetMaxPlayerCountInteraction>,
     IInteractionHandler<SetScoringRuleInteraction>,
-    IInteractionHandler<SetVictoryThresholdInteraction>
+    IInteractionHandler<SetVictoryThresholdInteraction>,
+    IInteractionHandler<SetSingleUseTechCanBeUniversal>
 {
     private class NounProjectImageCredit
     {
@@ -404,6 +405,25 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         }
 
         game.Rules.VictoryThreshold = interactionData.VictoryThreshold;
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+    
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetSingleUseTechCanBeUniversal interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change game settings after the game has started");
+            return new SpaceWarInteractionOutcome(false);       
+        }
+
+        game.Rules.SingleUseTechCanBeUniversal = interactionData.Value;
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
