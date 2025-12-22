@@ -4,8 +4,10 @@ namespace SpaceWarDiscordApp.GameLogic;
 
 public static class GameLogicExtensions
 {
+    public static IEnumerable<BoardHex> WhereOwnedBy(this IEnumerable<BoardHex> hexes, int playerId)
+        => hexes.Where(x => x.Planet?.OwningPlayerId == playerId);
     public static IEnumerable<BoardHex> WhereOwnedBy(this IEnumerable<BoardHex> hexes, GamePlayer player)
-        => hexes.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId);
+        => hexes.WhereOwnedBy(player.GamePlayerId);
     
     public static IEnumerable<BoardHex> WhereNotOwnedBy(this IEnumerable<BoardHex> hexes, GamePlayer player)
         => hexes.WhereNotOwnedBy(player.GamePlayerId);

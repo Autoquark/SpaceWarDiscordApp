@@ -167,49 +167,20 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             }
         }
         
-        IEnumerable<BoardHex> destinations;
-        if (RequireAdjacency)
+        var destinationsSet = new HashSet<BoardHex>();
+        var allowedSources = fixedSource.HasValue
+            ? [game.GetHexAt(fixedSource.Value)]
+            : GetAllowedMoveSources(game, player, null);
+        foreach (var sourceHex in allowedSources)
         {
-            var destinationsSet = new HashSet<BoardHex>();
-            var allowedSources = fixedSource.HasValue
-                ? [game.GetHexAt(fixedSource.Value)]
-                : GetAllowedMoveSources(game, player, null);
-            foreach (var sourceHex in allowedSources)
-            {
-                destinationsSet.UnionWith(GetAllowedDestinationsForSource(game, sourceHex));
-            }
-
-            destinations = destinationsSet;
-        }
-        else
-        {
-            destinations = game.Hexes;
-        }
-
-        // Can only move to hexes with a planet
-        destinations = destinations.WhereNonNull(x => x.Planet);
-
-        switch (DestinationRestriction)
-        {
-            case MoveDestinationRestriction.Unrestricted:
-                break;
-            case MoveDestinationRestriction.CannotAttack:
-                destinations = destinations.Where(x => x.Planet?.OwningPlayerId == player.GamePlayerId || x.IsNeutral);
-                break;
-            case MoveDestinationRestriction.MustAlreadyControl:
-                destinations = destinations.WhereOwnedBy(player);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+            destinationsSet.UnionWith(GetAllowedDestinationsForSource(game, sourceHex));
         }
         
         var playerName = await player.GetNameAsync(true);
         builder.AppendContentNewline($"{GetMoveName()}: {playerName}, choose a {"destination".DiscordBold()} for your move: ")
             .WithAllowedMentions(player);
 
-        destinations = destinations.ToList();
-
-        var interactionIds = serviceProvider.AddInteractionsToSetUp(destinations.Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(destinationsSet.Select(x =>
             new SetMoveDestinationInteraction<T>
             {
                 Game = game.DocumentId,
@@ -222,7 +193,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 TriggerToMarkResolvedId = triggerToMarkResolved
             }));
         
-        return builder.AppendHexButtons(game, destinations, interactionIds);
+        return builder.AppendHexButtons(game, destinationsSet, interactionIds);
     }
 
     /// <summary>
@@ -611,8 +582,17 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 : game.Hexes.WhereOwnedBy(player))
             .Except(destination)!.ToList<BoardHex>();
 
-    protected virtual ISet<BoardHex> GetAllowedDestinationsForSource(Game game, BoardHex source)
-        => BoardUtils.GetNeighbouringHexes(game, source);
+    public virtual IEnumerable<BoardHex> GetAllowedDestinationsForSource(Game game, BoardHex source)
+    {
+        IEnumerable<BoardHex> destinations = RequireAdjacency ? BoardUtils.GetNeighbouringHexes(game, source) : game.Hexes;
+        return DestinationRestriction switch
+        {
+            MoveDestinationRestriction.Unrestricted => destinations,
+            MoveDestinationRestriction.CannotAttack => destinations.Where(x => x.Planet?.OwningPlayerId == source.Planet!.OwningPlayerId || x.IsNeutral),
+            MoveDestinationRestriction.MustAlreadyControl => destinations.WhereOwnedBy(source.Planet!.OwningPlayerId),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
 
     public virtual async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<T> gameEvent, Game game,
         IServiceProvider serviceProvider)

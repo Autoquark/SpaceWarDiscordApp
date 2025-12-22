@@ -36,7 +36,7 @@ class HopDriveMovementFlowHandler : MovementFlowHandler<Tech_HopDrive>
         ActionType = tech.SimpleActionType;
     }
 
-    protected override ISet<BoardHex> GetAllowedDestinationsForSource(Game game, BoardHex source)
+    public override IEnumerable<BoardHex> GetAllowedDestinationsForSource(Game game, BoardHex source)
     {
         var oneAway = BoardUtils.GetNeighbouringHexes(game, source.Coordinates);
         return oneAway

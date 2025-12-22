@@ -21,7 +21,8 @@ public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomy
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
     {
-        if (gameEvent is GameEvent_ExceedingPlanetCapacity exceedingPlanetCapacity)
+        if (gameEvent is GameEvent_ExceedingPlanetCapacity exceedingPlanetCapacity &&
+            _movementFlowHandler.GetAllowedDestinationsForSource(game, game.GetHexAt(exceedingPlanetCapacity.Location)).Any())
         {
             var hex = game.GetHexAt(exceedingPlanetCapacity.Location);
             if (hex.Planet!.OwningPlayerId == player.GamePlayerId)
@@ -53,7 +54,6 @@ public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomy
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseFungibleAnatomyInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
-        // TODO: Handle showing more than 6 forces on map
         var hex = game.GetHexAt(interactionData.Event.Location);
         await _movementFlowHandler.BeginPlanningMoveAsync(builder!, game,
             game.GetGamePlayerForInteraction(interactionData), serviceProvider,
@@ -70,6 +70,7 @@ class FungibleAnatomyMovementFlowHandler : MovementFlowHandler<Tech_FungibleAnat
         ActionType = null;
         AllowManyToOne = false;
         ContinueResolvingStackAfterMove = true;
+        DestinationRestriction = MoveDestinationRestriction.MustAlreadyControl;
     }
     
     
