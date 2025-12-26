@@ -284,7 +284,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             game.Phase = GamePhase.Finished;
             
             // Cancel any active prod timers
-            ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<NonDbGameState>());
+            ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().NonDbGameState!);
 
             if (builder != null)
             {
