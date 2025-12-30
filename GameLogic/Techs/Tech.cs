@@ -94,7 +94,10 @@ public abstract class Tech
     
     protected bool SimpleActionIsOncePerTurn { get; init; } = false;
 
-    protected bool IncludeInGames { get; set; } = true;
+    /// <summary>
+    /// If false, the tech will be excluded from games by default and hidden from the listing of all techs
+    /// </summary>
+    public bool IncludeInGames { get; init; } = true;
 
     /// <summary>
     /// Gets a discord message string representing the state of this tech for the given game and player

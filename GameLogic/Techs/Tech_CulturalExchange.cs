@@ -20,6 +20,7 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
     {
         HasSimpleAction = true;
         SimpleActionType = ActionType.Free;
+        IncludeInGames = false;
     }
 
     private IEnumerable<GamePlayer> GetTargetablePlayers(Game game, GamePlayer user)

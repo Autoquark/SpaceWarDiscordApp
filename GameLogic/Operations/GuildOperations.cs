@@ -41,9 +41,10 @@ public static class GuildOperations
 
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         builder.AppendContentNewline("This channel will be kept updated with details of all techs in SpaceWar:");
-        foreach (var techId in Tech.TechsById.Keys.Order())
+        foreach (var tech in Tech.TechsById.Values.Where(x => x.IncludeInGames)
+                     .OrderBy(x => x.DisplayName))
         {
-            TechOperations.ShowTechDetails(builder, techId);
+            TechOperations.ShowTechDetails(builder, tech.Id);
         }
 
         var messages = await guildData.TechListingMessageIds.ToAsyncEnumerable()
