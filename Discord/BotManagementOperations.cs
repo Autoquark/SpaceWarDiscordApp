@@ -22,17 +22,14 @@ public class BotManagementOperations
         
         foreach (var playerColour in Enum.GetValues<PlayerColour>().Select(PlayerColourInfo.Get))
         {
-            var recolorBrush = new RecolorBrush(Color.White, playerColour.ImageSharpColor, 0.5f);
-            foreach (var (image, i) in BoardImageGenerator.ColourlessDieIcons.ZipWithIndices())
+            foreach (var (i, image) in BoardImageGenerator.ColouredDieIcons[playerColour.PlayerColour].Index())
             {
-                using var dieImage = image.Clone(x => x.Fill(recolorBrush));
                 await using var fileStream = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_{i + 1}.png"), FileMode.Create);
-                await dieImage.SaveAsPngAsync(fileStream);
+                await image.SaveAsPngAsync(fileStream);
             }
             
-            using var blankImage = BoardImageGenerator.BlankDieIconFullSize.Clone(x => x.Fill(recolorBrush));
             await using var fileStream2 = new FileStream(Path.Combine(DieEmojiDirectoryPath, $"{playerColour.Name}_blank.png"), FileMode.Create);
-            await blankImage.SaveAsPngAsync(fileStream2);
+            await BoardImageGenerator.PlayerEmblemIcons[playerColour.PlayerColour].SaveAsPngAsync(fileStream2);
         }
         
         // Reupload bot emoji to discord

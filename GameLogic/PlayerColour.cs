@@ -27,7 +27,8 @@ public class PlayerColourInfo
                 {
                     Name = "red",
                     PlayerColour = PlayerColour.Red,
-                    ImageSharpColor = Color.Red
+                    ImageSharpColor = Color.Red,
+                    DieIconFolder = "Circle"
                 }
             },
             {
@@ -36,7 +37,8 @@ public class PlayerColourInfo
                 {
                     Name = "green",
                     PlayerColour = PlayerColour.Green,
-                    ImageSharpColor = Color.LimeGreen
+                    ImageSharpColor = Color.LimeGreen,
+                    DieIconFolder = "Square"
                 }
             },
             {
@@ -45,7 +47,8 @@ public class PlayerColourInfo
                 {
                     Name = "blue",
                     PlayerColour = PlayerColour.Blue,
-                    ImageSharpColor = Color.DodgerBlue
+                    ImageSharpColor = Color.DodgerBlue,
+                    DieIconFolder = "Diamond"
                 }
             },
             {
@@ -54,7 +57,8 @@ public class PlayerColourInfo
                 {
                     Name = "orange",
                     PlayerColour = PlayerColour.Orange,
-                    ImageSharpColor = Color.Orange
+                    ImageSharpColor = Color.Orange,
+                    DieIconFolder = "Star8"
                 }
             },
             {
@@ -63,7 +67,8 @@ public class PlayerColourInfo
                 {
                     Name = "yellow",
                     PlayerColour = PlayerColour.Yellow,
-                    ImageSharpColor = Color.Gold
+                    ImageSharpColor = Color.Gold,
+                    DieIconFolder = "Triangle"
                 }
             },
             {
@@ -72,7 +77,8 @@ public class PlayerColourInfo
                 {
                     Name = "cyan",
                     PlayerColour = PlayerColour.Cyan,
-                    ImageSharpColor = Color.DarkTurquoise
+                    ImageSharpColor = Color.DarkTurquoise,
+                    DieIconFolder = "Plus"
                 }
             },
             {
@@ -81,7 +87,8 @@ public class PlayerColourInfo
                 {
                     Name = "purple",
                     PlayerColour = PlayerColour.Purple,
-                    ImageSharpColor = Color.Purple
+                    ImageSharpColor = Color.Purple,
+                    DieIconFolder = "Circle"
                 }
             }
         };
@@ -89,6 +96,7 @@ public class PlayerColourInfo
     public required string Name { get; init; }
     public required PlayerColour PlayerColour { get; init; }
     public required Color ImageSharpColor { get; init; }
+    public required string DieIconFolder { get; init; }
     
     public DiscordEmoji BlankDieEmoji => Program.AppEmojisByName[$"{Name}_blank"];
     public DiscordEmoji GetDieEmoji(int number) => Program.AppEmojisByName[$"{Name}_{number}"];

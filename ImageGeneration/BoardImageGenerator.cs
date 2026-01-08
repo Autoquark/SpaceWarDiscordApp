@@ -14,7 +14,11 @@ using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using Path = SixLabors.ImageSharp.Drawing.Path;
+
+// ImageSharp produces a lot of this due to the Mutate() etc. methods taking delegates
+// but it's fine as they do in fact run immediately and not access captured variables later on
 // ReSharper disable AccessToModifiedClosure
+// ReSharper disable AccessToDisposedClosure
 
 namespace SpaceWarDiscordApp.ImageGeneration;
 
@@ -75,9 +79,9 @@ public static class BoardImageGenerator
     private static readonly Image TopStarsTiedIcon;
     private static readonly Image TopStarsIcon;
     private static readonly Image ExclamationIcon;
-    public static readonly IReadOnlyList<Image> ColourlessDieIcons;
-    public static readonly Image BlankDieIconFullSize;
-    private static readonly Image PlayerAreaBlankDieIcon;
+    public static readonly IReadOnlyDictionary<PlayerColour, List<Image>> ColouredDieIcons;
+    public static readonly IReadOnlyDictionary<PlayerColour, Image> PlayerEmblemIcons;
+    private static readonly IReadOnlyDictionary<PlayerColour, Image> PlayerAreaEmblemIcons;
     private static readonly Image CurrentTurnPlayerIcon;
     private static readonly Image ScienceCostIcon;
     private static readonly Image DrawPileIcon;
@@ -100,7 +104,7 @@ public static class BoardImageGenerator
     private static readonly Font PlayerAreaNameFont;
     private static readonly Font SectionHeaderFont;
     private static readonly Font TechCostFont;
-    // Fallback font for indicating number of forces if there's more than 6
+    // Fallback font for indicating the number of forces if there's more than 6
     private static readonly Font ForcesNumberFont;
     
     // Recap graphics
@@ -159,17 +163,40 @@ public static class BoardImageGenerator
             CurrentTurnPlayerIcon = Image.Load("Icons/noun-arrow-3134187.png");
             DrawPileIcon = Image.Load("Icons/noun-deck-3644800.png");
             DiscardPileIcon = Image.Load("Icons/noun-discard-pile-3644798.png");
+
+            var playerColourInfos = Enum.GetValues<PlayerColour>().Select(PlayerColourInfo.Get)
+                .ToList(); 
             
-            ColourlessDieIcons = [
-                Image.Load("Icons/dice-six-faces-one.png"),
-                Image.Load("Icons/dice-six-faces-two.png"),
-                Image.Load("Icons/dice-six-faces-three.png"),
-                Image.Load("Icons/dice-six-faces-four.png"),
-                Image.Load("Icons/dice-six-faces-five.png"),
-                Image.Load("Icons/dice-six-faces-six.png")
-            ];
-            
-            BlankDieIconFullSize = Image.Load("Icons/dice-six-faces-blank.png");
+            ColouredDieIcons = playerColourInfos.ToDictionary(
+                x => x.PlayerColour, x =>
+                {
+                    var recolor = new RecolorBrush(Color.White, x.ImageSharpColor, 0.5f);
+                    var images = new List<Image>
+                    {
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-one.png"),
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-two.png"),
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-three.png"),
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-four.png"),
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-five.png"),
+                        Image.Load($"Icons/Dice/{x.DieIconFolder}/dice-six-faces-six.png"),
+                    };
+
+                    foreach (var image in images)
+                    {
+                        image.Mutate(context => context.Fill(recolor));
+                    }
+
+                    return images;
+                });
+
+            PlayerEmblemIcons = playerColourInfos.ToDictionary(x => x.PlayerColour,
+                x =>
+                {
+                    var recolor = new RecolorBrush(Color.White, x.ImageSharpColor, 0.5f);
+                    var image = Image.Load($"Icons/Dice/{x.DieIconFolder}/emblem.png");
+                    image.Mutate(context => context.Fill(recolor));
+                    return image;
+                });
             
             var family = FontCollection.Add("Fonts/Arial/arial.ttf");
             FontCollection.Add("Fonts/Arial/arialbd.ttf");
@@ -200,7 +227,8 @@ public static class BoardImageGenerator
             
             TechBoxMinHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(InfoTableFont)).Height * 4;
             
-            PlayerAreaBlankDieIcon = BlankDieIconFullSize.Clone(x => x.Resize(0, PlayerAreaTitleHeight - playerAreaTitleSpacer));
+            PlayerAreaEmblemIcons = PlayerEmblemIcons.ToDictionary(x => x.Key,
+                x => x.Value.Clone(context => context.Resize(0, PlayerAreaTitleHeight - playerAreaTitleSpacer)));
         
             ScienceCostIcon = ScienceIcon.Clone(x => x.Resize(ScienceCostIconSize, 0));
             DrawPileIcon = DrawPileIcon.Clone(x => x.Resize(0, DiscardPileIconSize));
@@ -215,7 +243,7 @@ public static class BoardImageGenerator
             ExclamationIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
             CurrentTurnPlayerIcon.Mutate(x => x.Resize(0, InfoTableIconHeight));
         
-            foreach (var dieIcon in ColourlessDieIcons)
+            foreach (var dieIcon in ColouredDieIcons.SelectMany(x => x.Value))
             {
                 dieIcon.Mutate(x => x.Resize(DieIconSize, 0));
             }
@@ -495,11 +523,10 @@ public static class BoardImageGenerator
                 var tempLocation = location;
                 
                 var evenMoreTempLocation = tempLocation + new Size(12, 0);;
-                var recolorBrush = new RecolorBrush(Color.White, player.PlayerColourInfo.ImageSharpColor, 0.5f);
-                using var dieImage = PlayerAreaBlankDieIcon.Clone(x => x.Fill(recolorBrush));
-                image.Mutate(x => x.DrawImage(dieImage, evenMoreTempLocation, 1.0f));
+                var emblem = PlayerAreaEmblemIcons[player.PlayerColour];
+                image.Mutate(x => x.DrawImage(emblem, evenMoreTempLocation, 1.0f));
                 
-                playerNameTextOptions.Origin = evenMoreTempLocation + new Size(PlayerAreaBlankDieIcon.Width + 12, 0);
+                playerNameTextOptions.Origin = evenMoreTempLocation + new Size(emblem.Width + 12, 0);
                 image.Mutate(x => x.DrawText(playerNameTextOptions, playerNames[player], player.PlayerColourInfo.ImageSharpColor));
                 tempLocation.Y += PlayerAreaTitleHeight;
                 
@@ -805,7 +832,7 @@ public static class BoardImageGenerator
                     // Draw die in centre of hex to represent forces
                     if (hex.ForcesPresent <= 6)
                     {
-                        using var dieImage = ColourlessDieIcons[hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
+                        using var dieImage = ColouredDieIcons[colourInfo.PlayerColour][hex.ForcesPresent - 1].Clone(x => x.Fill(recolorBrush));
                         image.Mutate(x => x.DrawImageCentred(dieImage, hexCentre));
                     }
                     // Sometimes we can have more than 6 forces present if resolution is paused for a player decision between forces moving/being produced
