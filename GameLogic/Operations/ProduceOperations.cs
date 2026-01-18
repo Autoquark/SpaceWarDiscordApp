@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Raffinert.FuzzySharp.Utils;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
@@ -49,7 +50,15 @@ public class ProduceOperations : IEventResolvedHandler<GameEvent_BeginProduce>,
         var player = game.GetGamePlayerByGameId(producingPlayerId);
         var name = await player.GetNameAsync(false);
         
-        hex.Planet.SetForces(hex.Planet.ForcesPresent + gameEvent.EffectiveProductionValue, producingPlayerId);
+        // Cap minimum production at 1 if planet usually produces at least 1
+        var produceAdditionalForces = gameEvent.EffectiveProductionValue;
+        if (gameEvent.EffectiveProductionValue < 1 && hex.Planet.Production > 0)
+        {
+            produceAdditionalForces = 1;
+        }
+        
+        hex.Planet.SetForces(hex.Planet.ForcesPresent + produceAdditionalForces, producingPlayerId);
+        
         hex.Planet.IsExhausted = true;
         var producedScience = gameEvent.EffectiveScienceProduction > 0;
 
