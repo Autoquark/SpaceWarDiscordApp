@@ -196,6 +196,4 @@ public abstract class Tech
     /// when trigger conditions are rechecked for an event.
     /// </summary>
     protected string GetTriggerId(int index) => $"{Id}-{index}";
-
-    public static string StaticId => throw new NotImplementedException();
 }
