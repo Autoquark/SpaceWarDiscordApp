@@ -9,7 +9,7 @@ public class Tech_FreeMoveVariant : Tech
 {
     public const string StaticId = "free-move-variant";
     
-    public Tech_FreeMoveVariant() : base(StaticId, "Free Move", "Make a move action. Exhaust the destination planet.", "", [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
+    public Tech_FreeMoveVariant() : base(StaticId, "Free Move", "Make a move action. If you capture a planet during this move, exhaust it.", "", [TechKeyword.FreeAction, TechKeyword.OncePerTurn])
     {
         IncludeInGames = false;
         HasSimpleAction = true;
@@ -37,8 +37,13 @@ class FreeMoveVariant_MovementFlowHandler : MovementFlowHandler<Tech_FreeMoveVar
     public override Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<Tech_FreeMoveVariant> gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
-        game.GetHexAt(gameEvent.Destination).Planet!.IsExhausted = true;
-        builder?.AppendContentNewline($"{gameEvent.Destination} has been exhausted");
+        var hex = game.GetHexAt(gameEvent.Destination);
+        if (hex.Planet!.OwningPlayerId == gameEvent.PlayerGameId)
+        {
+            hex.Planet.IsExhausted = true;
+            builder?.AppendContentNewline($"{gameEvent.Destination} has been exhausted");
+        }
+
         return base.HandleEventResolvedAsync(builder, gameEvent, game, serviceProvider);
     }
 }
