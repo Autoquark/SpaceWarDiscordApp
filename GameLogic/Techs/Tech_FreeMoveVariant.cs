@@ -31,7 +31,6 @@ class FreeMoveVariant_MovementFlowHandler : MovementFlowHandler<Tech_FreeMoveVar
     public FreeMoveVariant_MovementFlowHandler(Tech_FreeMoveVariant tech) : base(tech)
     {
         ActionType = GameLogic.ActionType.Free;
-        ExhaustTechId = Tech_FreeMoveVariant.StaticId;
     }
     
     public override Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<Tech_FreeMoveVariant> gameEvent, Game game,
