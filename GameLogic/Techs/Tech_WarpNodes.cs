@@ -2,6 +2,7 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
+using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.Tech.WarpNodes;
@@ -16,6 +17,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_WarpNodes : Tech,
     IInteractionHandler<WarpNodes_ChooseSourceInteraction>,
     IInteractionHandler<WarpNodes_ChooseAmountInteraction>,
+    IEventResolvedHandler<GameEvent_MovementFlowComplete<Tech_WarpNodes>>,
     IPlayerChoiceEventHandler<GameEvent_ChooseWarpNodesDestination, WarpNodes_ChooseDestinationInteraction>
 
 {
@@ -87,11 +89,17 @@ public class Tech_WarpNodes : Tech,
         
         if (interactionData.Amount > 0)
         {
-            events.AddRange(await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, new PlannedMove
+            events.AddRange((await MovementOperations.GetResolveMoveEventsAsync(builder, game, player, new PlannedMove
             {
                 Sources = [new SourceAndAmount { Source = source.Coordinates, Amount = interactionData.Amount }],
                 Destination = interactionData.Destination
-            }, serviceProvider, this));
+            }, serviceProvider, this)).Append(new GameEvent_MovementFlowComplete<Tech_WarpNodes>
+            {
+                PlayerGameId = player.GamePlayerId,
+                TriggerToMarkResolved = null,
+                Sources = [new SourceAndAmount{ Source = source.Coordinates, Amount = interactionData.Amount}],
+                Destination = interactionData.Destination
+            }));
             playerTech.MovedTo.Add(interactionData.Destination);
         }
         
@@ -200,5 +208,14 @@ public class Tech_WarpNodes : Tech,
 
         // The choice event will be marked resolved by the interaction handler for WarpNodes_ChooseAmountInteraction
         return false;
+    }
+
+    // Normally this would be part of a movement handler but warp nodes doesn't use one due to having a weird unique flow. We still need to fire and handle this event to ensure related
+    // techs (e.g. en passant) trigger however
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_MovementFlowComplete<Tech_WarpNodes> gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        // Nothing to do here, this is just the end of an individual movement, not the whole warp nodes action
+        return Task.FromResult(builder);
     }
 }
