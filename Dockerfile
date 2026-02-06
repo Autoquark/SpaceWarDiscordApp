@@ -1,9 +1,9 @@
-# Use the .NET 9.0 runtime image for production
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
+# Use the .NET 10.0 runtime image for production
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
 WORKDIR /app
 
-# Use the .NET 9.0 SDK image to build/publish the app
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# Use the .NET 10.0 SDK image to build/publish the app
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet restore "./SpaceWarDiscordApp.csproj"
