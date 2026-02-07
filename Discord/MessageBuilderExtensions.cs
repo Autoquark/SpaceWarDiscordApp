@@ -123,22 +123,19 @@ public static class MessageBuilderExtensions
     public static async Task<IDiscordMessageBuilder> AppendPlayerButtonsAsync(this IDiscordMessageBuilder builder,
         IEnumerable<GamePlayer> players, IEnumerable<string> interactionIds, string? cancelId = null)
     {
-        IEnumerable<DiscordButtonComponent> buttons = await Task.WhenAll(players.Zip(interactionIds,
-                async (p, i) => (Player: p, Name: await p.GetNameAsync(false, false), Id: i))
+        var buttons = players.Zip(interactionIds)
             .ToAsyncEnumerable()
-            .OrderByAwait(async x => (await x).Name)
-            .Select(async x =>
-            {
-                var (player, name, id) = await x;
-                return await DiscordHelpers.CreateButtonForPlayerAsync(player, id);
-            }).ToEnumerable());
+            .Select(async ((GamePlayer First, string Second) p, CancellationToken c) => (Player: p.First,
+                Name: await p.First.GetNameAsync(false, false), Id: p.Second))
+            .OrderBy(x => x.Name)
+            .Select(async ((GamePlayer Player, string Name, string Id) x, CancellationToken _) => await DiscordHelpers.CreateButtonForPlayerAsync(x.Player, x.Id));
 
         if (cancelId != null)
         {
             buttons = buttons.Append(DiscordHelpers.CreateCancelButton(cancelId));
         }
         
-        return builder.AppendButtonRows(buttons);
+        return builder.AppendButtonRows(await buttons.ToListAsync());
     }
 
     public static IDiscordMessageBuilder AppendCancelButton(this IDiscordMessageBuilder builder, string interactionId)

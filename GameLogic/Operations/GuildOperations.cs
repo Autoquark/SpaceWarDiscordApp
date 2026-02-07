@@ -47,10 +47,10 @@ public static class GuildOperations
             TechOperations.ShowTechDetails(builder, tech.Id);
         }
 
-        var messages = await guildData.TechListingMessageIds.ToAsyncEnumerable()
-            .SelectAwait(async x => await channel.TryGetMessageAsync(x))
-            .WhereNonNull()
-            .ToListAsync();
+        var messages = (await Task.WhenAll(guildData.TechListingMessageIds
+            .Select(async x => await channel.TryGetMessageAsync(x))
+            .WhereNonNull()))
+            .ToList();
         
         foreach (var (discordMessageBuilder, message) in builder.Builders.Cast<DiscordMessageBuilder>()
                      .ZipLongest(messages))

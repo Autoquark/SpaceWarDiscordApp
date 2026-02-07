@@ -202,10 +202,9 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                     }
                     else
                     {
-                        var drawnPlayerNames = await playerScores.TakeWhile(x => x.score == playerScores[0].score)
-                            .ToAsyncEnumerable()
-                            .SelectAwait(async x => await x.player.GetNameAsync(false))
-                            .ToListAsync();
+                        var drawnPlayerNames = await Task.WhenAll(playerScores
+                            .TakeWhile(x => x.score == playerScores[0].score)
+                            .Select(async x => await x.player.GetNameAsync(false)));
                         builder?.AppendContentNewline(
                             $"Nobody scores this turn (draw between {string.Join(", ", drawnPlayerNames)})");
                     }
