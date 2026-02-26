@@ -66,6 +66,7 @@ public static class BoardImageGenerator
     private const int DieIconSize = 80;
     private const float HyperlaneThickness = 20;
     private const float PreviousMoveThickness = 10;
+    private const float ProductionStrikethroughThickness = 4;
     private const float AsteroidTriangleSideLength = 40;
     private static readonly float PlanetIconDistance = PlanetCircleRadius + 36;
     private const int DisplayedCombatStrengthOffset = 52;
@@ -805,8 +806,8 @@ public static class BoardImageGenerator
                 }
 
                 // Draw production
-                var circleCentre = hexCentre + GetPointPolar(PlanetCircleRadius + ProductionCircleRadius + 10, 135);
-                var productionCircle = new EllipsePolygon(circleCentre, ProductionCircleRadius)
+                var productionCircleCentre = hexCentre + GetPointPolar(PlanetCircleRadius + ProductionCircleRadius + 10, 135);
+                var productionCircle = new EllipsePolygon(productionCircleCentre, ProductionCircleRadius)
                     .GenerateOutline(2.0f);
                 
                 image.Mutate(x => x.Fill(Color.Black, productionCircle)
@@ -815,7 +816,7 @@ public static class BoardImageGenerator
                             TextAlignment = TextAlignment.Center,
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            Origin = circleCentre,
+                            Origin = productionCircleCentre,
                             TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
                         },
                         hex.Planet.Production.ToString(),
@@ -854,17 +855,32 @@ public static class BoardImageGenerator
                     // Draw any known production bonus from techs
                     var displayedProductionBonus = owningPlayer.Techs.Sum(x =>
                         Tech.TechsById[x.TechId].GetDisplayedProductionBonus(game, hex, owningPlayer));
-                    if (displayedProductionBonus != 0)
+                    var effectiveProduction = hex.Planet.Production + displayedProductionBonus;
+                    if (effectiveProduction <= 0 && hex.Planet.Production > 0)
+                    {
+                        effectiveProduction = 1;
+                    }
+                    
+                    if (effectiveProduction != hex.Planet.Production)
                     {
                         var brush = new SolidBrush(owningPlayer.PlayerColourInfo.ImageSharpColor);
-                        image.Mutate(x => x.DrawText(
-                            new RichTextOptions(StrengthNumberFont)
-                            {
-                                Origin = circleCentre + new Size(30, -50),
-                                HorizontalAlignment = HorizontalAlignment.Center
-                            },
-                            displayedProductionBonus.ToString("+##"),
-                            brush));
+                        image.Mutate(x =>
+                        {
+                            x.DrawText(
+                                new RichTextOptions(StrengthNumberFont)
+                                {
+                                    Origin = productionCircleCentre + new Size(30, -50),
+                                    HorizontalAlignment = HorizontalAlignment.Center
+                                },
+                                effectiveProduction.ToString("##"),
+                                brush);
+                            
+                            // Cross out base production number
+                            x.DrawLine(brush, ProductionStrikethroughThickness, productionCircleCentre - new PointF(1, 1).Normalised() * ProductionCircleRadius,
+                                productionCircleCentre + new PointF(1, 1).Normalised() * ProductionCircleRadius);
+                        });
+                        
+                        
                     }
                     
                     // Draw any known defensive strength bonus from techs
@@ -978,8 +994,8 @@ public static class BoardImageGenerator
                             image.Mutate(x =>
                             {
                                 Pen pen = movement.IsTechMove
-                                    ? Pens.Dash(player.PlayerColourInfo.ImageSharpColor, PreviousMoveThickness)
-                                    : new SolidPen(player.PlayerColourInfo.ImageSharpColor, PreviousMoveThickness);
+                                    ? Pens.Dash(colour, PreviousMoveThickness)
+                                    : new SolidPen(colour, PreviousMoveThickness);
                                 x.Draw(pen, bezier).Fill(colour, arrowhead);
                             });
                         }
