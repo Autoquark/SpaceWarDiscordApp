@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -67,7 +68,12 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
     {
         builder?.AppendContentNewline("The tech market has been cycled.");
         var added = TryDrawTechFromDeck(builder, game);
-        game.TechMarket.Insert(0, added?.Id);
+
+        var displaced = added?.Id;
+        foreach (var slot in game.TechMarket)
+        {
+            (slot.TechId, displaced) = (displaced, slot.TechId!);
+        }
         
         if (added != null)
         {
@@ -75,17 +81,38 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             builder.OrDefault(x => ShowTechDetails(x, added.Id));
         }
         
-        var removed = game.TechMarket.Last();
-        game.TechMarket.RemoveAt(game.TechMarket.Count - 1);
-        if (removed != null)
+        if (displaced != null)
         {
-            AddTechToDiscards(game, removed);
-            var tech = Tech.TechsById[removed];
+            AddTechToDiscards(game, displaced);
+            var tech = Tech.TechsById[displaced];
             builder?.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
         }
 
         await UpdatePinnedTechMessage(game);
         
+        return builder;
+    }
+
+    public static async Task<DiscordMultiMessageBuilder?> FillEmptyMarketSlotAsync(DiscordMultiMessageBuilder? builder,
+        Game game, TechMarketSlot slot)
+    {
+        Debug.Assert(game.TechMarket.Contains(slot) && slot.TechId == null);
+        
+        var added = TryDrawTechFromDeck(builder, game);
+        builder?.AppendContentNewline("A new tech has been added to the tech market:");
+        
+        slot.TechId = added?.Id;
+
+        if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        {
+            slot.Cost = GameConstants.DiscountingSlotsInitialTechCost;
+        }
+
+        if (added != null)
+        {
+            builder.OrDefault(x => ShowTechDetails(x, added.Id));
+        }
+
         return builder;
     }
 
@@ -110,7 +137,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
 
         var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>();
         var allTechs = game.UniversalTechs
-            .Concat(game.TechMarket.WhereNonNull())
+            .Concat(game.TechMarket.Select(x => x.TechId).WhereNonNull())
             .Concat(game.Players.SelectMany(x => x.Techs.Select(y => y.TechId)))
             .Distinct()
             .OrderBy(x => Tech.TechsById[x].DisplayName)
@@ -171,7 +198,7 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
     
     public static void AddTechToDiscards(Game game, string techId) => game.TechDiscards.Insert(0, techId);
 
-    public static int GetMarketSlotCost(int slotNumber) => slotNumber == 0 ? 3 : 2;
+    public static int GetQueueMarketSlotCost(int slotNumber) => slotNumber == 0 ? 3 : 2;
 
     public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(DiscordMultiMessageBuilder builder, GameEvent_TechPurchaseDecision gameEvent, Game game,
         IServiceProvider serviceProvider)
@@ -179,10 +206,9 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         var player = game.GetGamePlayerByGameId(gameEvent.PlayerGameId);
         var availableUniversal = GetPurchaseableUniversalTechsForPlayer(game, player).ToList();
         
-        var availableMarket = game.TechMarket.Select(x => (techId: x, cost: GetMarketSlotCost(game.TechMarket.IndexOf(x))))
-            .Where(x => x.techId != null && player.TryGetPlayerTechById(x.techId) == null && player.Science >= x.cost)!
-            // Assert that techId is not null, because it's checked above
-            .ToList<(string techId, int cost)>();
+        var availableMarket = game.TechMarket
+            .Where(x => x.TechId != null && player.TryGetPlayerTechById(x.TechId) == null && player.Science >= x.Cost)
+            .ToList();
         
         var name = await player.GetNameAsync(true);
         builder.NewMessage()
@@ -204,10 +230,10 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             .Select(x => new PurchaseTechInteraction
                 {
                     Game = game.DocumentId,
-                    TechId = x.techId,
+                    TechId = x.TechId,
                     ForGamePlayerId = player.GamePlayerId,
                     EditOriginalMessage = true,
-                    Cost = x.cost,
+                    Cost = x.Cost,
                     ResolvesChoiceEventId = gameEvent.EventId,
                 }));
 
@@ -235,11 +261,11 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         {
             builder.AppendContentNewline("Market Techs:".DiscordHeading3());
             builder.AppendButtonRows(availableMarket
-                .Zip(marketIds, (x, y) => (x.techId, x.cost, interactionId: y))
+                .Zip(marketIds, (x, y) => (x.TechId, x.Cost, interactionId: y))
                 .Select(x => new DiscordButtonComponent(
                     DiscordButtonStyle.Primary,
                     x.interactionId,
-                    $"{Tech.TechsById[x.techId].DisplayName} ({x.cost})")));
+                    $"{Tech.TechsById[x.TechId!].DisplayName} ({x.Cost})")));
         }
         
         builder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, declineId, "Decline"));
@@ -295,10 +321,8 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         return builder;
     }
     
-    private static IEnumerable<string> GetPurchaseableMarketTechsForPlayer(Game game, GamePlayer player) =>
-        game.TechMarket.WhereNonNull()
-            .Where(x => !player.HasTech(x))
-            .Where(x => player.Science >= GetMarketSlotCost(game.TechMarket.IndexOf(x)))
+    private static IEnumerable<TechMarketSlot> GetPurchaseableMarketTechsForPlayer(Game game, GamePlayer player) =>
+        game.TechMarket.Where(x => x.TechId != null && !player.HasTech(x.TechId) && player.Science >= x.Cost)
             .ToList();
     
     private static IEnumerable<string> GetPurchaseableUniversalTechsForPlayer(Game game, GamePlayer player) =>
@@ -313,19 +337,29 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         var tech = Tech.TechsById[gameEvent.TechId];
         
         player.Techs.Add(gameEvent.PlayerTech ?? tech.CreatePlayerTech(game, player));
-        
-        var index = game.TechMarket.IndexOf(tech.Id);
-        if (index != -1)
+
+        var gainedFromMarketSlot = game.TechMarket.FirstOrDefault(x => x.TechId == gameEvent.TechId);
+        if (game.Rules.TechMarketRule == TechMarketRule.Queue)
         {
-            game.TechMarket[index] = null;
+            gainedFromMarketSlot?.TechId = null;
+            if (gameEvent.CycleMarket)
+            {
+                await CycleTechMarketAsync(builder, game);
+            }
+        }
+        else if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        {
+            var newTech = TryDrawTechFromDeck(builder, game);
+            gainedFromMarketSlot?.TechId = newTech?.Id;
+            gainedFromMarketSlot?.Cost = GameConstants.DiscountingSlotsInitialTechCost;
+            
+            if (newTech != null)
+            {
+                builder.OrDefault(x => ShowTechDetails(x, newTech.Id));
+            }
         }
 
         builder.OrDefault(x => ShowTechDetails(x, tech.Id));
-
-        if (gameEvent.CycleMarket)
-        {
-            await CycleTechMarketAsync(builder, game);
-        }
         
         await UpdatePinnedTechMessage(game);
         

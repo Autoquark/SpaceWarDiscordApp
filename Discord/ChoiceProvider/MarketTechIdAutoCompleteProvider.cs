@@ -17,7 +17,8 @@ public class MarketTechIdAutoCompleteProvider : IAutoCompleteProvider
         }
         
         var prefix = context.UserInput ?? "";
-        return game.TechMarket.WhereNonNull()
+        return game.TechMarket.Select(x => x.TechId)
+            .WhereNonNull()
             .Select(x => Tech.TechsById[x])
             .Where(x => x.DisplayName.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase))
             .OrderBy(x => x.DisplayName)

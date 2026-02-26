@@ -195,9 +195,19 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         
         if (removeFromOtherPlaces)
         {
-            if (game.TechMarket.RemoveAll(x => x == techId) > 0)
+            var techMarketSlots = game.TechMarket.Where(x => x.TechId == techId).ToList();
+            if (techMarketSlots.Count > 0)
             {
                 builder.AppendContentNewline($"Removed {techName} from the tech market");
+            }
+            
+            foreach (var slot in techMarketSlots)
+            {
+                slot.TechId = null;
+                if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+                {
+                    await TechOperations.FillEmptyMarketSlotAsync(builder, game, slot);
+                }
             }
             
             if(game.TechDeck.RemoveAll(x => x == techId) > 0)
@@ -277,7 +287,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     }
 
     [Command("discardMarketTech")]
-    [Description("Discards a tech from the tech market, leaving an empty slot")]
+    [Description("Discards a tech from the tech market")]
     public static async Task DiscardMarketTech(CommandContext context,
         [SlashAutoCompleteProvider<MarketTechIdAutoCompleteProvider>]
         string techId,
@@ -287,8 +297,8 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         var game = context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!;
         var outcome = context.Outcome();
 
-        var index = game.TechMarket.IndexOf(techId);
-        if (index == -1)
+        var slot = game.TechMarket.FirstOrDefault(x => x.TechId == techId);
+        if (slot == null)
         {
             outcome.RequiresSave = false;
             context.ServiceProvider.GetRequiredService<GameMessageBuilders>().SourceChannelBuilder
@@ -297,7 +307,13 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         }
         
         var tech = Tech.TechsById[techId];
-        game.TechMarket[index] = null;
+        slot.TechId = null;
+
+        if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        {
+            await TechOperations.FillEmptyMarketSlotAsync(
+                context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!, game, slot);
+        }
 
         if (putInDiscard)
         {
@@ -370,15 +386,15 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         // Put first card in market back on the tech deck
         var first = game.TechMarket[0];
-        if (first != null)
+        if (first.TechId != null)
         {
-            game.TechDeck.Insert(0, first);
-            builder.AppendContentNewline($"Returned {Tech.TechsById[first].DisplayName} to the top of the tech deck");
+            game.TechDeck.Insert(0, first.TechId);
+            builder.AppendContentNewline($"Returned {Tech.TechsById[first.TechId].DisplayName} to the top of the tech deck");
         }
         
         for(var i = 0; i < game.TechMarket.Count - 1; i++)
         {
-            game.TechMarket[i] = game.TechMarket[i + 1];
+            game.TechMarket[i].TechId = game.TechMarket[i + 1].TechId;
         }
         
         // Put top card in tech discards back into the last market slot
@@ -386,7 +402,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         if (topDiscard != null)
         {
             game.TechDiscards.RemoveAt(0);
-            game.TechMarket[^1] = topDiscard;
+            game.TechMarket[^1].TechId = topDiscard;
             builder.AppendContentNewline($"Returned {Tech.TechsById[topDiscard].DisplayName} from the tech discards to the market");
         }
     }

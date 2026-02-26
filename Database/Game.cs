@@ -79,7 +79,7 @@ public class Game : FirestoreDocument
     /// Market techs, with the first being the most expensive.
     /// </summary>
     [FirestoreProperty]
-    public List<string?> TechMarket { get; set; } = [];
+    public List<TechMarketSlot> TechMarket { get; set; } = [];
     
     /// <summary>
     /// Whether the current player has taken any action (main or free) this turn

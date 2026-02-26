@@ -843,12 +843,35 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             game.TechDeck.Shuffle();
         }
 
-        for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
+        if (game.Rules.TechMarketRule == TechMarketRule.Queue)
         {
-            game.TechMarket.Add(TechOperations.DrawTechFromDeckSilent(game)!.Id);
+            for (var i = 0; i < GameConstants.MarketTechCount - 1; i++)
+            {
+                game.TechMarket.Add(new TechMarketSlot
+                {
+                    TechId = TechOperations.DrawTechFromDeckSilent(game)!.Id,
+                    Cost = TechOperations.GetQueueMarketSlotCost(i)
+                });
+            }
+            
+            // Final slot starts empty
+            game.TechMarket.Add(new TechMarketSlot
+            {
+                TechId = null,
+                Cost = TechOperations.GetQueueMarketSlotCost(GameConstants.MarketTechCount - 1) 
+            });
         }
-        
-        game.TechMarket.Add(null);
+        else if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        {
+            for (var i = 0; i < game.Players.Count; i++)
+            {
+                game.TechMarket.Add(new TechMarketSlot
+                {
+                    TechId = TechOperations.DrawTechFromDeckSilent(game)!.Id,
+                    Cost = GameConstants.DiscountingSlotsInitialTechCost
+                });
+            }
+        }
         
         game.ScoringTokenPlayerIndex = game.Players.Count - 1;
         game.Phase = GamePhase.Play;
@@ -861,7 +884,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         builder.AppendContentNewline("Tech Market:".DiscordHeading2());
-        foreach (var tech in game.TechMarket.WhereNonNull())
+        foreach (var tech in game.TechMarket.Select(x => x.TechId).WhereNonNull())
         {
             TechOperations.ShowTechDetails(builder, tech);
         }

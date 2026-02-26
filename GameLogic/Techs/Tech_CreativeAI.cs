@@ -29,7 +29,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
     {
-        var availableMarket = game.TechMarket.Select(x => x).WhereNonNull().ToList();
+        var availableMarket = game.TechMarket.Select(x => x.TechId).WhereNonNull().ToList();
 
         if (availableMarket.Count == 0)
         {
@@ -80,11 +80,16 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
 
             builder?.AppendContentNewline($"{name}'s Creative AI has discarded {tech.DisplayName} from the tech market");
 
-            var index = game.TechMarket.IndexOf(tech.Id);
-            if (index != -1)
+            var entry = game.TechMarket.FirstOrDefault(x => x.TechId == tech.Id);
+            entry?.TechId = null;
+
+            if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
             {
-                game.TechMarket[index] = null;
+                
             }
+            
+            TechOperations.AddTechToDiscards(game, tech.Id);
+
         } // Or decline
         
         player.GetPlayerTechById(Id).IsExhausted = true;

@@ -9,6 +9,7 @@ public static class GameConstants
     public const int UniversalTechCount = 3;
     public const int MarketTechCount = 3;
     public const int UniversalTechCost = 2;
+    public const int DiscountingSlotsInitialTechCost = 3;
 
     public static readonly TimeSpan TurnProdInterval = TimeSpan.FromDays(1);
     public static readonly TimeSpan UnfinishedTurnProdTime = TimeSpan.FromMinutes(15);

@@ -313,8 +313,9 @@ public static class BoardImageGenerator
         
         var maxMarketTechDescriptionHeight = 0;
         var marketTechSectionHeight = 0;
-        foreach (var tech in game.TechMarket.ToTechsByIdNullable())
+        foreach (var slot in game.TechMarket)
         {
+            var tech = slot.TechId.OrDefault(x => Tech.TechsById[x]);
             var descriptionHeight = 0;
             var table = LayoutPurchaseableTech(tech, ref descriptionHeight);
             maxMarketTechDescriptionHeight = Math.Max(maxMarketTechDescriptionHeight, descriptionHeight);
@@ -607,9 +608,10 @@ public static class BoardImageGenerator
         image.Mutate(context =>
         {
             var xLocation = topLeft.X + spareHorizontalSpace / 2;
-            foreach (var (tech, i) in game.TechMarket.Select(x => x == null ? null : Tech.TechsById[x]).ZipWithIndices())
+            foreach (var slot in game.TechMarket)
             {
-                var size = DrawPurchaseableTech(context, new Point(xLocation, topLeft.Y), tech, TechOperations.GetMarketSlotCost(i), maxDescriptionHeight);
+                var tech = slot.TechId.OrDefault(x => Tech.TechsById[x]);
+                var size = DrawPurchaseableTech(context, new Point(xLocation, topLeft.Y), tech, slot.Cost, maxDescriptionHeight);
                 xLocation += TechBoxWidth + Margin;
                 height = Math.Max(height, size.Height);
             }

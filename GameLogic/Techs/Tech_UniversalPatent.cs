@@ -21,7 +21,8 @@ public class Tech_UniversalPatent : Tech, IInteractionHandler<UseUniversalPatent
         SimpleActionType = ActionType.Free;
     }
 
-    private static IEnumerable<string> GetTargetTechIds(Game game, GamePlayer player) => game.TechMarket.WhereNonNull()
+    private static IEnumerable<string> GetTargetTechIds(Game game, GamePlayer player) => game.TechMarket.Select(x => x.TechId)
+        .WhereNonNull()
         .Where(x => !player.HasTech(x)).Concat(game.UniversalTechs.Where(x => !player.HasTech(x)));
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) => base.IsSimpleActionAvailable(game, player)
