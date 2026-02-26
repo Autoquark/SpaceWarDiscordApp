@@ -10,7 +10,7 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomyInteraction>
 {
     public Tech_FungibleAnatomy() : base("fungibleAnatomy", "Fungible Anatomy",
-        "Whenever you would lose forces due to exceeding a planet's capacity, you may instead move the excess to an adjacent planet you control.",
+        "Whenever you would lose forces due to exceeding a planet's capacity, you may instead move the excess to an adjacent planet.",
         "We find it's most efficient to pack similar body parts together and reassemble personnel at the far end.")
     {
         _movementFlowHandler = new FungibleAnatomyMovementFlowHandler(this);
@@ -70,7 +70,6 @@ class FungibleAnatomyMovementFlowHandler : MovementFlowHandler<Tech_FungibleAnat
         ActionType = null;
         AllowManyToOne = false;
         ContinueResolvingStackAfterMove = true;
-        DestinationRestriction = MoveDestinationRestriction.MustAlreadyControl;
     }
     
     
