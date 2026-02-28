@@ -19,6 +19,17 @@ public static partial class ImageProcessingExtensions
         Image image, PointF location, float opacity = 1.0f)
         => imageProcessingContext.DrawImage(image, (Point)location - image.Size / 2, 1.0f);
 
+    /// <summary>
+    /// Draws text substituting certain specified tokens with inline icons.
+    /// </summary>
+    /// <param name="imageProcessingContext"></param>
+    /// <param name="textOptions"></param>
+    /// <param name="text"></param>
+    /// <param name="brush"></param>
+    /// <param name="pen"></param>
+    /// <param name="substitutions">Dictionary of string tokens to the icon they should be substituted with. The tokens are expected to be surrounded with dollar signs ($) which should not be included in the dictionary keys</param>
+    /// <param name="iconOffset"></param>
+    /// <returns></returns>
     public static IImageProcessingContext DrawTextWithInlineIcons(this IImageProcessingContext imageProcessingContext,
         RichTextOptions textOptions,
         string text,

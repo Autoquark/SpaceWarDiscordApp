@@ -121,9 +121,9 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
         return this;
     }
 
-    public DiscordMultiMessageBuilder AppendButtonRows(IEnumerable<DiscordButtonComponent> buttons)
+    public DiscordMultiMessageBuilder AppendButtonRows(params IEnumerable<DiscordButtonComponent> buttons)
     {
-        CurrentBuilder.AppendButtonRows(buttons);
+        AppendButtonRows(null, buttons);
         return this;
     }
     

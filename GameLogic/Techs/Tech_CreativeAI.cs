@@ -83,9 +83,9 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
             var entry = game.TechMarket.FirstOrDefault(x => x.TechId == tech.Id);
             entry?.TechId = null;
 
-            if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+            if (entry != null && game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
             {
-                
+                await TechOperations.FillEmptyMarketSlotAsync(builder, game, entry);
             }
             
             TechOperations.AddTechToDiscards(game, tech.Id);
@@ -94,7 +94,10 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
         
         player.GetPlayerTechById(Id).IsExhausted = true;
 
-        await TechOperations.CycleTechMarketAsync(builder, game);
+        if (game.Rules.TechMarketRule == TechMarketRule.Queue)
+        {
+            await TechOperations.CycleTechMarketAsync(builder, game);
+        }
 
         await TechOperations.UpdatePinnedTechMessage(game);
 

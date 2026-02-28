@@ -3,6 +3,8 @@ using System.Diagnostics;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.Drawing.Processing;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
@@ -230,6 +232,30 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 
                 await CheckForVictoryAsync(builder, game, serviceProvider);
                 break;
+        }
+
+        if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        {
+            // Decrement the cost of the tech in the slot corresponding to this player
+            if (game.TechMarket.Count >= game.CurrentTurnPlayerIndex)
+            {
+                var discountingSlot = game.TechMarket[game.CurrentTurnPlayerIndex];
+                discountingSlot.Cost--;
+                if (discountingSlot.Cost <= 0)
+                {
+                    TechOperations.AddTechToDiscards(game, discountingSlot.TechId!);
+                    var tech = Tech.TechsById[discountingSlot.TechId!];
+                    builder?.AppendContentNewline($"{tech.DisplayName} has been discarded from the tech market");
+                    
+                    discountingSlot.TechId = null;
+                    await TechOperations.FillEmptyMarketSlotAsync(builder, game, discountingSlot);
+                }
+                else
+                {
+                    var tech = Tech.TechsById[discountingSlot.TechId!];
+                    builder?.AppendContentNewline($"The cost of {tech.DisplayName} has been reduced to {discountingSlot.Cost} $science$".ReplaceIconTokens());
+                }
+            }
         }
 
         do

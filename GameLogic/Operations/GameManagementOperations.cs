@@ -16,13 +16,8 @@ public class GameManagementOperations
     public static async Task CreateOrUpdateGameSettingsMessageAsync(Game game, IServiceProvider serviceProvider)
     {
         var channel = await Program.DiscordClient.GetChannelAsync(game.GameChannelId);
-        DiscordMessage? message = null;
-        if (game.SetupMessageId != 0)
-        {
-            message = await channel.TryGetMessageAsync(game.SetupMessageId);
-        }
 
-        var builder = new DiscordMessageBuilder().EnableV2Components()
+        var builder = DiscordMultiMessageBuilder.Create<DiscordMessageBuilder>()
             .AppendContentNewline("Game Setup".DiscordHeading1());
         
         // Player count
@@ -119,6 +114,34 @@ public class GameManagementOperations
             _ => "???"
         });
         
+        // Tech market rule
+        
+        builder.AppendContentNewline("Tech Market".DiscordHeading3());
+        
+        interactionIds = serviceProvider.AddInteractionsToSetUp(Enum.GetValues<TechMarketRule>().Select(x => new SetTechMarketRuleInteraction
+        {
+            ForGamePlayerId = -1,
+            Game = game.DocumentId,
+            Value = x,
+        }));
+
+        builder.AppendButtonRows(
+            Enum.GetValues<TechMarketRule>()
+                .Zip(interactionIds, (enumValue, interactionId) => new DiscordButtonComponent(
+                    enumValue == game.Rules.TechMarketRule
+                        ? DiscordButtonStyle.Success
+                        : DiscordButtonStyle.Secondary,
+                    interactionId,
+                    Enum.GetName(enumValue)!.InsertSpacesInCamelCase())));
+
+        builder.AppendContentNewline(game.Rules.TechMarketRule switch
+        {
+            TechMarketRule.Queue => "A queue of techs with the most recently added costing more. Whenever a tech is purchased the remaining techs move along, with any tech in the rightmost slot being discarded and a new tech dealt into the leftmost slot.",
+            TechMarketRule.DiscountingSlots =>
+                "Each tech in the market discounts in price at the end of a particular player's turn. If the price of a tech reaches zero, it is discarded and a replacement tech is dealt",
+            _ => "???"
+        });
+        
         // Single use tech rules
         builder.AppendContentNewline("Tech Settings".DiscordHeading3());
 
@@ -167,15 +190,30 @@ public class GameManagementOperations
         }
         
         builder.AppendContentNewline("Current players: " + string.Join(", ", await Task.WhenAll(game.Players.Select(x => x.GetNameAsync(false)))));
+
+        var newMessageIds = new List<ulong>();
+        foreach (var (subBuilder, messageId) in builder.Builders.Cast<DiscordMessageBuilder>().ZipLongest(game.SetupMessageIds))
+        {
+            if (subBuilder == null)
+            {
+                break;
+            }
+            
+            if (messageId != 0)
+            {
+                var message = await channel.TryGetMessageAsync(messageId);
+                if (message != null)
+                {
+                    await message.ModifyAsync(subBuilder);
+                    newMessageIds.Add(messageId);
+                    continue;
+                }
+            }
+            
+            newMessageIds.Add((await channel.SendMessageAsync(subBuilder)).Id);
+        }
         
-        if (message == null)
-        {
-            game.SetupMessageId = (await channel.SendMessageAsync(builder)).Id;
-        }
-        else
-        {
-            await message.ModifyAsync(builder);
-        }
+        game.SetupMessageIds = newMessageIds;
     }
 
     public static async Task SaveRollbackStateAsync(Game game)

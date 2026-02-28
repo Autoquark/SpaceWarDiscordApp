@@ -34,7 +34,7 @@ public static class BoardImageGenerator
         //TechStatus
     }
 
-    private static Dictionary<SummaryTableColumn, int> SummaryTableColumnWidths = new()
+    private static readonly Dictionary<SummaryTableColumn, int> SummaryTableColumnWidths = new()
     {
         {SummaryTableColumn.ScoringToken, InfoTableSingleIconColumnWidth},
         {SummaryTableColumn.PlayerName, 600},
@@ -121,8 +121,6 @@ public static class BoardImageGenerator
     private static readonly Dictionary<PlayerColour, Image> ProduceRecapIcons = new();
     private static readonly Dictionary<PlayerColour, Image> TechRecapIcons = new();
     private const int PlanetRecapIconSize = 48;
-    private static readonly Pen SolidLinePen = new SolidPen(Color.Black, PreviousMoveThickness);
-    private static readonly Pen DottedLinePen = new PatternPen(Color.Black, PreviousMoveThickness, [2.0f, 2.0f]);
     
     // Info tables (general)
     private const int InfoTableRowHeight = 76;
@@ -133,6 +131,7 @@ public static class BoardImageGenerator
     private static readonly Pen InfoTextStrikethroughPen = new SolidPen(Color.Black);
     private const int InfoTableIconHeight = 32;
     private const int InfoTableCellDrawingMargin = 16;
+    private static readonly int InfoTableLineHeight;
 
     private static readonly int SectionHeaderHeight;
     private const int ScienceCostIconSize = 80;
@@ -148,7 +147,10 @@ public static class BoardImageGenerator
     // Purchaseable techs
     private const int TechBoxWidth = 700;
     private static readonly int TechBoxMinHeight;
-    private const int TechBoxToCostSpacing = 8;
+    private const int TechBoxToCostSpacing = 16;
+    private const int TechCostToDiscountTextSpacing = 10;
+    private const int SpacingBetweenTechMarketRows = 70;
+    private static readonly int MarketTechDiscountTextHeight;
 
     static BoardImageGenerator()
     {
@@ -226,7 +228,9 @@ public static class BoardImageGenerator
                 
             }).Height + playerAreaTitleSpacer;
             
-            TechBoxMinHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(InfoTableFont)).Height * 4;
+            InfoTableLineHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(InfoTableFont)).Height;
+            TechBoxMinHeight = InfoTableLineHeight * 4;
+            MarketTechDiscountTextHeight = InfoTableLineHeight * 2;
             
             PlayerAreaEmblemIcons = PlayerEmblemIcons.ToDictionary(x => x.Key,
                 x => x.Value.Clone(context => context.Resize(0, PlayerAreaTitleHeight - playerAreaTitleSpacer)));
@@ -269,8 +273,14 @@ public static class BoardImageGenerator
             IconSubstitutions = new Dictionary<string, Image>
             {
                 { "star", StarIcon.Clone(x => x.Resize(InlineIconSize, 0)) },
-                { "science", ScienceIcon.Clone(x => x.Resize(InlineIconSize, 0)) }
+                { "science", ScienceIcon.Clone(x => x.Resize(InlineIconSize, 0)) },
             };
+
+            foreach (var playerColour in Enum.GetValues<PlayerColour>())
+            {
+                IconSubstitutions.Add(PlayerColourInfo.Get(playerColour).Name,
+                    PlayerEmblemIcons[playerColour].Clone(x => x.Resize(InlineIconSize, 0)));
+            }
         }
         catch (Exception e)
         {
@@ -311,19 +321,33 @@ public static class BoardImageGenerator
         // Tech Market
         imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
         
-        var maxMarketTechDescriptionHeight = 0;
-        var marketTechSectionHeight = 0;
-        foreach (var slot in game.TechMarket)
+        var marketTechRowHeights = new List<int>();
+        var marketTechRowDescriptionHeights = new List<int>();
+        // Split tech market into rows of three slots
+        foreach (var row in game.TechMarket.Chunk(3))
         {
-            var tech = slot.TechId.OrDefault(x => Tech.TechsById[x]);
-            var descriptionHeight = 0;
-            var table = LayoutPurchaseableTech(tech, ref descriptionHeight);
-            maxMarketTechDescriptionHeight = Math.Max(maxMarketTechDescriptionHeight, descriptionHeight);
-            marketTechSectionHeight = Math.Max(marketTechSectionHeight, table.GetRect().Height);
+            var rowHeight = 0;
+            var maxDescriptionHeight = 0;
+            foreach (var slot in row)
+            {
+                var tech = slot.TechId.OrDefault(x => Tech.TechsById[x]);
+                var descriptionHeight = 0;
+                var table = LayoutPurchaseableTech(tech, ref descriptionHeight);
+                maxDescriptionHeight = Math.Max(descriptionHeight, maxDescriptionHeight);
+                rowHeight = Math.Max(rowHeight, table.GetRect().Height);
+            }
+
+            rowHeight += TechBoxToCostSpacing + ScienceCostIcon.Height;
+            if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+            {
+                rowHeight += MarketTechDiscountTextHeight + TechCostToDiscountTextSpacing;
+            }
+            imageSize.Height += rowHeight + Margin;
+            
+            marketTechRowHeights.Add(rowHeight);
+            marketTechRowDescriptionHeights.Add(maxDescriptionHeight);
         }
-        marketTechSectionHeight += TechBoxToCostSpacing + ScienceCostIcon.Height;
-        imageSize.Height += marketTechSectionHeight + Margin;
-        
+
         // Summary table
         imageSize.Height += SectionHeaderHeight + SpacingBelowSectionHeader;
         
@@ -378,7 +402,37 @@ public static class BoardImageGenerator
         
         // Tech Market
         sectionTopLeft = DrawSectionHeader("Tech Market", image, sectionTopLeft);
-        sectionTopLeft = DrawMarketTechs(game, image, sectionTopLeft, maxMarketTechDescriptionHeight);
+
+        var marketSectionHeight = marketTechRowHeights.Sum() + (marketTechRowHeights.Count - 1) * SpacingBetweenTechMarketRows;
+        
+        var iconLocation = sectionTopLeft + new Size(0, marketSectionHeight / 2);
+        image.Mutate(context => context.DrawImageCentred(DrawPileIcon, iconLocation));
+        var textOptions = new RichTextOptions(SectionHeaderFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
+        };
+        image.Mutate(context => context.DrawText(textOptions, game.TechDeck.Count.ToString(), InfoTextBrush));
+        
+        iconLocation = sectionTopLeft + new Size(TechBoxWidth * 3 + Margin * 4, marketSectionHeight / 2);
+        textOptions = new RichTextOptions(SectionHeaderFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
+        };
+        image.Mutate(context => context.DrawImageCentred(DiscardPileIcon, iconLocation));
+        image.Mutate(context => context.DrawText(textOptions, game.TechDiscards.Count.ToString(), InfoTextBrush));
+        
+        foreach (var (row, height) in game.TechMarket.Chunk(3).Zip(marketTechRowDescriptionHeights))
+        {
+            sectionTopLeft = DrawMarketTechRow(game, row, image, sectionTopLeft, height);
+            
+            
+            
+            sectionTopLeft += new Size(0, SpacingBetweenTechMarketRows);
+        }
+    
+        sectionTopLeft -= new Size(0, SpacingBetweenTechMarketRows);
         
         sectionTopLeft += verticalMargin;
         
@@ -390,7 +444,7 @@ public static class BoardImageGenerator
         summaryRect = summaryTable.GetRect(); // Recalculate with final top left
         image.Mutate(x => summaryTable.Draw(x));
 
-        var textOptions = new RichTextOptions(InfoTableFont)
+        textOptions = new RichTextOptions(InfoTableFont)
         {
             VerticalAlignment = VerticalAlignment.Center,
             Font = InfoTableFont,
@@ -600,40 +654,43 @@ public static class BoardImageGenerator
         return topLeft + new Size(0, height);
     }
     
-    private static Point DrawMarketTechs(Game game, Image<Rgba32> image, Point topLeft, int maxDescriptionHeight)
+    private static Point DrawMarketTechRow(Game game, IEnumerable<TechMarketSlot> slots, Image<Rgba32> image, Point topLeft, int maxDescriptionHeight)
     {
         var spareHorizontalSpace = image.Width - Margin * 4 - TechBoxWidth * 3;
 
+        var textOptions = new RichTextOptions(InfoTableFont)
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top,
+            WrappingLength = TechBoxWidth,
+            TextRuns = [] // Workaround for bug in imagesharp, RichTextOptions leaves this as a collection of non-rich text run
+        };
+        
         var height = 0;
         image.Mutate(context =>
         {
             var xLocation = topLeft.X + spareHorizontalSpace / 2;
-            foreach (var slot in game.TechMarket)
+            foreach (var slot in slots)
             {
                 var tech = slot.TechId.OrDefault(x => Tech.TechsById[x]);
                 var size = DrawPurchaseableTech(context, new Point(xLocation, topLeft.Y), tech, slot.Cost, maxDescriptionHeight);
+                var slotHeight = size.Height;
+                
+                if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+                {
+                    var slotIndex = game.TechMarket.IndexOf(slot);
+                    var player = game.Players[slotIndex];
+                    textOptions.Origin = new Point(xLocation + TechBoxWidth / 2, topLeft.Y + size.Height + TechCostToDiscountTextSpacing);
+                    context.DrawTextWithInlineIcons(textOptions,
+                        $"{(slot.Cost == 1 ? "Will be discarded" : "Cost will be reduced by 1")} at the end of {player.GetNameAsync(false, false).Result} ${player.PlayerColourInfo.Name}$ 's turn",
+                        InfoTextBrush, null, IconSubstitutions, InlineIconOffset);
+                    slotHeight += MarketTechDiscountTextHeight + TechCostToDiscountTextSpacing;
+                }
+                
                 xLocation += TechBoxWidth + Margin;
-                height = Math.Max(height, size.Height);
+                height = Math.Max(height, slotHeight);
             }
         });
-        
-        var iconLocation = topLeft + new Size(0, maxDescriptionHeight / 2);
-        image.Mutate(context => context.DrawImageCentred(DrawPileIcon, iconLocation));
-        var textOptions = new RichTextOptions(SectionHeaderFont)
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
-        };
-        image.Mutate(context => context.DrawText(textOptions, game.TechDeck.Count.ToString(), InfoTextBrush));
-        
-        iconLocation = topLeft + new Size(TechBoxWidth * 3 + Margin * 4, maxDescriptionHeight / 2);
-        textOptions = new RichTextOptions(SectionHeaderFont)
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Origin = iconLocation + new Size(0, DiscardPileIcon.Height / 2 + 2)
-        };
-        image.Mutate(context => context.DrawImageCentred(DiscardPileIcon, iconLocation));
-        image.Mutate(context => context.DrawText(textOptions, game.TechDiscards.Count.ToString(), InfoTextBrush));
 
         return topLeft + new Size(0, height);
     }

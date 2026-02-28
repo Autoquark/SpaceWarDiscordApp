@@ -70,7 +70,7 @@ public class Game : FirestoreDocument
     public List<string> UniversalTechs { get; set; } = [];
 
     [FirestoreProperty]
-    public ulong SetupMessageId { get; set; } = 0;
+    public List<ulong> SetupMessageIds { get; set; } = [];
     
     [FirestoreProperty]
     public GameRules Rules { get; set; } = new();

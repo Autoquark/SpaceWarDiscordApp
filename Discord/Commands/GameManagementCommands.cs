@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Reflection.Metadata;
 using System.Text;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
@@ -9,12 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Database.InteractionData.GameRules;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.DimensionalOrigami;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
-using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
@@ -25,6 +22,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
     IInteractionHandler<RollBackGameInteraction>,
     IInteractionHandler<SetMaxPlayerCountInteraction>,
     IInteractionHandler<SetScoringRuleInteraction>,
+    IInteractionHandler<SetTechMarketRuleInteraction>,
     IInteractionHandler<SetVictoryThresholdInteraction>,
     IInteractionHandler<SetSingleUseTechCanBeUniversal>
 {
@@ -386,6 +384,30 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         
         game.Rules.ScoringRule = interactionData.Value;
         game.Rules.VictoryThreshold = GameConstants.DefaultVictoryThresholds[interactionData.Value];
+        
+        await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
+
+        return new SpaceWarInteractionOutcome(true)
+        {
+            DeleteOriginalMessage = true
+        };
+    }
+    
+    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetTechMarketRuleInteraction interactionData,
+        Game game, IServiceProvider serviceProvider)
+    {
+        if (game.Phase != GamePhase.Setup)
+        {
+            builder?.AppendContentNewline("You can't change the scoring rule after the game has started");
+            return new SpaceWarInteractionOutcome(false);       
+        }
+
+        if (game.Rules.TechMarketRule == interactionData.Value)
+        {
+            return new SpaceWarInteractionOutcome(false);
+        }
+        
+        game.Rules.TechMarketRule = interactionData.Value;
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 

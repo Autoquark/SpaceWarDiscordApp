@@ -96,17 +96,13 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
     public static async Task<DiscordMultiMessageBuilder?> FillEmptyMarketSlotAsync(DiscordMultiMessageBuilder? builder,
         Game game, TechMarketSlot slot)
     {
-        Debug.Assert(game.TechMarket.Contains(slot) && slot.TechId == null);
+        Debug.Assert(game.TechMarket.Contains(slot) && slot.TechId == null && game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots);
         
         var added = TryDrawTechFromDeck(builder, game);
         builder?.AppendContentNewline("A new tech has been added to the tech market:");
         
         slot.TechId = added?.Id;
-
-        if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
-        {
-            slot.Cost = GameConstants.DiscountingSlotsInitialTechCost;
-        }
+        slot.Cost = GameConstants.DiscountingSlotsInitialTechCost;
 
         if (added != null)
         {
@@ -337,7 +333,9 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
         var tech = Tech.TechsById[gameEvent.TechId];
         
         player.Techs.Add(gameEvent.PlayerTech ?? tech.CreatePlayerTech(game, player));
-
+        
+        builder.OrDefault(x => ShowTechDetails(x, tech.Id));
+        
         var gainedFromMarketSlot = game.TechMarket.FirstOrDefault(x => x.TechId == gameEvent.TechId);
         if (game.Rules.TechMarketRule == TechMarketRule.Queue)
         {
@@ -355,11 +353,10 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
             
             if (newTech != null)
             {
+                builder?.AppendContentNewline("A new tech has been added to the tech market:");
                 builder.OrDefault(x => ShowTechDetails(x, newTech.Id));
             }
         }
-
-        builder.OrDefault(x => ShowTechDetails(x, tech.Id));
         
         await UpdatePinnedTechMessage(game);
         
