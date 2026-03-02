@@ -10,7 +10,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
-    IInteractionHandler<ProduceInteraction>
+    IInteractionHandler<ProduceInteraction>, IEventResolvedHandler<GameEvent_AlterPlanet>
 {
     public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider)
@@ -65,5 +65,40 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
             });
         
         return new SpaceWarInteractionOutcome(true);
+    }
+
+    public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_AlterPlanet gameEvent, Game game,
+        IServiceProvider serviceProvider)
+    {
+        var hex = game.GetHexAt(gameEvent.Coordinates);
+
+        if (gameEvent.ProductionChange != 0)
+        {
+            var previous = hex.Planet!.Production;
+            hex.Planet.Production += gameEvent.ProductionChange;
+
+            builder?.AppendContentNewline(
+                $"The production value of {hex.ToHexNumberWithDieEmoji(game)} has changed by {gameEvent.ProductionChange} ({previous} -> {hex.Planet.Production})");
+        }
+
+        if (gameEvent.ScienceChange != 0)
+        {
+            var previous = hex.Planet!.Science;
+            hex.Planet.Science += gameEvent.ScienceChange;
+
+            builder?.AppendContentNewline(
+                $"The science value of {hex.ToHexNumberWithDieEmoji(game)} has changed by {gameEvent.ScienceChange} ({previous} -> {hex.Planet.Science})");
+        }
+        
+        if (gameEvent.StarsChange != 0)
+        {
+            var previous = hex.Planet!.Stars;
+            hex.Planet.Stars += gameEvent.StarsChange;
+
+            builder?.AppendContentNewline(
+                $"The star value of {hex.ToHexNumberWithDieEmoji(game)} has changed by {gameEvent.StarsChange} ({previous} -> {hex.Planet.Stars})");
+        }
+        
+        return Task.FromResult(builder);
     }
 }
