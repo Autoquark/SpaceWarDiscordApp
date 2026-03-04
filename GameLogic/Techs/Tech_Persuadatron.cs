@@ -65,6 +65,8 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
             throw new Exception();
         }
         
+        var formerOwner = hex.Planet!.OwningPlayerId;
+        
         // Replace all forces on the hex with the same number of our forces
         // This doesn't count as destroying any forces, we are converting them
         hex.Planet!.SetForces(hex.Planet!.ForcesPresent, player.GamePlayerId);
@@ -86,6 +88,11 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
                 TechId = Id,
                 PlayerGameId = player.GamePlayerId,
                 Reason = LoseTechReason.SingleUse
+            },
+            new GameEvent_CapturePlanet
+            {
+                FormerOwnerGameId = formerOwner,
+                Location = hex.Coordinates,
             },
             new GameEvent_ActionComplete
             {

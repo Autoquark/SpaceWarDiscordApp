@@ -28,7 +28,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         .WhereForcesPresent();
 
     protected override bool IsSimpleActionAvailable(Game game, GamePlayer player) =>
-        base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any(x => x.ForcesPresent > 0);
+        base.IsSimpleActionAvailable(game, player) && GetTargets(game, player).Any();
 
     public override async Task<DiscordMultiMessageBuilder> UseTechActionAsync(DiscordMultiMessageBuilder builder, Game game, GamePlayer player,
         IServiceProvider serviceProvider)
