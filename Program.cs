@@ -230,7 +230,7 @@ static class Program
                 {
                     game = gameDoc.ConvertTo<Game>();
                 }
-                catch (InvalidOperationException)
+                catch (Exception e) when(e is InvalidOperationException or ArgumentException)
                 {
                     continue;
                 }
