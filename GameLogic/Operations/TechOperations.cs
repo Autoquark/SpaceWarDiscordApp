@@ -345,11 +345,11 @@ public class TechOperations : IPlayerChoiceEventHandler<GameEvent_TechPurchaseDe
                 await CycleTechMarketAsync(builder, game);
             }
         }
-        else if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots)
+        else if (game.Rules.TechMarketRule == TechMarketRule.DiscountingSlots && gainedFromMarketSlot != null)
         {
             var newTech = TryDrawTechFromDeck(builder, game);
-            gainedFromMarketSlot?.TechId = newTech?.Id;
-            gainedFromMarketSlot?.Cost = GameConstants.DiscountingSlotsInitialTechCost;
+            gainedFromMarketSlot.TechId = newTech?.Id;
+            gainedFromMarketSlot.Cost = GameConstants.DiscountingSlotsInitialTechCost;
             
             if (newTech != null)
             {

@@ -72,6 +72,13 @@ public readonly partial record struct HexCoordinates
             result = new HexCoordinates(0, 0);
             return true;
         }
+
+        // Apart from the centre (000), all hex numbers should be >= 100
+        if (hexNumber < 100)
+        {
+            result = new HexCoordinates(0, 0);
+            return false;
+        }
         
         var radius = hexNumber / 100;
         var index = hexNumber % 100;
