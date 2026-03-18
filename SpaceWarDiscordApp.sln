@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceWarDiscordApp", "SpaceWarDiscordApp.csproj", "{83AB5684-F5F7-4377-8564-7FA5F5C5BFC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceWarDiscordApp", "SpaceWarDiscordApp\SpaceWarDiscordApp.csproj", "{83AB5684-F5F7-4377-8564-7FA5F5C5BFC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tumult", "Tumult\Tumult.csproj", "{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +14,9 @@ Global
 		{83AB5684-F5F7-4377-8564-7FA5F5C5BFC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83AB5684-F5F7-4377-8564-7FA5F5C5BFC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83AB5684-F5F7-4377-8564-7FA5F5C5BFC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

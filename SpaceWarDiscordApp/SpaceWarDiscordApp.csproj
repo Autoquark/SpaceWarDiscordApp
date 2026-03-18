@@ -259,4 +259,8 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Tumult\Tumult.csproj" />
+    </ItemGroup>
+
 </Project>
