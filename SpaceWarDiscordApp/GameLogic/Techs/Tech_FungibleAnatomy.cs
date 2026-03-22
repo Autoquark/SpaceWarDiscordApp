@@ -1,7 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.FungibleAnatomy;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.FungibleAnatomy;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -51,7 +50,7 @@ public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomy
     }
 
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseFungibleAnatomyInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseFungibleAnatomyInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Event.Location);
@@ -59,7 +58,7 @@ public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomy
             game.GetGamePlayerForInteraction(interactionData), serviceProvider,
             fixedSource: interactionData.Event.Location, dynamicMaxAmountPerSource: hex.ForcesPresent - interactionData.Event.Capacity,
             triggerToMarkResolved: interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 }
 

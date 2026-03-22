@@ -14,7 +14,6 @@ using Newtonsoft.Json;
 using SpaceWarDiscordApp.AI.Services;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
-using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic;
@@ -42,13 +41,13 @@ static class Program
     
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
 
-    public static bool IsTestEnvironment { get; private set; } = false;
+    public static bool IsTestEnvironment { get; private set; }
 
     private static Task? _updateEmojiTask;
 
-    private static DiscordUser? _userToMessageErrorsTo = null;
+    private static DiscordUser? _userToMessageErrorsTo;
 
-    public static bool BotReady { get; private set; } = false;
+    public static bool BotReady { get; private set; }
     
     static async Task Main()
     {
@@ -65,7 +64,7 @@ static class Program
 
         IsTestEnvironment = secrets.IsTestEnvironment;
         
-        var converterRegistry = new ConverterRegistry() { new ImageSharpColorCoordinateConverter() };
+        var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         var typeDiscriminator = new TypeDiscriminator();
 
         foreach (var type in typeof(TypeDiscriminator).GetInterfaces()
@@ -108,7 +107,7 @@ static class Program
                 var httpClient = serviceProvider.GetRequiredService<HttpClient>();
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
-            x.AddSingleton<GameCache>();
+            x.AddSingleton<GameCache<Game, NonDbGameState>>();
             x.AddSingleton<GameSyncManager>();
             x.AddSingleton<BackstoryGenerator>();
         });
@@ -133,7 +132,7 @@ static class Program
 
             // Add text commands with a custom prefix (?ping)
             extension.AddProcessor(textCommandProcessor);*/
-        }, new CommandsConfiguration()
+        }, new CommandsConfiguration
         {
             // The default value is true, however it's shown here for clarity
             RegisterDefaultCommandProcessors = false,
@@ -222,7 +221,7 @@ static class Program
                 continue;
             }
 
-            var cache = DiscordClient.ServiceProvider.GetRequiredService<GameCache>();
+            var cache = DiscordClient.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
             
             if (!cache.GetGame(gameDoc.Reference, out var game, out var nonDbGameState))
             {

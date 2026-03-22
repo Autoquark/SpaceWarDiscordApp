@@ -1,5 +1,3 @@
-using DSharpPlus.Entities;
-
 namespace SpaceWarDiscordApp.Discord;
 
 public class SpaceWarCommandOutcome
@@ -13,5 +11,5 @@ public class SpaceWarCommandOutcome
         RequiresSave = requiresSave;
     }
 
-    public bool? RequiresSave { get; set; } = null;
+    public bool? RequiresSave { get; set; }
 }

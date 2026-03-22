@@ -1,9 +1,6 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.CodeOfHonour;
-using SpaceWarDiscordApp.Database.Tech;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.CodeOfHonour;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -43,7 +40,7 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
                         AlwaysAutoResolve = true,
                         IsMandatory = true,
                         DisplayName = DisplayName,
-                        ResolveInteractionData = new ApplyCodeOfHonourBonusInteraction()
+                        ResolveInteractionData = new ApplyCodeOfHonourBonusInteraction
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
@@ -60,7 +57,7 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyCodeOfHonourBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyCodeOfHonourBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -82,6 +79,6 @@ public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonu
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

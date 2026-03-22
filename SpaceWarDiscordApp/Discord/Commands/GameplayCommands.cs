@@ -4,8 +4,8 @@ using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -61,7 +61,7 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         builders.PlayerPrivateThreadBuilders[player.GamePlayerId].AppendContentNewline($"{await player.GetNameAsync(true, false)} {BoopStrings.Random()}");
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         EndTurnInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         if (game.CurrentTurnPlayer.GamePlayerId != interactionData.ForGamePlayerId)
@@ -81,16 +81,16 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         // If we're ending the turn, delete the original turn action prompt message to condense the game history
         await (serviceProvider.GetRequiredService<SpaceWarCommandContextData>().InteractionMessage?.DeleteAsync() ?? Task.CompletedTask);
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         DeclineOptionalTriggersInteraction interactionData,
         Game game,
         IServiceProvider serviceProvider)
     {
         await GameFlowOperations.DeclineOptionalTriggersAsync(builder, game, serviceProvider);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
     
     public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(DiscordMultiMessageBuilder builder, GameEvent_PlayersChooseStartingTech gameEvent,
@@ -175,10 +175,10 @@ public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IIntera
         return game.Players.All(x => x.StartingTechs.Count > 0);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RepromptInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RepromptInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 }

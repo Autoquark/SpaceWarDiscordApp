@@ -1,6 +1,4 @@
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.ImageGeneration;
 

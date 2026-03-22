@@ -1,9 +1,7 @@
-using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Refresh;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Discord.ContextChecks;
+using SpaceWarDiscordApp.Database.Interactions;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -11,7 +9,7 @@ namespace SpaceWarDiscordApp.Discord.Commands;
 
 public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         RefreshActionInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -19,7 +17,7 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
         {
             builder?.AppendContentNewline("You can't click this right now because the game is waiting on a different decision:");
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
 
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
@@ -32,6 +30,6 @@ public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
                 ActionType = ActionType.Main,
             });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

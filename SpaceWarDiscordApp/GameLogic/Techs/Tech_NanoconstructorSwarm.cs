@@ -2,8 +2,8 @@ using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.NanoconstructorSwarm;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.NanoconstructorSwarm;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -74,10 +74,7 @@ public class Tech_NanoconstructorSwarm : Tech, IPlayerChoiceEventHandler<GameEve
             });
         
         builder.AppendHexButtons(game, gameEvent.RemainingPlanets.Select(game.GetHexAt), interactionIds);
-        return builder.AppendButtonRows([
-            new DiscordButtonComponent(DiscordButtonStyle.Secondary, quickResolveId, "Quick resolve"),
-            DiscordHelpers.CreateShowBoardButton(showBoardId)
-        ]);
+        return builder.AppendButtonRows(new DiscordButtonComponent(DiscordButtonStyle.Secondary, quickResolveId, "Quick resolve"), DiscordHelpers.CreateShowBoardButton(showBoardId));
     }
 
     public async Task<bool> HandlePlayerChoiceEventInteractionAsync(DiscordMultiMessageBuilder? builder,

@@ -36,8 +36,8 @@ public readonly partial record struct HexCoordinates
     
     public HexCoordinates(int q, int r)
     {
-        this.Q = q;
-        this.R = r;
+        Q = q;
+        R = r;
     }
 
     /// <summary>

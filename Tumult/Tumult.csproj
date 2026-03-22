@@ -1,9 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AsyncKeyedLock" Version="8.0.1" />
+        <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02543" />
+        <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02543" />
+        <PackageReference Include="Google.Cloud.Firestore" Version="4.1.0" />
+    </ItemGroup>
 
 </Project>

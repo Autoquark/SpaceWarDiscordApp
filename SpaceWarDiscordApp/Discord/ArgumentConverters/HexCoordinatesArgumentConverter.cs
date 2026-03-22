@@ -15,7 +15,8 @@ public class HexCoordinatesArgumentConverter : ISlashArgumentConverter<HexCoordi
             {
                 return Task.FromResult(Optional.FromValue(result));
             }
-            else if(int.TryParse(argument, out var asInt))
+
+            if(int.TryParse(argument, out var asInt))
             {
                 return HexCoordinates.TryFromHexNumber(asInt, out result)
                     ? Task.FromResult(Optional.FromValue(result))

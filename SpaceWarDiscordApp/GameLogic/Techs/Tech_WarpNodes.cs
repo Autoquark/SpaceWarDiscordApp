@@ -1,11 +1,10 @@
 using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.WarpNodes;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.WarpNodes;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -59,7 +58,7 @@ public class Tech_WarpNodes : Tech,
         return builder.AppendHexButtons(game, sources, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         WarpNodes_ChooseSourceInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -73,10 +72,10 @@ public class Tech_WarpNodes : Tech,
             Source = interactionData.Source
         });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         WarpNodes_ChooseAmountInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -114,7 +113,7 @@ public class Tech_WarpNodes : Tech,
         
         await GameFlowOperations.PlayerChoiceEventResolvedAsync(game, builder, serviceProvider, interactionData.ChoiceEventToResolve);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     public async Task<DiscordMultiMessageBuilder?> ShowPlayerChoicesAsync(

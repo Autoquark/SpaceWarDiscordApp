@@ -1,6 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database;
@@ -13,7 +11,7 @@ public enum GamePhase
 }
 
 [FirestoreData]
-public class Game : FirestoreDocument
+public class Game : BaseGame
 {
     /// <summary>
     /// All players in the game. Once the game has started, they will be in turn order.
@@ -30,8 +28,17 @@ public class Game : FirestoreDocument
     [FirestoreProperty]
     public int TurnNumber { get; set; } = 1;
 
-    [FirestoreProperty]
-    public ulong GameChannelId { get; set; } = 0;
+    public override bool IsDiscordUserInGame(ulong discordUserId)
+        => TryGetGamePlayerByDiscordId(discordUserId) != null;
+
+    public override bool IsInteractionAllowedForUser(int forGamePlayerId, ulong discordUserId)
+    {
+        var forPlayer = TryGetGamePlayerByGameId(forGamePlayerId);
+        if (forPlayer == null) return false;
+        if (forPlayer.IsDummyPlayer) return true;
+        var requestingPlayer = TryGetGamePlayerByDiscordId(discordUserId);
+        return requestingPlayer != null && forPlayer == requestingPlayer;
+    }
 
     [FirestoreProperty]
     public ulong PinnedTechMessageId { get; set; } = 0;
@@ -103,7 +110,7 @@ public class Game : FirestoreDocument
     /// Stack of events currently being resolved. The last event in the list is on top of the stack.
     /// </summary>
     [FirestoreProperty]
-    public List<GameEvent> EventStack { get; set; } = [];
+    public override List<GameEvent> EventStack { get; set; } = [];
     
     /// <summary>
     /// List of saved states for this game that we can roll back to. Latest state is last.
@@ -136,7 +143,7 @@ public class Game : FirestoreDocument
     public GamePlayer GetGamePlayerByDiscordId(ulong id) => Players.First(x => x.DiscordUserId == id);
     public GamePlayer? TryGetGamePlayerByDiscordId(ulong id) => Players.FirstOrDefault(x => x.DiscordUserId == id);
     
-    public GamePlayer GetGamePlayerForInteraction(InteractionData.InteractionData interaction) => GetGamePlayerByGameId(interaction.ForGamePlayerId);
+    public GamePlayer GetGamePlayerForInteraction(InteractionData interaction) => GetGamePlayerByGameId(interaction.ForGamePlayerId);
     
     public BoardHex? TryGetHexAt(HexCoordinates coordinates) => Hexes.FirstOrDefault(x => x.Coordinates == coordinates);
     public BoardHex GetHexAt(HexCoordinates coordinates) => Hexes.First(x => x.Coordinates == coordinates);

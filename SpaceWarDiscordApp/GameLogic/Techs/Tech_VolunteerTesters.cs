@@ -1,10 +1,8 @@
 using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.VolunteerTesters;
+using SpaceWarDiscordApp.Database.Interactions.Tech.VolunteerTesters;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -43,7 +41,7 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         return builder.AppendHexButtons(game, targets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SetVolunteerTestersTargetInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -65,10 +63,10 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
                 .Zip(interactions)
                 .Select(x => new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second, x.First.ToString())));
 
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseVolunteerTestersInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -105,6 +103,6 @@ public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTeste
         // I guess you can eliminate yourself with this, if you want to...
         await GameFlowOperations.CheckForPlayerEliminationsAsync(builder, game);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

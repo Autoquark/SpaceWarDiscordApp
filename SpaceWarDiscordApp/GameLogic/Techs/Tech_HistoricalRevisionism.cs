@@ -1,6 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.HistoricalRevisionism;
+using SpaceWarDiscordApp.Database.Interactions.Tech.HistoricalRevisionism;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -49,7 +49,7 @@ public class Tech_HistoricalRevisionism : Tech, IInteractionHandler<SelectHistor
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SelectHistoricalRevisionismFirstTargetInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
@@ -67,10 +67,10 @@ public class Tech_HistoricalRevisionism : Tech, IInteractionHandler<SelectHistor
         builder?.AppendContentNewline($"{await player.GetNameAsync(true)}, choose the second planet to swap ownership of {hex.ToHexNumberWithDieEmoji(game)} with:");
         builder?.AppendHexButtons(game, secondTargets, interactionIds);
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseHistoricalRevisionismInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseHistoricalRevisionismInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex1 = game.GetHexAt(interactionData.FirstTarget);
@@ -103,6 +103,6 @@ public class Tech_HistoricalRevisionism : Tech, IInteractionHandler<SelectHistor
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

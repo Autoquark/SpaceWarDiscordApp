@@ -1,7 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Tech_MaterialRepurposing;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Tech_MaterialRepurposing;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -46,7 +45,7 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseMaterialRepurposingInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -62,6 +61,6 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

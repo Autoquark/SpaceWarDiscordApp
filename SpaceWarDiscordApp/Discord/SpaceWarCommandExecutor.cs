@@ -1,12 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using DSharpPlus.Commands;
-using DSharpPlus.Commands.Processors.MessageCommands;
 using DSharpPlus.Entities;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -52,7 +49,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             throw new Exception("RequireGamePlayerAttribute must be on a command that requires a game channel");
         }
         
-        var cache = context.Client.ServiceProvider.GetRequiredService<GameCache>();
+        var cache = context.Client.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
 
         IDisposable? disposable = null;
         try

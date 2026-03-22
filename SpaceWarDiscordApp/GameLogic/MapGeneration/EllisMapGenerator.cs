@@ -4,7 +4,7 @@ namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 public class EllisMapGenerator : BaseMapGenerator
 {
-    public EllisMapGenerator() : base("ellis-1", "Mini Madness", [3, 6])
+    public EllisMapGenerator() : base("ellis-1", "Mini Madness", 3, 6)
     {
     }
 
@@ -14,13 +14,13 @@ public class EllisMapGenerator : BaseMapGenerator
 
         // Edit default tiles
         CenterSystems.Clear();
-        CenterSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 3, Science = (playerCount == 6) ? 3 : 2 } });
+        CenterSystems.Add(new BoardHex { Planet = new Planet { Stars = 3, Science = (playerCount == 6) ? 3 : 2 } });
         InnerSystems.Clear();
-        InnerSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 2, Production = 4 } });
-        InnerSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 2, Production = 2, Science = 1 } });
+        InnerSystems.Add(new BoardHex { Planet = new Planet { Stars = 2, Production = 4 } });
+        InnerSystems.Add(new BoardHex { Planet = new Planet { Stars = 2, Production = 2, Science = 1 } });
         // Keep OuterSystems the same
         HomeSystems.Clear();
-        HomeSystems.Add(new BoardHex() { Planet = new Planet() { Stars = 1, Production = 3, Science = 1, IsHomeSystem = true, ForcesPresent = 3, } });
+        HomeSystems.Add(new BoardHex { Planet = new Planet { Stars = 1, Production = 3, Science = 1, IsHomeSystem = true, ForcesPresent = 3, } });
 
         var map = new List<BoardHex>();
 
@@ -63,7 +63,7 @@ public class EllisMapGenerator : BaseMapGenerator
 
             if (playerCount == 3) // Hyperlanes for 3 player variation
             {
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(2, -2).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.South.RotateClockwise(rotation))]

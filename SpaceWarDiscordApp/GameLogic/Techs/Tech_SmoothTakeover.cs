@@ -1,7 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.SmoothTakeover;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.SmoothTakeover;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -46,7 +45,7 @@ public class Tech_SmoothTakeover : Tech, IInteractionHandler<SmoothTakeoverRefre
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SmoothTakeoverRefreshInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SmoothTakeoverRefreshInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Event.Location);
@@ -59,6 +58,6 @@ public class Tech_SmoothTakeover : Tech, IInteractionHandler<SmoothTakeoverRefre
         }
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

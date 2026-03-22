@@ -1,7 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Biorecyclers;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Biorecyclers;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -95,7 +94,7 @@ public class Tech_Biorecyclers : Tech, IInteractionHandler<PutForcesOnBiorecycle
     }
 
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, PutForcesOnBiorecyclersInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, PutForcesOnBiorecyclersInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -112,10 +111,10 @@ public class Tech_Biorecyclers : Tech, IInteractionHandler<PutForcesOnBiorecycle
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, DeployFromBiorecyclersInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, DeployFromBiorecyclersInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var playerTech = GetThisTech<PlayerTech_Biorecyclers>(game.GetGamePlayerForInteraction(interactionData));
@@ -137,6 +136,6 @@ public class Tech_Biorecyclers : Tech, IInteractionHandler<PutForcesOnBiorecycle
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

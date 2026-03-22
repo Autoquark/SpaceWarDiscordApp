@@ -1,8 +1,7 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.IntensiveTraining;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.IntensiveTraining;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -81,7 +80,7 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyIntensiveTrainingBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyIntensiveTrainingBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -103,6 +102,6 @@ public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTr
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

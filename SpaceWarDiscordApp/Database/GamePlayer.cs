@@ -1,8 +1,6 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database.Converters;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.GameLogic;
-using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Database;
 
