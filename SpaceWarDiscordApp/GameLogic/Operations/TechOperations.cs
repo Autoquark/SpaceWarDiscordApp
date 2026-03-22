@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Interactions.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 

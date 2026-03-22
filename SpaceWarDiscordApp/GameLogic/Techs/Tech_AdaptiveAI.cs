@@ -1,9 +1,8 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.AdaptiveAI;
+using SpaceWarDiscordApp.Database.Interactions.Tech.AdaptiveAI;
 using SpaceWarDiscordApp.Database.Tech;
-using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -83,7 +82,7 @@ public class Tech_AdaptiveAI : Tech, IInteractionHandler<ApplyAdaptiveAIBonusInt
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyAdaptiveAIBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyAdaptiveAIBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var amount = GetThisTech<PlayerTech_AdaptiveAI>(game.GetGamePlayerForInteraction(interactionData)).Progress / ForcesPerPlusOne;
@@ -106,10 +105,10 @@ public class Tech_AdaptiveAI : Tech, IInteractionHandler<ApplyAdaptiveAIBonusInt
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, GainAdaptiveAIProgressInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, GainAdaptiveAIProgressInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var owningPlayer = game.GetGamePlayerForInteraction(interactionData);
@@ -127,6 +126,6 @@ public class Tech_AdaptiveAI : Tech, IInteractionHandler<ApplyAdaptiveAIBonusInt
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

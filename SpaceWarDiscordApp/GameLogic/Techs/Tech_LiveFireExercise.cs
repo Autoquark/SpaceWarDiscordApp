@@ -1,8 +1,8 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.LiveFireExercise;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.LiveFireExercise;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -71,7 +71,7 @@ public class Tech_LiveFireExercise : Tech,
             .AppendCancelButton(cancelId);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SelectLiveFireExercisePlanetInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SelectLiveFireExercisePlanetInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -92,7 +92,7 @@ public class Tech_LiveFireExercise : Tech,
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
@@ -146,7 +146,7 @@ public class Tech_LiveFireExercise : Tech,
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyLiveFireExerciseCombatBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyLiveFireExerciseCombatBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -168,6 +168,6 @@ public class Tech_LiveFireExercise : Tech,
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

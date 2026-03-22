@@ -3,14 +3,12 @@ using System.Diagnostics;
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
-using SixLabors.Fonts;
-using SixLabors.ImageSharp.Drawing.Processing;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Move;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Move;
+using SpaceWarDiscordApp.Database.Interactions.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
@@ -33,7 +31,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         
         var name = await game.CurrentTurnPlayer.GetNameAsync(true);
         
-        var moveInteractionId = serviceProvider.AddInteractionToSetUp(new BeginPlanningMoveInteraction<MoveActionCommands>()
+        var moveInteractionId = serviceProvider.AddInteractionToSetUp(new BeginPlanningMoveInteraction<MoveActionCommands>
         {
             Game = game.DocumentId,
             ForGamePlayerId = game.CurrentTurnPlayer.GamePlayerId,
@@ -452,8 +450,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             {
                 var resolvingTrigger = resolvingEvent.RemainingTriggersToResolve[0];
                 await ResolveTriggeredEffectAsync(builder, game, resolvingTrigger, serviceProvider);
-                
-                continue;
             }
             // Multiple and/or optional triggers, need to get a player decision
             else if (resolvingEvent.RemainingTriggersToResolve.Count > 0)
@@ -560,7 +556,8 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                     continue;
                 }
                 // Player choice event, display choices and stop resolving
-                else if(resolvingEvent is GameEvent_PlayerChoice choiceEvent)
+
+                if(resolvingEvent is GameEvent_PlayerChoice choiceEvent)
                 {
                     if (builder != null)
                     {
@@ -572,8 +569,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                         {
                             continue;
                         }
-                        
-                        break;
                     }
                 }
                 // No more players to resolve, pop this event from the stack and resolve its OnResolve
@@ -812,14 +807,14 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, StartGameInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, StartGameInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
         
         await StartGameAsync(builder, game, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     public async static Task<DiscordMultiMessageBuilder> StartGameAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
@@ -865,7 +860,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             game.UniversalTechs.Add(drawn[^1].Id);
             
             // Return unsuitable cards drawn to the deck and shuffle
-            game.TechDeck.AddRange(drawn[0..^1].Select(x => x.Id));
+            game.TechDeck.AddRange(drawn[..^1].Select(x => x.Id));
             game.TechDeck.Shuffle();
         }
 
@@ -995,13 +990,13 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         return amount;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowBoardInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowBoardInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         if (builder != null)
         {
             await GameStateOperations.ShowBoardStateMessageAsync(builder, game);
         }
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 }

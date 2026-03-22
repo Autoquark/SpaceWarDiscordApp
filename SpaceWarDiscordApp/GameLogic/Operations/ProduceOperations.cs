@@ -1,10 +1,7 @@
-using DSharpPlus.Entities;
-using Raffinert.FuzzySharp.Utils;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Discord;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 

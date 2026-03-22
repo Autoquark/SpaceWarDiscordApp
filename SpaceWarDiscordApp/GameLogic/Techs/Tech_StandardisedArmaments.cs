@@ -1,7 +1,7 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.StandardisedArmaments;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.StandardisedArmaments;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -39,7 +39,7 @@ public class Tech_StandardisedArmaments : Tech, IInteractionHandler<UseStandardi
         builder.AppendContentNewline($"{await player.GetNameAsync(true)}, choose where add forces:");
         
         var interactionIds = serviceProvider.AddInteractionsToSetUp(targets.Select(x =>
-            new UseStandardisedArmamentsInteraction()
+            new UseStandardisedArmamentsInteraction
             {
                 ForGamePlayerId = player.GamePlayerId,
                 Game = game.DocumentId,
@@ -57,7 +57,7 @@ public class Tech_StandardisedArmaments : Tech, IInteractionHandler<UseStandardi
             .AppendCancelButton(cancelId);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseStandardisedArmamentsInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseStandardisedArmamentsInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -78,6 +78,6 @@ public class Tech_StandardisedArmaments : Tech, IInteractionHandler<UseStandardi
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

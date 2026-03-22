@@ -4,49 +4,27 @@ using DSharpPlus.EventArgs;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
-using System.Reflection;
 
 namespace SpaceWarDiscordApp.Discord;
 
 public static class InteractionDispatcher
 {
-    private static readonly Dictionary<Type, object> InteractionHandlers = new();
+    internal static readonly InteractionDispatcher<Game> Instance =
+        new(GameEventDispatcher.Instance);
 
     public static void RegisterInteractionHandler(object interactionHandler)
-    {
-        foreach (var interactionType in interactionHandler.GetType()
-                     .GetInterfaces()
-                     .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IInteractionHandler<>))
-                     .Select(x => x.GetGenericArguments()[0]))
-        {
-            if (!InteractionHandlers.TryAdd(interactionType, interactionHandler))
-            {
-                throw new Exception($"Handler already registered for {interactionType}");
-            }
-        }
-
-    }
+        => Instance.RegisterInteractionHandler(interactionHandler);
 
     /// <summary>
     /// Allows game logic to trigger resolution of an interaction directly
     /// </summary>
-    public static async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public static Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         InteractionData gamePlayerInteractionData,
         Game game,
         IServiceProvider serviceProvider)
-    {
-        if (!game.DocumentId!.Equals(gamePlayerInteractionData.Game))
-        {
-            throw new ArgumentException("InteractionData does not belong to the given game");
-        }
-
-        return await HandleInteractionInternalAsync(builder, gamePlayerInteractionData, game, serviceProvider);
-    }
+        => Instance.HandleInteractionAsync(builder, gamePlayerInteractionData, game, serviceProvider);
 
     /// <summary>
     /// Handles interactions sent from Discord
@@ -86,7 +64,7 @@ public static class InteractionDispatcher
             await args.Interaction.DeferAsync(interactionData.EphemeralResponse);
         }
 
-        var cache = client.ServiceProvider.GetRequiredService<GameCache>();
+        var cache = client.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
         if (!cache.GetGame(interactionData.Game!, out var game, out var nonDbGameState))
         {
             game = await Program.FirestoreDb.RunTransactionAsync(transaction => transaction.GetGameAsync(interactionData.Game!));
@@ -151,7 +129,7 @@ public static class InteractionDispatcher
 
             var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
 
-            var outcome = await HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
+            var outcome = await Instance.HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
 
             if (outcome.RequiresSave || interactionsToSetUp.Any())
             {
@@ -176,7 +154,6 @@ public static class InteractionDispatcher
                 }
             }
 
-            // Send messages to the source channel as interaction followups - not sure how necessary this is
             var firstBuilder = builders.SourceChannelBuilder.Builders[0];
             if (firstBuilder is { Components.Count: > 0 })
             {
@@ -211,7 +188,6 @@ public static class InteractionDispatcher
             }
             else
             {
-                // No response, delete the deferred response placeholder
                 await args.Interaction.DeleteOriginalResponseAsync();
             }
 
@@ -240,7 +216,6 @@ public static class InteractionDispatcher
         }
         catch (Exception e) when (!Program.IsTestEnvironment)
         {
-            // Force a refetch next command so any half complete operations on the in-memory game object are discarded
             if (game.DocumentId != null)
             {
                 cache.Clear(game.DocumentId);
@@ -253,71 +228,5 @@ public static class InteractionDispatcher
                     "An error occurred. Please try again, or report as a bug if the problem persists"));
             throw;
         }
-    }
-
-    private static async Task<SpaceWarInteractionOutcome> HandleInteractionInternalAsync(DiscordMultiMessageBuilder? builder,
-        InteractionData interaction,
-        Game game,
-        IServiceProvider serviceProvider) =>
-        await (Task<SpaceWarInteractionOutcome>)typeof(InteractionDispatcher).GetMethod(nameof(HandleTypedInteractionInternalAsync), BindingFlags.NonPublic | BindingFlags.Static)!
-            .MakeGenericMethod(interaction.GetType())
-            .Invoke(null, [builder, interaction, game, serviceProvider])!;
-
-    private static async Task<SpaceWarInteractionOutcome> HandleTypedInteractionInternalAsync<TInteractionData>(DiscordMultiMessageBuilder? builder,
-        TInteractionData interaction,
-        Game game,
-        IServiceProvider serviceProvider)
-        where TInteractionData : InteractionData
-    {
-        var currentEvent = game.EventStack.LastOrDefault();
-        if (interaction.ResolvesChoiceEventId != null)
-        {
-            if (currentEvent is GameEvent_PlayerChoice<TInteractionData> choiceEvent)
-            {
-                await (Task<DiscordMultiMessageBuilder?>)typeof(GameEventDispatcher).GetMethod(nameof(GameEventDispatcher.HandlePlayerChoiceInteractionAsync))!
-                    .MakeGenericMethod(currentEvent.GetType(), typeof(TInteractionData))
-                    .Invoke(null, [builder, choiceEvent, interaction, game, serviceProvider])!;
-                return new SpaceWarInteractionOutcome(true);
-            }
-            else
-            {
-                builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
-                return new SpaceWarInteractionOutcome(false);
-            }
-        }
-
-        var interactionType = interaction.GetType();
-        if (!InteractionHandlers.TryGetValue(interactionType, out var handler))
-        {
-            throw new Exception("Handler not found");
-        }
-
-        if (interaction is EventModifyingInteractionData eventModifyingInteractionData)
-        {
-            // If this is an EventModifyingInteractionData, populate the event property
-            var baseType = interactionType;
-            while (baseType != null &&
-                   (!baseType.IsGenericType ||
-                    baseType.GetGenericTypeDefinition() != typeof(EventModifyingInteractionData<>)))
-            {
-                baseType = baseType.BaseType;
-            }
-
-            if (baseType != null)
-            {
-                var eventType = baseType.GetGenericArguments()[0];
-                // Event id check for the remote scenario where the top event on the stack is of the right type, but not actually the event that this trigger is associated with
-                if (currentEvent == null || !currentEvent.GetType().IsAssignableTo(eventType) || !eventModifyingInteractionData.EventId.Equals(currentEvent.EventId))
-                {
-                    builder?.AppendContentNewline("These buttons are not for the currently resolving effect.");
-                    return new SpaceWarInteractionOutcome(false);
-                }
-
-                interactionType.GetProperty(nameof(EventModifyingInteractionData<GameEvent>.Event))!
-                    .SetValue(interaction, currentEvent);
-            }
-        }
-
-        return await ((IInteractionHandler<TInteractionData>)handler).HandleInteractionAsync(builder, interaction, game, serviceProvider);
     }
 }

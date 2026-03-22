@@ -2,9 +2,8 @@ using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Plagiarism;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Plagiarism;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -61,7 +60,7 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
             .Distinct()
             .Except(player.Techs.Select(x => x.TechId));
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, PlagiariseTechInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, PlagiariseTechInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -86,6 +85,6 @@ public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteracti
                 ActionType = SimpleActionType
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

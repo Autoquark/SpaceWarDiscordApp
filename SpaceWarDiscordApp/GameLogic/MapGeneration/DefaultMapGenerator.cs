@@ -61,7 +61,7 @@ public class DefaultMapGenerator : BaseMapGenerator
                 map.Add(system);
                 
                 // Hyperlane
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(1, -2).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.North.RotateClockwise(rotation), HexDirection.SouthWest.RotateClockwise(rotation))]
@@ -73,21 +73,21 @@ public class DefaultMapGenerator : BaseMapGenerator
             foreach (var rotation in Enumerable.Range(0, 6).Except(playerSliceRotations))
             {
                 // Outer hyperlane
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(-1, -2).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.NorthEast.RotateClockwise(rotation))]
                 };
                 map.Add(system);
                 
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(0, -3).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
                 };
                 map.Add(system);
                 
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(1, -3).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
@@ -95,7 +95,7 @@ public class DefaultMapGenerator : BaseMapGenerator
                 map.Add(system);
                 
                 // Inner hyperlane
-                system = new BoardHex()
+                system = new BoardHex
                 {
                     Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation),
                     HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
@@ -176,13 +176,13 @@ public class DefaultMapGenerator : BaseMapGenerator
             
             // Hyperlanes
             // Top left
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(-3, 1),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.South, HexDirection.NorthEast)]
             };
             map.Add(system);
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(-2, 0),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
@@ -190,13 +190,13 @@ public class DefaultMapGenerator : BaseMapGenerator
             map.Add(system);
             
             // Top right
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(1, -3),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthEast, HexDirection.SouthWest)]
             };
             map.Add(system);
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(0, -2),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
@@ -204,13 +204,13 @@ public class DefaultMapGenerator : BaseMapGenerator
             map.Add(system);
             
             // Bottom left
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(-1, 3),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest, HexDirection.NorthEast)]
             };
             map.Add(system);
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(0, 2),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
@@ -218,13 +218,13 @@ public class DefaultMapGenerator : BaseMapGenerator
             map.Add(system);
             
             // Bottom right
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(2, 0),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.NorthEast)]
             };
             map.Add(system);
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(3, -1),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.SouthWest, HexDirection.North)]

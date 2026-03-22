@@ -1,8 +1,8 @@
 using DSharpPlus.Commands.Processors.SlashCommands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
-using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.Database;
+using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 

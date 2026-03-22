@@ -1,5 +1,3 @@
-using System;
-
 namespace SpaceWarDiscordApp;
 
 public static class ObjectExtensions

@@ -1,8 +1,6 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Overwhelm;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Overwhelm;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -43,7 +41,7 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
                         AlwaysAutoResolve = true,
                         IsMandatory = true,
                         DisplayName = DisplayName,
-                        ResolveInteractionData = new ApplyOverwhelmBonusInteraction()
+                        ResolveInteractionData = new ApplyOverwhelmBonusInteraction
                         {
                             Game = game.DocumentId,
                             ForGamePlayerId = player.GamePlayerId,
@@ -60,7 +58,7 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyOverwhelmBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyOverwhelmBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -82,6 +80,6 @@ public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInter
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

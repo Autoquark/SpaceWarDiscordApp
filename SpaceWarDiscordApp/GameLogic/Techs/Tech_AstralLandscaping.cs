@@ -1,7 +1,7 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.AstralLandscaping;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.AstralLandscaping;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -32,7 +32,7 @@ public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLand
                 Game = game.DocumentId
             }));
 
-        var cancelId = serviceProvider.AddInteractionToSetUp(new RepromptInteraction()
+        var cancelId = serviceProvider.AddInteractionToSetUp(new RepromptInteraction
         {
             ForGamePlayerId = player.GamePlayerId,
             Game = game.DocumentId
@@ -44,7 +44,7 @@ public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLand
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SelectAstralLandscapingFirstTargetInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -57,7 +57,7 @@ public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLand
         var adjacentTargets = BoardUtils.GetNeighbouringHexes(game, firstTarget);
 
         var ids = serviceProvider.AddInteractionsToSetUp(adjacentTargets.Select(x =>
-            new SelectAstralLandscapingSecondTargetInteraction()
+            new SelectAstralLandscapingSecondTargetInteraction
             {
                 ControlledTarget = firstTarget.Coordinates,
                 OtherTarget = x.Coordinates,
@@ -74,10 +74,10 @@ public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLand
         builder!.AppendContentNewline($"{await player.GetNameAsync(true)}, choose an adjacent system to swap with {firstTarget.ToHexNumberWithDieEmoji(game)}:");
         builder.AppendHexButtons(game, adjacentTargets, ids, cancelId);
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SelectAstralLandscapingSecondTargetInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -102,6 +102,6 @@ public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLand
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

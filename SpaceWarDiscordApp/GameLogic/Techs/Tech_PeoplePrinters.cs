@@ -1,8 +1,7 @@
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.PeoplePrinters;
+using SpaceWarDiscordApp.Database.Interactions.Tech.PeoplePrinters;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -48,7 +47,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UsePeoplePrintersInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UsePeoplePrintersInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Event.Location);
@@ -57,7 +56,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
         if (hex.Planet == null || hex.Planet.Science == 0 || interactionData.Event.EffectiveScienceProduction == 0)
         {
             await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
 
         // Only 1 science produced so no need to prompt for amount
@@ -69,7 +68,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
             builder?.AppendContentNewline(GetMessage(1));
             
             await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
 
         // Prompt for amount
@@ -88,10 +87,10 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
                 new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Second,
                     $"{x.First} science -> {x.First * 2} forces"))));
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SpecifyPeoplePrintersAmountInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SpecifyPeoplePrintersAmountInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.Event.EffectiveScienceProduction < interactionData.ScienceAmount)
@@ -105,7 +104,7 @@ public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersIn
         builder?.AppendContentNewline(GetMessage(interactionData.ScienceAmount));
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     private static string GetMessage(int scienceAmount) =>

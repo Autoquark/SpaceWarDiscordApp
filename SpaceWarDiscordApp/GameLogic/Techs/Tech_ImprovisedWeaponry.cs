@@ -1,7 +1,6 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.ImprovisedWeaponry;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.ImprovisedWeaponry;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -45,7 +44,7 @@ public class Tech_ImprovisedWeaponry : Tech, IInteractionHandler<ImprovisedWeapo
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ImprovisedWeaponryAddForcesInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ImprovisedWeaponryAddForcesInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Event.Location);
@@ -59,6 +58,6 @@ public class Tech_ImprovisedWeaponry : Tech, IInteractionHandler<ImprovisedWeapo
         }
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

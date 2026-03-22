@@ -18,13 +18,13 @@ public class Planet
     }
 
     [FirestoreProperty]
-    public int Production {get; set;} = 0;
+    public int Production {get; set;}
     
     [FirestoreProperty]
-    public int Science {get; set;} = 0;
+    public int Science {get; set;}
     
     [FirestoreProperty]
-    public int Stars {get; set;} = 0;
+    public int Stars {get; set;}
     
     // Allow init, but otherwise require using methods to set, to avoid having no forces but an owning player
     [FirestoreProperty]
@@ -34,13 +34,13 @@ public class Planet
         init => _forcesPresent = value;
     }
 
-    private int _forcesPresent = 0;
+    private int _forcesPresent;
 
     [FirestoreProperty]
     public int OwningPlayerId { get; set; } = -1;
     
     [FirestoreProperty]
-    public bool IsHomeSystem { get; set; } = false;
+    public bool IsHomeSystem { get; set; }
     
     [FirestoreProperty]
     public bool IsExhausted { get; set; } = false;

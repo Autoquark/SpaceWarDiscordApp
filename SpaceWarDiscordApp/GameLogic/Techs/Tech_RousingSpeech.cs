@@ -1,9 +1,8 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.RousingSpeech;
+using SpaceWarDiscordApp.Database.Interactions.Tech.RousingSpeech;
 using SpaceWarDiscordApp.Database.Tech;
-using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -25,7 +24,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         => base.IsSimpleActionAvailable(game, player) &&
         GetThisTech<PlayerTech_RousingSpeech>(player).TurnsActiveRemaining == 0;
 
-    public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech()
+    public override PlayerTech CreatePlayerTech(Game game, GamePlayer player) => new PlayerTech_RousingSpeech
     {
         TechId = Id,
     };
@@ -114,7 +113,7 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyRousingSpeechBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyRousingSpeechBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -136,6 +135,6 @@ public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBo
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

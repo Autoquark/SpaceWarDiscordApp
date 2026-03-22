@@ -1,9 +1,6 @@
-using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.MassMigration;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.MassMigration;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -45,7 +42,7 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyMassMigrationBonusInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         interactionData.Event.AttackerCombatStrengthSources.Add(new CombatStrengthSource
@@ -56,6 +53,6 @@ public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigratio
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

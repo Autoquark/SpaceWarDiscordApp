@@ -1,8 +1,6 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Isolationism;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Isolationism;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -50,7 +48,7 @@ public class Tech_Isolationism : Tech, IInteractionHandler<ApplyIsolationismBonu
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyIsolationismBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyIsolationismBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.EffectiveProductionValue += ProductionBonus;
@@ -59,7 +57,7 @@ public class Tech_Isolationism : Tech, IInteractionHandler<ApplyIsolationismBonu
         
         builder?.AppendContentNewline($"Produced {ProductionBonus} additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     private static bool IsHexAffected(Game game, BoardHex hex, GamePlayer owningPlayer) 

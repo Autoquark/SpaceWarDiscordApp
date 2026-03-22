@@ -2,16 +2,11 @@ using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.ContextChecks;
 using DSharpPlus.Entities;
-using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Processing;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
-using SpaceWarDiscordApp.ImageGeneration;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
@@ -87,7 +82,7 @@ public class BotManagementCommands
     [Command("ClearAllGameCache")]
     public static async Task ClearAllGameCache(CommandContext context)
     {
-        var cache = context.ServiceProvider.GetRequiredService<GameCache>();
+        var cache = context.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
         var outcome = context.Outcome();
         cache.ClearAll();
         
