@@ -19,12 +19,4 @@ public static class InteractionsHelper
             transaction.Set(globalData);
             return globalData;
         });
-
-    public static List<string> SetUpInteractions(IEnumerable<InteractionData> interactions,
-        Transaction transaction, ulong interactionGroupId) =>
-        InteractionStatics.SetUpInteractions(interactions, transaction, transaction.Database.InteractionData(), interactionGroupId);
-
-    public static string SetUpInteraction(InteractionData data,
-        Transaction transaction, ulong interactionGroupId) =>
-        InteractionStatics.SetUpInteraction(data, transaction, transaction.Database.InteractionData(), interactionGroupId);
 }

@@ -151,7 +151,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
             transaction.Create(game.DocumentId, game);
-            InteractionsHelper.SetUpInteractions([startGameInteraction, joinGameInteraction],
+            InteractionStatics.SetUpInteractions([startGameInteraction, joinGameInteraction],
                 transaction,
                 context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         });

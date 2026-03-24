@@ -6,18 +6,18 @@ namespace Tumult.Database;
 public static class InteractionStatics
 {
     public static List<string> SetUpInteractions(IEnumerable<InteractionData> interactions,
-        Transaction transaction, CollectionReference interactionDataCollection, ulong interactionGroupId) =>
-        interactions.Select(x => SetUpInteraction(x, transaction, interactionDataCollection, interactionGroupId)).ToList();
+        Transaction transaction, ulong interactionGroupId) =>
+        interactions.Select(x => SetUpInteraction(x, transaction, interactionGroupId)).ToList();
 
     public static string SetUpInteraction(InteractionData data,
-        Transaction transaction, CollectionReference interactionDataCollection, ulong interactionGroupId)
+        Transaction transaction, ulong interactionGroupId)
     {
         if (string.IsNullOrEmpty(data.InteractionId))
         {
             throw new ArgumentException("InteractionId must be set");
         }
 
-        var documentRef = interactionDataCollection.Document();
+        var documentRef = transaction.Database.InteractionData().Document();
         data.DocumentId = documentRef;
         data.InteractionGroupId = interactionGroupId;
         transaction.Create(documentRef, data);

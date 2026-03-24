@@ -34,8 +34,16 @@ public class Game : BaseGame
     public override bool IsInteractionAllowedForUser(int forGamePlayerId, ulong discordUserId)
     {
         var forPlayer = TryGetGamePlayerByGameId(forGamePlayerId);
-        if (forPlayer == null) return false;
-        if (forPlayer.IsDummyPlayer) return true;
+        if (forPlayer == null)
+        {
+            return false;
+        }
+
+        if (forPlayer.IsDummyPlayer)
+        {
+            return true;
+        }
+
         var requestingPlayer = TryGetGamePlayerByDiscordId(discordUserId);
         return requestingPlayer != null && forPlayer == requestingPlayer;
     }

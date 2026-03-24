@@ -142,7 +142,7 @@ public static class InteractionDispatcher
                             transaction.Set(game);
                         }
 
-                        InteractionsHelper.SetUpInteractions(interactionsToSetUp,
+                        InteractionStatics.SetUpInteractions(interactionsToSetUp,
                             transaction,
                             contextData.GlobalData.InteractionGroupId);
                     });

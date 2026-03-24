@@ -501,7 +501,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                         .Where(x => x.ResolveInteractionData != null && string.IsNullOrEmpty(x.ResolveInteractionId)))
                     {
                         trigger.ResolveInteractionId =
-                            InteractionsHelper.SetUpInteraction(trigger.ResolveInteractionData!, transaction,
+                            InteractionStatics.SetUpInteraction(trigger.ResolveInteractionData!, transaction,
                                 interactionGroupId);
                     }
 

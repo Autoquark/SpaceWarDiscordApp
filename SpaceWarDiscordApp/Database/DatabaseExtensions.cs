@@ -4,12 +4,14 @@ namespace SpaceWarDiscordApp.Database;
 
 public static class DatabaseExtensions
 {
-    public static CollectionReference Games(this FirestoreDb db) => db.Collection("Games");
-    public static CollectionReference GameBackups(this FirestoreDb db) => db.Collection("GameBackups");
-    public static CollectionReference PlayerTechs(this FirestoreDb db) => db.Collection("PlayerTechs");
-    public static CollectionReference GameEvents(this FirestoreDb db) => db.Collection("GameEvents");
-    public static CollectionReference EventRecords(this FirestoreDb db) => db.Collection("EventRecords");
-    public static CollectionReference InteractionData(this FirestoreDb db) => db.Collection("InteractionData");
-    public static CollectionReference GuildData(this FirestoreDb db) => db.Collection("GuildData");
-    public static DocumentReference GlobalData(this FirestoreDb db) => db.Collection("GlobalData").Document("GlobalData");
+    extension(FirestoreDb db)
+    {
+        public CollectionReference Games() => db.Collection("Games");
+        public CollectionReference GameBackups() => db.Collection("GameBackups");
+        public CollectionReference PlayerTechs() => db.Collection("PlayerTechs");
+        public CollectionReference GameEvents() => db.Collection("GameEvents");
+        public CollectionReference EventRecords() => db.Collection("EventRecords");
+        public CollectionReference GuildData() => db.Collection("GuildData");
+        public DocumentReference GlobalData() => db.Collection("GlobalData").Document("GlobalData");
+    }
 }

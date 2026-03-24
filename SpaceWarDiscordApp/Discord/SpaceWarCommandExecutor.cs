@@ -158,7 +158,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                                     transaction.Set(contextData.Game!);
                                 }
                                 
-                                InteractionsHelper.SetUpInteractions(interactionsToSetUp,
+                                InteractionStatics.SetUpInteractions(interactionsToSetUp,
                                     transaction,
                                     contextData.GlobalData.InteractionGroupId);
                             },
@@ -175,7 +175,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
             else if (interactionsToSetUp.Count != 0)
             {
                 await Program.FirestoreDb.RunTransactionAsync(transaction =>
-                    InteractionsHelper.SetUpInteractions(interactionsToSetUp, transaction,
+                    InteractionStatics.SetUpInteractions(interactionsToSetUp, transaction,
                         contextData.GlobalData.InteractionGroupId), cancellationToken: cancellationToken);
             }
 
