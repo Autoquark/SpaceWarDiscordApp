@@ -2,7 +2,7 @@ using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public interface IInteractionHandler<T> : IInteractionHandler<T, Game>
+public interface ISpaceWarInteractionHandler<T> : IInteractionHandler<T, Game>
     where T : InteractionData
 {
 }

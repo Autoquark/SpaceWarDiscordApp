@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_PeoplePrinters : Tech, IInteractionHandler<UsePeoplePrintersInteraction>, IInteractionHandler<SpecifyPeoplePrintersAmountInteraction>
+public class Tech_PeoplePrinters : Tech, ISpaceWarInteractionHandler<UsePeoplePrintersInteraction>, ISpaceWarInteractionHandler<SpecifyPeoplePrintersAmountInteraction>
 {
     public Tech_PeoplePrinters() : base("people-printers",
         "People Printers",

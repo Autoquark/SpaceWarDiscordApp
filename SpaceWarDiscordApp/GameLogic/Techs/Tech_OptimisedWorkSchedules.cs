@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptimisedWorkSchedulesInteraction>
+public class Tech_OptimisedWorkSchedules : Tech, ISpaceWarInteractionHandler<TargetOptimisedWorkSchedulesInteraction>
 {
     public Tech_OptimisedWorkSchedules() : base("optimisedWorkSchedules", 
         "Optimised Work Schedules",

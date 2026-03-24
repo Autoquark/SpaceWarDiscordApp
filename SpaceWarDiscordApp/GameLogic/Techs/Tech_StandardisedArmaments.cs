@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_StandardisedArmaments : Tech, IInteractionHandler<UseStandardisedArmamentsInteraction>
+public class Tech_StandardisedArmaments : Tech, ISpaceWarInteractionHandler<UseStandardisedArmamentsInteraction>
 {
     public Tech_StandardisedArmaments() : base("standardised-armaments", "Standardised Armaments",
         "Choose a ready planet you control. Exhaust it and add 1 forces.",

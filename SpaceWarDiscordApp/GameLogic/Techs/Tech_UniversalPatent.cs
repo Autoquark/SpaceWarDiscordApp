@@ -9,7 +9,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_UniversalPatent : Tech, IInteractionHandler<UseUniversalPatentInteraction>
+public class Tech_UniversalPatent : Tech, ISpaceWarInteractionHandler<UseUniversalPatentInteraction>
 {
     public Tech_UniversalPatent() : base("universalPatent", "Universal Patent",
         "Research any currently available tech for free.",

@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRepurposingInteraction>
+public class Tech_MaterialRepurposing : Tech, ISpaceWarInteractionHandler<UseMaterialRepurposingInteraction>
 {
     public Tech_MaterialRepurposing() : base("material-repurposing", "Material Repurposing",
         "When you capture a planet, if it's ready, produce there (then exhaust it as normal)",

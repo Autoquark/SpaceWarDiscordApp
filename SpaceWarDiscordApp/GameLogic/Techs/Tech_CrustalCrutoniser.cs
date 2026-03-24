@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CrustalCrutoniser : Tech, IInteractionHandler<UseCrustalCrutoniserInteraction>
+public class Tech_CrustalCrutoniser : Tech, ISpaceWarInteractionHandler<UseCrustalCrutoniserInteraction>
 {
     public Tech_CrustalCrutoniser() : base("crustalCrutoniser", "Crustal Crutoniser",
         "Produce on a ready planet with at least one production (exhaust it as usual). Reduce that planet's production score by 1.",

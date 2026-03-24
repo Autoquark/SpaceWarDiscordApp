@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EnPassant : Tech, IInteractionHandler<ResolveEnPassantInteraction>
+public class Tech_EnPassant : Tech, ISpaceWarInteractionHandler<ResolveEnPassantInteraction>
 {
     public Tech_EnPassant() : base("en_passant", "En Passant",
         "When you complete a movement, if the destination and at least one source were both adjacent to a planet controlled by an opponent, destroy 1 forces from that planet.",

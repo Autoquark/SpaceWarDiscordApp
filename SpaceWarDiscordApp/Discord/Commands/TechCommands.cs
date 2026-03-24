@@ -11,7 +11,7 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class TechCommands : IInteractionHandler<UseTechActionInteraction>
+public class TechCommands : ISpaceWarInteractionHandler<UseTechActionInteraction>
 {
     public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseTechActionInteraction interactionData,

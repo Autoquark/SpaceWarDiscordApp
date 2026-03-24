@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_ImprovisedWeaponry : Tech, IInteractionHandler<ImprovisedWeaponryAddForcesInteraction>
+public class Tech_ImprovisedWeaponry : Tech, ISpaceWarInteractionHandler<ImprovisedWeaponryAddForcesInteraction>
 {
     public Tech_ImprovisedWeaponry() : base("improvised-weaponry", "Improvised Weaponry",
         "After you capture a planet from another player, add 1 forces to that planet. Don't exhaust it.",

@@ -22,11 +22,11 @@ public enum MoveDestinationRestriction
 /// </summary>
 /// <typeparam name="T">Type used to uniquely identify interactions to be handled by this handler.
 /// The type is not otherwise interacted with and can be any type</typeparam>
-public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanningMoveInteraction<T>>,
-    IInteractionHandler<SetMoveDestinationInteraction<T>>,
-    IInteractionHandler<AddMoveSourceInteraction<T>>,
-    IInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
-    IInteractionHandler<PerformPlannedMoveInteraction<T>>,
+public abstract class MovementFlowHandler<T> : ISpaceWarInteractionHandler<BeginPlanningMoveInteraction<T>>,
+    ISpaceWarInteractionHandler<SetMoveDestinationInteraction<T>>,
+    ISpaceWarInteractionHandler<AddMoveSourceInteraction<T>>,
+    ISpaceWarInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
+    ISpaceWarInteractionHandler<PerformPlannedMoveInteraction<T>>,
     IEventResolvedHandler<GameEvent_MovementFlowComplete<T>>
 {
     protected MovementFlowHandler(Tech? tech)

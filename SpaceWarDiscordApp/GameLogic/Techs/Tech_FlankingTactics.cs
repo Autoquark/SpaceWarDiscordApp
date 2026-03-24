@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacticsBonusInteraction>
+public class Tech_FlankingTactics : Tech, ISpaceWarInteractionHandler<ApplyFlankingTacticsBonusInteraction>
 {
     public Tech_FlankingTactics() : base("flanking-tactics",
         "Flanking Tactics",

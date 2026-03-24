@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEfficientManufacturingBonusInteraction>
+public class Tech_EfficientManufacturing : Tech, ISpaceWarInteractionHandler<ApplyEfficientManufacturingBonusInteraction>
 {
     public Tech_EfficientManufacturing() : base("efficient-manufacturing",
         "Efficient Manufacturing",

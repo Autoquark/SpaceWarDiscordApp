@@ -14,8 +14,8 @@ namespace SpaceWarDiscordApp.GameLogic.Techs;
 
 // ReSharper disable once InconsistentNaming
 public class Tech_WarpNodes : Tech,
-    IInteractionHandler<WarpNodes_ChooseSourceInteraction>,
-    IInteractionHandler<WarpNodes_ChooseAmountInteraction>,
+    ISpaceWarInteractionHandler<WarpNodes_ChooseSourceInteraction>,
+    ISpaceWarInteractionHandler<WarpNodes_ChooseAmountInteraction>,
     IEventResolvedHandler<GameEvent_MovementFlowComplete<Tech_WarpNodes>>,
     IPlayerChoiceEventHandler<GameEvent_ChooseWarpNodesDestination, WarpNodes_ChooseDestinationInteraction>
 

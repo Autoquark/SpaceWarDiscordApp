@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Biorecyclers : Tech, IInteractionHandler<PutForcesOnBiorecyclersInteraction>, IInteractionHandler<DeployFromBiorecyclersInteraction>
+public class Tech_Biorecyclers : Tech, ISpaceWarInteractionHandler<PutForcesOnBiorecyclersInteraction>, ISpaceWarInteractionHandler<DeployFromBiorecyclersInteraction>
 {
     private const int MaxForces = 6;
     

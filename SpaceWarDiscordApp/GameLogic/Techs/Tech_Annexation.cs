@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Annexation : Tech, IInteractionHandler<UseAnnexationInteraction>
+public class Tech_Annexation : Tech, ISpaceWarInteractionHandler<UseAnnexationInteraction>
 {
     public Tech_Annexation() : base("annexation", "Annexation",
         "Produce on a ready neutral planet that is next to one you control (exhaust it as usual. If it has neutral forces on it, combat will occur.)",

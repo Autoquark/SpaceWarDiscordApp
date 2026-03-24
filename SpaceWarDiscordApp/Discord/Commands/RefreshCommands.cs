@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class RefreshCommands : IInteractionHandler<RefreshActionInteraction>
+public class RefreshCommands : ISpaceWarInteractionHandler<RefreshActionInteraction>
 {
     public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         RefreshActionInteraction interactionData,

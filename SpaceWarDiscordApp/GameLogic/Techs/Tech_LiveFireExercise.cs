@@ -11,8 +11,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
 public class Tech_LiveFireExercise : Tech,
-    IInteractionHandler<SelectLiveFireExercisePlanetInteraction>,
-    IInteractionHandler<ApplyLiveFireExerciseCombatBonusInteraction>
+    ISpaceWarInteractionHandler<SelectLiveFireExercisePlanetInteraction>,
+    ISpaceWarInteractionHandler<ApplyLiveFireExerciseCombatBonusInteraction>
 {
     public Tech_LiveFireExercise() : base("live-fire-exercise", "Live Fire Exercise",
         "Remove 1 forces from a planet you control. If you do you have +1 Combat Strength until the start of your next turn.",

@@ -16,8 +16,8 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
-public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, IInteractionHandler<StartGameInteraction>,
-    IEventResolvedHandler<GameEvent_PostForcesDestroyed>, IInteractionHandler<ShowBoardInteraction>
+public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IEventResolvedHandler<GameEvent_ActionComplete>, ISpaceWarInteractionHandler<StartGameInteraction>,
+    IEventResolvedHandler<GameEvent_PostForcesDestroyed>, ISpaceWarInteractionHandler<ShowBoardInteraction>
 {
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {

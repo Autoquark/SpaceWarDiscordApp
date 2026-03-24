@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FreezeDriedForces : Tech, IInteractionHandler<UseFreezeDriedForcesInteraction>
+public class Tech_FreezeDriedForces : Tech, ISpaceWarInteractionHandler<UseFreezeDriedForcesInteraction>
 {
     public Tech_FreezeDriedForces() : base(
         "freeze_dried_forces",

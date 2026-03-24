@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisationBonusInteraction>
+public class Tech_FlagOptimisation : Tech, ISpaceWarInteractionHandler<ApplyFlagOptimisationBonusInteraction>
 {
     public Tech_FlagOptimisation() : base(
         "flagOptimisation",

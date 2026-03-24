@@ -8,8 +8,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTroopsBonusInteraction>, IInteractionHandler<DisposableTroopsDestroyForcesInteraction>,
-    IInteractionHandler<DisposableTroopsClearPendingDestroyInteraction>
+public class Tech_DisposableTroops : Tech, ISpaceWarInteractionHandler<ApplyDisposableTroopsBonusInteraction>, ISpaceWarInteractionHandler<DisposableTroopsDestroyForcesInteraction>,
+    ISpaceWarInteractionHandler<DisposableTroopsClearPendingDestroyInteraction>
 {
     private const int ProductionBonus = 2;
     

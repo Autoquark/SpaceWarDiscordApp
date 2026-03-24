@@ -9,7 +9,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Plagiarism : Tech, IInteractionHandler<PlagiariseTechInteraction>
+public class Tech_Plagiarism : Tech, ISpaceWarInteractionHandler<PlagiariseTechInteraction>
 {
     public Tech_Plagiarism() : base("plagiarism", "Plagiarism",
         "Gain a tech that at least one other player owns (this will cycle the tech market).",

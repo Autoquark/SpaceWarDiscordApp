@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_AdaptiveAI : Tech, IInteractionHandler<ApplyAdaptiveAIBonusInteraction>, IInteractionHandler<GainAdaptiveAIProgressInteraction>
+public class Tech_AdaptiveAI : Tech, ISpaceWarInteractionHandler<ApplyAdaptiveAIBonusInteraction>, ISpaceWarInteractionHandler<GainAdaptiveAIProgressInteraction>
 {
     private const int ForcesPerPlusOne = 6;
     

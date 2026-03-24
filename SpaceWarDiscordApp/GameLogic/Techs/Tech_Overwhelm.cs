@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Overwhelm : Tech, IInteractionHandler<ApplyOverwhelmBonusInteraction>
+public class Tech_Overwhelm : Tech, ISpaceWarInteractionHandler<ApplyOverwhelmBonusInteraction>
 {
     public Tech_Overwhelm() : base("overwhelm", "Overwhelm",
         "When you have 5 or more forces present, +1 Combat Strength.",

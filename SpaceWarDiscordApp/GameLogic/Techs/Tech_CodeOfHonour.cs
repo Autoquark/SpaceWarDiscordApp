@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CodeOfHonour : Tech, IInteractionHandler<ApplyCodeOfHonourBonusInteraction>
+public class Tech_CodeOfHonour : Tech, ISpaceWarInteractionHandler<ApplyCodeOfHonourBonusInteraction>
 {
     public Tech_CodeOfHonour() : base("codeOfHonour", "Code of Honour", "If you have the same number of forces present as your opponent, +1 Combat Strength.",
         "There's no other option - we're going to have to fight fair.")

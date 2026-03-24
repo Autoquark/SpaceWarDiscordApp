@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInteraction>
+public class Tech_EnervatorBeam : Tech, ISpaceWarInteractionHandler<UseEnervatorBeamInteraction>
 {
     public Tech_EnervatorBeam() : base("enervatorBeam",
         "Enervator Beam",

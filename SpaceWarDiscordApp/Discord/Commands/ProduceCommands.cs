@@ -7,8 +7,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
-    IInteractionHandler<ProduceInteraction>, IEventResolvedHandler<GameEvent_AlterPlanet>
+public class ProduceCommands : ISpaceWarInteractionHandler<ShowProduceOptionsInteraction>,
+    ISpaceWarInteractionHandler<ProduceInteraction>, IEventResolvedHandler<GameEvent_AlterPlanet>
 {
     public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider)

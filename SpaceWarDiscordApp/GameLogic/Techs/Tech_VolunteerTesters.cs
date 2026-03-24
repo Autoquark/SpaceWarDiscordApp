@@ -9,8 +9,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_VolunteerTesters : Tech, IInteractionHandler<SetVolunteerTestersTargetInteraction>,
-    IInteractionHandler<UseVolunteerTestersInteraction>
+public class Tech_VolunteerTesters : Tech, ISpaceWarInteractionHandler<SetVolunteerTestersTargetInteraction>,
+    ISpaceWarInteractionHandler<UseVolunteerTestersInteraction>
 {
     public Tech_VolunteerTesters() : base("volunteerTesters",
         "'Volunteer' Testers",

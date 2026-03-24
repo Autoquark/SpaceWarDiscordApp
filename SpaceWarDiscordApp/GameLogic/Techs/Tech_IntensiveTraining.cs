@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_IntensiveTraining : Tech, IInteractionHandler<ApplyIntensiveTrainingBonusInteraction>
+public class Tech_IntensiveTraining : Tech, ISpaceWarInteractionHandler<ApplyIntensiveTrainingBonusInteraction>
 {
     public Tech_IntensiveTraining() : base("intensive-training",
         "Intensive Training",

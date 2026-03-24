@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_XlClassDropships : Tech, IInteractionHandler<ApplyMassMigrationBonusInteraction>
+public class Tech_XlClassDropships : Tech, ISpaceWarInteractionHandler<ApplyMassMigrationBonusInteraction>
 {
     public Tech_XlClassDropships() : base("xl-class-dropships", "XL Class Dropships",
         "When attacking, if you moved all of your forces that were present on at least one planet, +1 Combat Strength.",

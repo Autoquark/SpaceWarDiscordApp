@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfareBonusInteraction>
+public class Tech_GorillaWarfare : Tech, ISpaceWarInteractionHandler<ApplyGorillaWarfareBonusInteraction>
 {
     public Tech_GorillaWarfare() : base("gorillaWarfare", "Gorilla Warfare",
         "If you have only 1 forces present, +1 Combat Strength",

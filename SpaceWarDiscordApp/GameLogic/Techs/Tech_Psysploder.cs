@@ -9,7 +9,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetInteraction>, IInteractionHandler<UsePsysploderInteraction>
+public class Tech_Psysploder : Tech, ISpaceWarInteractionHandler<ChoosePsysploderTargetInteraction>, ISpaceWarInteractionHandler<UsePsysploderInteraction>
 {
     public Tech_Psysploder() : base("psysploder", "Psysploder",
         "Destroy any number of your forces on a planet, and an equal number of enemy forces on each adjacent planet.",

@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_SmoothTakeover : Tech, IInteractionHandler<SmoothTakeoverRefreshInteraction>
+public class Tech_SmoothTakeover : Tech, ISpaceWarInteractionHandler<SmoothTakeoverRefreshInteraction>
 {
     public Tech_SmoothTakeover() : base(
         "smooth-takeover", "Smooth Takeover", "When you capture an exhausted planet, ready it.",

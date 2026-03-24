@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteraction>
+public class Tech_CreativeAI : Tech, ISpaceWarInteractionHandler<CreativeAITechInteraction>
 {
     public Tech_CreativeAI() : base(
         "creative_ai",

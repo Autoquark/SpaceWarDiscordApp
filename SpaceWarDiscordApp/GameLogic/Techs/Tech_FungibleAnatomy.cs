@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FungibleAnatomy : Tech, IInteractionHandler<UseFungibleAnatomyInteraction>
+public class Tech_FungibleAnatomy : Tech, ISpaceWarInteractionHandler<UseFungibleAnatomyInteraction>
 {
     public Tech_FungibleAnatomy() : base("fungibleAnatomy", "Fungible Anatomy",
         "Whenever you would lose forces due to exceeding a planet's capacity, you may instead move the excess to an adjacent planet.",

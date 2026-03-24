@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEmpireBonusInteraction>
+public class Tech_JewelOfTheEmpire : Tech, ISpaceWarInteractionHandler<ApplyJewelOfTheEmpireBonusInteraction>
 {
     public Tech_JewelOfTheEmpire() : base("jewel-of-the-empire",
         "Jewel of the Empire",

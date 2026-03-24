@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_AstralLandscaping : Tech, IInteractionHandler<SelectAstralLandscapingFirstTargetInteraction>, IInteractionHandler<SelectAstralLandscapingSecondTargetInteraction>
+public class Tech_AstralLandscaping : Tech, ISpaceWarInteractionHandler<SelectAstralLandscapingFirstTargetInteraction>, ISpaceWarInteractionHandler<SelectAstralLandscapingSecondTargetInteraction>
 {
     public Tech_AstralLandscaping() : base("astral-landscaping", "Astral Landscaping",
         "Swap the position of a system you control with an adjacent system.",

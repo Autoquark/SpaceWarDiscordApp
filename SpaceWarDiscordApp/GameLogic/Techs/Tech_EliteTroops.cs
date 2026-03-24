@@ -7,7 +7,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EliteTroops : Tech, IInteractionHandler<ApplyEliteTroopsBonusInteraction>, IInteractionHandler<ApplyEliteTroopsProductionReductionInteraction>
+public class Tech_EliteTroops : Tech, ISpaceWarInteractionHandler<ApplyEliteTroopsBonusInteraction>, ISpaceWarInteractionHandler<ApplyEliteTroopsProductionReductionInteraction>
 {
     public Tech_EliteTroops(): base("eliteTroops", "Elite Troops", 
         "You have +1 Combat Strength. Whenever you produce, produce 1 fewer forces (minimum of 1).", 

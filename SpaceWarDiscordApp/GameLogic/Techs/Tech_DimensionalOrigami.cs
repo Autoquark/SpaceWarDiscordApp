@@ -9,8 +9,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDimensionalOrigamiSystemInteraction>,
-    IInteractionHandler<UseDimensionalOrigamiInteraction>
+public class Tech_DimensionalOrigami : Tech, ISpaceWarInteractionHandler<ChooseFirstDimensionalOrigamiSystemInteraction>,
+    ISpaceWarInteractionHandler<UseDimensionalOrigamiInteraction>
 {
     public Tech_DimensionalOrigami() : base("dimensional-origami",
         "Dimensional Origami",

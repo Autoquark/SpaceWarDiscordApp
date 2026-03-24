@@ -7,8 +7,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_HistoricalRevisionism : Tech, IInteractionHandler<SelectHistoricalRevisionismFirstTargetInteraction>,
-    IInteractionHandler<UseHistoricalRevisionismInteraction>
+public class Tech_HistoricalRevisionism : Tech, ISpaceWarInteractionHandler<SelectHistoricalRevisionismFirstTargetInteraction>,
+    ISpaceWarInteractionHandler<UseHistoricalRevisionismInteraction>
 {
     public Tech_HistoricalRevisionism() : base("historical-revisionism", "Historical Revisionism",
         "Choose two adjacent planets with forces. Swap ownership of those planets and forces.",

@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Isolationism : Tech, IInteractionHandler<ApplyIsolationismBonusInteraction>
+public class Tech_Isolationism : Tech, ISpaceWarInteractionHandler<ApplyIsolationismBonusInteraction>
 {
     private const int ProductionBonus = 1;
     

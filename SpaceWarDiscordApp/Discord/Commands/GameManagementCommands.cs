@@ -16,15 +16,15 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel(RequireGameChannelMode.RequiresSave, GamePhase.Setup)]
-public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>,
-    IInteractionHandler<SetMapGeneratorInteraction>,
-    IInteractionHandler<ShowRollBackConfirmInteraction>,
-    IInteractionHandler<RollBackGameInteraction>,
-    IInteractionHandler<SetMaxPlayerCountInteraction>,
-    IInteractionHandler<SetScoringRuleInteraction>,
-    IInteractionHandler<SetTechMarketRuleInteraction>,
-    IInteractionHandler<SetVictoryThresholdInteraction>,
-    IInteractionHandler<SetSingleUseTechCanBeUniversal>
+public class GameManagementCommands : ISpaceWarInteractionHandler<JoinGameInteraction>, ISpaceWarInteractionHandler<SetStartingTechRuleInteraction>,
+    ISpaceWarInteractionHandler<SetMapGeneratorInteraction>,
+    ISpaceWarInteractionHandler<ShowRollBackConfirmInteraction>,
+    ISpaceWarInteractionHandler<RollBackGameInteraction>,
+    ISpaceWarInteractionHandler<SetMaxPlayerCountInteraction>,
+    ISpaceWarInteractionHandler<SetScoringRuleInteraction>,
+    ISpaceWarInteractionHandler<SetTechMarketRuleInteraction>,
+    ISpaceWarInteractionHandler<SetVictoryThresholdInteraction>,
+    ISpaceWarInteractionHandler<SetSingleUseTechCanBeUniversal>
 {
     private class NounProjectImageCredit
     {

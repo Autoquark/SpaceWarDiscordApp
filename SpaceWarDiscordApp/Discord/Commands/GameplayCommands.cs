@@ -13,9 +13,9 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class GameplayCommands : IInteractionHandler<EndTurnInteraction>, IInteractionHandler<DeclineOptionalTriggersInteraction>,
+public class GameplayCommands : ISpaceWarInteractionHandler<EndTurnInteraction>, ISpaceWarInteractionHandler<DeclineOptionalTriggersInteraction>,
     IPlayerChoiceEventHandler<GameEvent_PlayersChooseStartingTech, ChoosePlayerStartingTechInteraction>,
-    IInteractionHandler<RepromptInteraction>
+    ISpaceWarInteractionHandler<RepromptInteraction>
 {
     private static readonly string[] BoopStrings = ["Ping!", "Boop!", "Over here!", "Hello!", "Oi!", "Yoo-hoo!"];
     

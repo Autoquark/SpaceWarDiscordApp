@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_RousingSpeech : Tech, IInteractionHandler<ApplyRousingSpeechBonusInteraction>
+public class Tech_RousingSpeech : Tech, ISpaceWarInteractionHandler<ApplyRousingSpeechBonusInteraction>
 {
     public Tech_RousingSpeech (): base("rousing-speech", "Rousing Speech", 
         "Gain +1 Combat Strength until the start of your next turn.",

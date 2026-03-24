@@ -8,7 +8,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction>
+public class Tech_MegaLaser : Tech, ISpaceWarInteractionHandler<FireMegaLaserInteraction>
 {
     public Tech_MegaLaser() : base("megaLaser",
         "Mega Laser",

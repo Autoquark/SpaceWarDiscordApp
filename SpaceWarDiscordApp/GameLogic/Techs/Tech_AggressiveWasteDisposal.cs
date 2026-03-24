@@ -9,8 +9,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggressiveWasteDisposalInteraction>,
-    IInteractionHandler<RefreshAggressiveWasteDisposalInteraction>
+public class Tech_AggressiveWasteDisposal : Tech, ISpaceWarInteractionHandler<UseAggressiveWasteDisposalInteraction>,
+    ISpaceWarInteractionHandler<RefreshAggressiveWasteDisposalInteraction>
 {
     public Tech_AggressiveWasteDisposal() : base("aggressiveWasteDisposal",
         "Aggressive Waste Disposal",

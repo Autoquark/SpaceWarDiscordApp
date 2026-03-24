@@ -6,7 +6,7 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMilitaryGraduationCannonInteractionData>
+public class Tech_MilitaryGraduationCannon : Tech, ISpaceWarInteractionHandler<TriggerMilitaryGraduationCannonInteractionData>
 {
     public Tech_MilitaryGraduationCannon() : base("militaryGraduationCannon",
         "Military Graduation Cannon",

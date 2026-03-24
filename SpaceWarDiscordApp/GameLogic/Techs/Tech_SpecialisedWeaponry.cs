@@ -11,8 +11,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialisedWeaponryInteraction>, IInteractionHandler<ApplySpecialisedWeaponryBonusInteraction>,
-    IInteractionHandler<ResetSpecialisedWeaponryInteraction>
+public class Tech_SpecialisedWeaponry : Tech, ISpaceWarInteractionHandler<UseSpecialisedWeaponryInteraction>, ISpaceWarInteractionHandler<ApplySpecialisedWeaponryBonusInteraction>,
+    ISpaceWarInteractionHandler<ResetSpecialisedWeaponryInteraction>
 {
     public Tech_SpecialisedWeaponry() : base("specialisedWeaponry",
         "Specialised Weaponry",
