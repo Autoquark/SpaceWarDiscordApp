@@ -157,6 +157,7 @@ Use `Secrets-prod.json` for production configuration.
 
 - Always use braces for `if`, `for`, `foreach`, `while`, and similar blocks — never single-line braceless bodies
 - Prefer `using` directives over fully qualified type names; most Tumult namespaces are already available via global usings in `TumultGlobalUsings.cs`
+- Do not delete comments that are still relevant without explicit permission
 
 ## Important Implementation Notes
 

@@ -154,6 +154,7 @@ public static class InteractionDispatcher
                 }
             }
 
+            // Send messages to the source channel as interaction followups - not sure how necessary this is
             var firstBuilder = builders.SourceChannelBuilder.Builders[0];
             if (firstBuilder is { Components.Count: > 0 })
             {
@@ -188,6 +189,7 @@ public static class InteractionDispatcher
             }
             else
             {
+                // No response, delete the deferred response placeholder
                 await args.Interaction.DeleteOriginalResponseAsync();
             }
 
@@ -216,6 +218,7 @@ public static class InteractionDispatcher
         }
         catch (Exception e) when (!Program.IsTestEnvironment)
         {
+            // Force a refetch next command so any half complete operations on the in-memory game object are discarded
             if (game.DocumentId != null)
             {
                 cache.Clear(game.DocumentId);
