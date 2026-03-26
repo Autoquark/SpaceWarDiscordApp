@@ -561,7 +561,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
                 {
                     if (builder != null)
                     {
-                        await GameEventDispatcher.ShowPlayerChoicesForEvent(builder, choiceEvent, game,
+                        await serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().ShowPlayerChoicesForEvent(builder, choiceEvent, game,
                             serviceProvider);
 
                         // If showing the choices caused the stack to change, continue resolving
@@ -618,7 +618,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
         
         game.EventStack.RemoveAt(game.EventStack.Count - 1);
-        await GameEventDispatcher.HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
+        await serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
         
         return builder;
     }
@@ -725,7 +725,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
             throw new Exception("Interaction data not found");
         }
 
-        await InteractionDispatcher.HandleInteractionAsync(builder, interactionData, game, serviceProvider);
+        await serviceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionAsync(builder, interactionData, game, serviceProvider);
         return builder;
     }
     

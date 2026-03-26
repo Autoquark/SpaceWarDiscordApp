@@ -11,21 +11,6 @@ namespace SpaceWarDiscordApp.Discord;
 
 public static class InteractionDispatcher
 {
-    internal static readonly InteractionDispatcher<Game> Instance =
-        new(GameEventDispatcher.Instance);
-
-    public static void RegisterInteractionHandler(object interactionHandler)
-        => Instance.RegisterInteractionHandler(interactionHandler);
-
-    /// <summary>
-    /// Allows game logic to trigger resolution of an interaction directly
-    /// </summary>
-    public static Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
-        InteractionData gamePlayerInteractionData,
-        Game game,
-        IServiceProvider serviceProvider)
-        => Instance.HandleInteractionAsync(builder, gamePlayerInteractionData, game, serviceProvider);
-
     /// <summary>
     /// Handles interactions sent from Discord
     /// </summary>
@@ -129,7 +114,7 @@ public static class InteractionDispatcher
 
             var interactionsToSetUp = serviceProvider.GetInteractionsToSetUp();
 
-            var outcome = await Instance.HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
+            var outcome = await serviceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionInternalAsync(builders.GameChannelBuilder, interactionData, game, serviceProvider);
 
             if (outcome.RequiresSave || interactionsToSetUp.Any())
             {

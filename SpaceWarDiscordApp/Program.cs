@@ -63,7 +63,16 @@ static class Program
         }
 
         IsTestEnvironment = secrets.IsTestEnvironment;
-        
+
+        var gameEventDispatcher = new GameEventDispatcher<Game>(GameFlowOperations.PlayerChoiceEventResolvedAsync);
+        var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
+
+        void RegisterEverything(object obj)
+        {
+            interactionDispatcher.RegisterInteractionHandler(obj);
+            gameEventDispatcher.RegisterHandler(obj);
+        }
+
         var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         var typeDiscriminator = new TypeDiscriminator();
 
@@ -107,6 +116,8 @@ static class Program
                 var httpClient = serviceProvider.GetRequiredService<HttpClient>();
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
+            x.AddSingleton(gameEventDispatcher);
+            x.AddSingleton(interactionDispatcher);
             x.AddSingleton<GameCache<Game, NonDbGameState>>();
             x.AddSingleton<GameSyncManager>();
             x.AddSingleton<BackstoryGenerator>();
@@ -319,9 +330,4 @@ static class Program
 
     public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
     
-    private static void RegisterEverything(object obj)
-    {
-        InteractionDispatcher.RegisterInteractionHandler(obj);
-        GameEventDispatcher.RegisterHandler(obj);
-    }
 }

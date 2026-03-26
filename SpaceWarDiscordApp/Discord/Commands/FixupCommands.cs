@@ -740,7 +740,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         if (topEvent is GameEvent_PlayersChooseStartingTech)
         {
-            await InteractionDispatcher.HandleInteractionAsync(builder, new ChoosePlayerStartingTechInteraction
+            await context.ServiceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionAsync(builder, new ChoosePlayerStartingTechInteraction
             {
                 TechId = techId,
                 ForGamePlayerId = player,
