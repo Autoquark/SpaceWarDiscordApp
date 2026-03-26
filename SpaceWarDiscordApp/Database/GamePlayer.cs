@@ -1,22 +1,15 @@
 using Google.Cloud.Firestore;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.GameLogic;
+using Tumult.Database;
 
 namespace SpaceWarDiscordApp.Database;
 
 [FirestoreData]
-public class GamePlayer
+public class GamePlayer : BaseGamePlayer
 {
-    public const int GamePlayerIdNone = -1;
-    
-    [FirestoreProperty]
-    public ulong DiscordUserId { get; set; }
-
     [FirestoreProperty]
     public ulong PrivateThreadId { get; set; } = 0;
-    
-    [FirestoreProperty]
-    public int GamePlayerId { get; set; } = -1;
     
     [FirestoreProperty]
     public int VictoryPoints { get; set; }

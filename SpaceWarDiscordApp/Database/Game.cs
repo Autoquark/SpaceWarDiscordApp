@@ -18,6 +18,8 @@ public class Game : BaseGame
     /// </summary>
     [FirestoreProperty]
     public List<GamePlayer> Players { get; set; } = [];
+
+    public override IReadOnlyList<BaseGamePlayer> GamePlayers => Players;
     
     [FirestoreProperty]
     public string Name { get; set; } = "Untitled Game";
@@ -27,26 +29,6 @@ public class Game : BaseGame
     
     [FirestoreProperty]
     public int TurnNumber { get; set; } = 1;
-
-    public override bool IsDiscordUserInGame(ulong discordUserId)
-        => TryGetGamePlayerByDiscordId(discordUserId) != null;
-
-    public override bool IsInteractionAllowedForUser(int forGamePlayerId, ulong discordUserId)
-    {
-        var forPlayer = TryGetGamePlayerByGameId(forGamePlayerId);
-        if (forPlayer == null)
-        {
-            return false;
-        }
-
-        if (forPlayer.IsDummyPlayer)
-        {
-            return true;
-        }
-
-        var requestingPlayer = TryGetGamePlayerByDiscordId(discordUserId);
-        return requestingPlayer != null && forPlayer == requestingPlayer;
-    }
 
     [FirestoreProperty]
     public ulong PinnedTechMessageId { get; set; } = 0;
