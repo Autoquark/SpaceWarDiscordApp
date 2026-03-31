@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using DSharpPlus.Entities;
-using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
@@ -21,7 +19,7 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
 {
     public static async Task<DiscordMultiMessageBuilder> ShowSelectActionMessageAsync(DiscordMultiMessageBuilder builder, Game game, IServiceProvider serviceProvider)
     {
-        var transientState = serviceProvider.GetRequiredService<PerOperationGameState>(); 
+        var transientState = serviceProvider.GetRequiredService<SpaceWarPerOperationState>(); 
         if (transientState.HavePrintedSelectActionMessage || game.Phase == GamePhase.Finished)
         {
             return builder;
@@ -384,258 +382,20 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         }
     }
 
-    public static async Task<DiscordMultiMessageBuilder?> PlayerChoiceEventResolvedAsync(Game game,
+    public static Task<DiscordMultiMessageBuilder?> PlayerChoiceEventResolvedAsync(Game game,
         DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string eventId)
-    {
-        var relevantEvent = game.EventStack.FirstOrDefault(x => x.EventId == eventId);
-        if (relevantEvent is not GameEvent_PlayerChoice)
-        {
-            throw new Exception("Event not found or is not a player choice event");
-        }
-        
-        game.EventStack.Remove(relevantEvent);
-        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-    }
+        => serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().PlayerChoiceEventResolvedAsync(game, builder, serviceProvider, eventId);
 
-    public static async Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder, IServiceProvider serviceProvider, string interactionId)
-    {
-        // The interaction might not be for the top event on the stack if, in the process of resolving it, we pushed events onto the stack
-        var relevantEvent = game.EventStack.FirstOrDefault(x =>
-            x.RemainingTriggersToResolve.Any(y => y.ResolveInteractionId == interactionId));
-        
-        var triggeredEffect = relevantEvent?.RemainingTriggersToResolve.Find(x => x.ResolveInteractionId == interactionId);
-        if (triggeredEffect == null)
-        {
-            throw new Exception("Triggered effect not found or is not in response to top event on stack");
-        }
-        
-        relevantEvent!.TriggerIdsResolved.Add(triggeredEffect.TriggerId);
-        
-        // Reevaluate triggers for currently resolving player as this trigger may have changed the game state and caused
-        // triggers to become available or unavailable. We use GameEvent.TriggerIdsResolved to ensure that we don't resolve
-        // the same triggered effect multiple times for the same event.
-        var resolvingPlayer = game.GetGamePlayerByGameId(relevantEvent.ResolvingTriggersForPlayerId);
-        relevantEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, relevantEvent, resolvingPlayer).ToList();
-        
-        serviceProvider.AddInteractionsToSetUp(relevantEvent.RemainingTriggersToResolve
-            .Select(x => x.ResolveInteractionData).WhereNonNull());
-        
-        return await ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-    }
+    public static Task<DiscordMultiMessageBuilder?> TriggerResolvedAsync(Game game, DiscordMultiMessageBuilder? builder,
+        IServiceProvider serviceProvider, string interactionId)
+        => serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().TriggerResolvedAsync(game, builder, serviceProvider, interactionId);
 
-    public static async Task<DiscordMultiMessageBuilder?> ContinueResolvingEventStackAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
-    {
-        var transientState = serviceProvider.GetRequiredService<PerOperationGameState>();
-        if (transientState.IsResolvingStack)
-        {
-            return builder;
-        }
-        
-        transientState.IsResolvingStack = true;
-        
-        while (game.EventStack.Count > 0)
-        {
-            var resolvingEvent = game.EventStack.Last();
-            
-            var autoResolveTrigger = resolvingEvent.RemainingTriggersToResolve.FirstOrDefault(x => x.AlwaysAutoResolve);
-            if (autoResolveTrigger != null)
-            {
-                await ResolveTriggeredEffectAsync(builder, game, autoResolveTrigger, serviceProvider);
-                
-                continue;
-            }
-            
-            // If there is only one trigger and it's mandatory, we can auto resolve it
-            if (resolvingEvent.RemainingTriggersToResolve is [{ IsMandatory: true }])
-            {
-                var resolvingTrigger = resolvingEvent.RemainingTriggersToResolve[0];
-                await ResolveTriggeredEffectAsync(builder, game, resolvingTrigger, serviceProvider);
-            }
-            // Multiple and/or optional triggers, need to get a player decision
-            else if (resolvingEvent.RemainingTriggersToResolve.Count > 0)
-            {
-                var player = game.GetGamePlayerByGameId(resolvingEvent.ResolvingTriggersForPlayerId);
-                var name = await player.GetNameAsync(true);
-                // TODO: Better messaging, different for if there are any mandatory or not
-                var mandatoryCount = resolvingEvent.RemainingTriggersToResolve.Count(x => x.IsMandatory);
-                var optionalCount = resolvingEvent.RemainingTriggersToResolve.Count - mandatoryCount;
+    public static Task<DiscordMultiMessageBuilder?> ContinueResolvingEventStackAsync(DiscordMultiMessageBuilder? builder, Game game, IServiceProvider serviceProvider)
+        => serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().ContinueResolvingEventStackAsync(builder, game, serviceProvider);
 
-                if (mandatoryCount == 0)
-                {
-                    builder?.AppendContentNewline(
-                        $"{name}, you have optional tech effects which you may trigger. Please select one to resolve next or click 'Decline'.");
-                }
-                else if (mandatoryCount > 1 && optionalCount == 0)
-                {
-                    builder?.AppendContentNewline(
-                        $"{name}, you may choose the order in which these mandatory tech effects resolve. Please select one to resolve next.");
-                }
-                else
-                {
-                    builder?.AppendContentNewline(
-                        $"{name}, you have optional tech effects which you may trigger. There is also at least one mandatory effect which must be resolved before continuing. Please select an effect to resolve next.");
-                }
-                
-                var interactionGroupId = serviceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData
-                    .InteractionGroupId;
-                
-                // Store or update interaction data for buttons in DB
-                await Program.FirestoreDb.RunTransactionAsync(async transaction =>
-                {
-                    // For triggers whose InteractionData has already been saved to the DB, we need to update the 
-                    // interaction group ID so AI players know they are still among the current available choices
-                    var idsToUpdate = resolvingEvent.RemainingTriggersToResolve
-                        .Select(x => x.ResolveInteractionId)
-                        .Where(x => !string.IsNullOrEmpty(x))
-                        .ToList();
-
-                    IReadOnlyList<DocumentSnapshot> toUpdate = new ReadOnlyCollection<DocumentSnapshot>([]);
-                    if (idsToUpdate.Count > 0)
-                    {
-                        toUpdate = (await transaction.GetSnapshotAsync(
-                            new Query<InteractionData>(transaction.Database.InteractionData())
-                                .WhereIn(x => x.InteractionId, idsToUpdate))).Documents;
-                    }
-                    
-                    foreach (var trigger in resolvingEvent.RemainingTriggersToResolve
-                        .Where(x => x.ResolveInteractionData != null && string.IsNullOrEmpty(x.ResolveInteractionId)))
-                    {
-                        trigger.ResolveInteractionId =
-                            InteractionStatics.SetUpInteraction(trigger.ResolveInteractionData!, transaction,
-                                interactionGroupId);
-                    }
-
-                    foreach (var document in toUpdate)
-                    {
-                        transaction.Update(document.Reference, nameof(InteractionData.InteractionGroupId), interactionGroupId);
-                    }
-                });
-                
-                builder?.AppendButtonRows(resolvingEvent.RemainingTriggersToResolve.Select(x =>
-                    new DiscordButtonComponent(
-                        x.IsMandatory ? DiscordButtonStyle.Primary : DiscordButtonStyle.Secondary,
-                        x.ResolveInteractionId, x.DisplayName)));
-
-                var secondRowButtons = new List<DiscordButtonComponent>();
-                // If there are no mandatory triggers left, the player can decline remaining optional triggers
-                if (resolvingEvent.RemainingTriggersToResolve.All(x => !x.IsMandatory))
-                {
-                    var interactionId = serviceProvider.AddInteractionToSetUp(new DeclineOptionalTriggersInteraction
-                    {
-                        Game = game.DocumentId,
-                        ForGamePlayerId = resolvingEvent.ResolvingTriggersForPlayerId
-                    });
-                    secondRowButtons.Add(new DiscordButtonComponent(DiscordButtonStyle.Danger, interactionId, "Decline Optional Trigger(s)"));
-                }
-
-                var showBoardId = serviceProvider.AddInteractionToSetUp(new ShowBoardInteraction
-                {
-                    ForGamePlayerId = -1,
-                    Game = game.DocumentId
-                });
-                
-                secondRowButtons.Add(DiscordHelpers.CreateShowBoardButton(showBoardId));
-                builder?.AddActionRowComponent(secondRowButtons);
-
-                break;
-            }
-            // No triggers left for this player
-            else
-            {
-                // Move on to the next player
-                if(resolvingEvent.PlayerIdsToResolveTriggersFor.Count > 0)
-                {
-                    var player = game.GetGamePlayerByGameId(resolvingEvent.PlayerIdsToResolveTriggersFor[0]);
-                    resolvingEvent.PlayerIdsToResolveTriggersFor.RemoveAt(0);
-                    resolvingEvent.ResolvingTriggersForPlayerId = player.GamePlayerId;
-                    resolvingEvent.RemainingTriggersToResolve = GetTriggeredEffects(game, resolvingEvent, player).ToList();
-
-                    serviceProvider.AddInteractionsToSetUp(resolvingEvent.RemainingTriggersToResolve
-                        .Select(x => x.ResolveInteractionData).WhereNonNull());
-                    
-                    continue;
-                }
-                // Player choice event, display choices and stop resolving
-
-                if(resolvingEvent is GameEvent_PlayerChoice choiceEvent)
-                {
-                    if (builder != null)
-                    {
-                        await serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().ShowPlayerChoicesForEvent(builder, choiceEvent, game,
-                            serviceProvider);
-
-                        // If showing the choices caused the stack to change, continue resolving
-                        if (game.EventStack.Count == 0 || game.EventStack[^1] != resolvingEvent)
-                        {
-                            continue;
-                        }
-                    }
-                }
-                // No more players to resolve, pop this event from the stack and resolve its OnResolve
-                else
-                {
-                    await PopEventFromStackAndResolveAsync(builder, game, serviceProvider);
-                    continue;
-                }
-
-                // Event requires explicit resolve, pause resolution
-                break;
-            }
-        }
-        
-        transientState.IsResolvingStack = false;
-        
-        return (await AdvanceTurnOrPromptNextActionAsync(builder, game, serviceProvider))!;
-    }
-
-    public static async Task<DiscordMultiMessageBuilder?> DeclineOptionalTriggersAsync(DiscordMultiMessageBuilder? builder,
+    public static Task<DiscordMultiMessageBuilder?> DeclineOptionalTriggersAsync(DiscordMultiMessageBuilder? builder,
         Game game, IServiceProvider serviceProvider)
-    {
-        var gameEvent = game.EventStack.LastOrDefault();
-        if (gameEvent == null)
-        {
-            return builder;
-        }
-
-        if (gameEvent.RemainingTriggersToResolve.Any(x => x.IsMandatory))
-        {
-            Debug.Assert(false);
-            return builder;
-        }
-        
-        gameEvent.RemainingTriggersToResolve.Clear();
-        
-        return (await ContinueResolvingEventStackAsync(builder, game, serviceProvider))!;
-    }
-
-    private static async Task<DiscordMultiMessageBuilder?> PopEventFromStackAndResolveAsync(DiscordMultiMessageBuilder? builder, Game game,
-        IServiceProvider serviceProvider)
-    {
-        var resolving = game.EventStack.LastOrDefault();
-        if (resolving == null)
-        {
-            throw new Exception("No events to resolve");
-        }
-        
-        game.EventStack.RemoveAt(game.EventStack.Count - 1);
-        await serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().HandleEventResolvedAsync(builder, resolving, game, serviceProvider);
-        
-        return builder;
-    }
-
-    public static IEnumerable<TriggeredEffect> GetTriggeredEffects(Game game, GameEvent gameEvent, GamePlayer player)
-    {
-        var triggers = player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetTriggeredEffects(game, gameEvent, player))
-            .Where(x => !gameEvent.TriggerIdsResolved.Contains(x.TriggerId))
-            .ToList();
-
-        foreach (var triggeredEffect in triggers)
-        {
-            triggeredEffect.ResolveInteractionId = triggeredEffect.ResolveInteractionData!.InteractionId;
-        }
-        
-        return triggers;
-    }
+        => serviceProvider.GetRequiredService<GameEventDispatcher<Game>>().DeclineOptionalTriggersAsync(builder, game, serviceProvider);
 
     public static async Task<DiscordThreadChannel> GetOrCreateChatThreadAsync(Game game)
     {
@@ -714,21 +474,6 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
         builder?.AppendContentNewline($"**The scoring token passes to {scoringName}**");
     }
 
-    private static async Task<DiscordMultiMessageBuilder?> ResolveTriggeredEffectAsync(DiscordMultiMessageBuilder? builder, Game game,
-        TriggeredEffect triggeredEffect, IServiceProvider serviceProvider)
-    {
-        var interactionData = triggeredEffect.ResolveInteractionData
-            ?? await Program.FirestoreDb.RunTransactionAsync(async transaction => await transaction.GetInteractionDataAsync<TriggeredEffectInteractionData>(Guid.Parse(triggeredEffect.ResolveInteractionId)));
-
-        if (interactionData == null)
-        {
-            throw new Exception("Interaction data not found");
-        }
-
-        await serviceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionAsync(builder, interactionData, game, serviceProvider);
-        return builder;
-    }
-    
     public static IEnumerable<TechAction> GetPlayerTechActions(Game game, GamePlayer player)
         => player.Techs.SelectMany(x => Tech.TechsById[x.TechId].GetActions(game, player));
 

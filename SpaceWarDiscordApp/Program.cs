@@ -64,15 +64,6 @@ static class Program
 
         IsTestEnvironment = secrets.IsTestEnvironment;
 
-        var gameEventDispatcher = new GameEventDispatcher<Game>(GameFlowOperations.PlayerChoiceEventResolvedAsync);
-        var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
-
-        void RegisterEverything(object obj)
-        {
-            interactionDispatcher.RegisterInteractionHandler(obj);
-            gameEventDispatcher.RegisterHandler(obj);
-        }
-
         var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         var typeDiscriminator = new TypeDiscriminator();
 
@@ -87,7 +78,7 @@ static class Program
                 .MakeGenericMethod(type)
                 .Invoke(converterRegistry, [typeDiscriminator]);
         }
-        
+
         var firestoreBuilder = new FirestoreDbBuilder
         {
             //EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
@@ -96,6 +87,15 @@ static class Program
             //Credential = SslCredentials.Insecure,
         };
         FirestoreDb = await firestoreBuilder.BuildAsync();
+
+        var gameEventDispatcher = new SpaceWarGameEventDispatcher(FirestoreDb);
+        var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
+
+        void RegisterEverything(object obj)
+        {
+            interactionDispatcher.RegisterInteractionHandler(obj);
+            gameEventDispatcher.RegisterHandler(obj);
+        }
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
 
@@ -107,16 +107,17 @@ static class Program
             // List of interactions to set up
             x.AddScoped<List<InteractionData>>();
 
-            x.AddScoped<PerOperationGameState>();
+            x.AddScoped<SpaceWarPerOperationState>();
+            x.AddScoped<PerOperationState>(sp => sp.GetRequiredService<SpaceWarPerOperationState>());
             x.AddScoped<GameMessageBuilders>();
-            
+
             x.AddHttpClient();
             x.AddScoped<OpenRouterService>(serviceProvider =>
             {
                 var httpClient = serviceProvider.GetRequiredService<HttpClient>();
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
-            x.AddSingleton(gameEventDispatcher);
+            x.AddSingleton<GameEventDispatcher<Game>>(gameEventDispatcher);
             x.AddSingleton(interactionDispatcher);
             x.AddSingleton<GameCache<Game, NonDbGameState>>();
             x.AddSingleton<GameSyncManager>();
