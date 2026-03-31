@@ -2,15 +2,14 @@ using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.UniversalPatent;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.UniversalPatent;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_UniversalPatent : Tech, IInteractionHandler<UseUniversalPatentInteraction>
+public class Tech_UniversalPatent : Tech, ISpaceWarInteractionHandler<UseUniversalPatentInteraction>
 {
     public Tech_UniversalPatent() : base("universalPatent", "Universal Patent",
         "Research any currently available tech for free.",
@@ -59,7 +58,7 @@ public class Tech_UniversalPatent : Tech, IInteractionHandler<UseUniversalPatent
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseUniversalPatentInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseUniversalPatentInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -84,6 +83,6 @@ public class Tech_UniversalPatent : Tech, IInteractionHandler<UseUniversalPatent
                 ActionType = SimpleActionType
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

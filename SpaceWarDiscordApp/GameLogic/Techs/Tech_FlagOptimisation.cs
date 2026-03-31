@@ -1,14 +1,12 @@
 ﻿using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.FlagOptimisation;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.FlagOptimisation;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisationBonusInteraction>
+public class Tech_FlagOptimisation : Tech, ISpaceWarInteractionHandler<ApplyFlagOptimisationBonusInteraction>
 {
     public Tech_FlagOptimisation() : base(
         "flagOptimisation",
@@ -48,7 +46,7 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
                             AlwaysAutoResolve = true,
                             IsMandatory = true,
                             DisplayName = DisplayName,
-                            ResolveInteractionData = new ApplyFlagOptimisationBonusInteraction()
+                            ResolveInteractionData = new ApplyFlagOptimisationBonusInteraction
                             {
                                 Game = game.DocumentId,
                                 ForGamePlayerId = player.GamePlayerId,
@@ -65,7 +63,7 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(
+    public async Task<InteractionOutcome> HandleInteractionAsync(
         DiscordMultiMessageBuilder? builder,
         ApplyFlagOptimisationBonusInteraction interactionData,
         Game game,
@@ -90,6 +88,6 @@ public class Tech_FlagOptimisation : Tech, IInteractionHandler<ApplyFlagOptimisa
 
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

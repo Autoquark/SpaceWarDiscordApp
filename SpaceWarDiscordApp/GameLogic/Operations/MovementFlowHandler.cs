@@ -1,11 +1,9 @@
 using System.Diagnostics;
 using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Move;
+using SpaceWarDiscordApp.Database.Interactions.Move;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Techs;
@@ -24,11 +22,11 @@ public enum MoveDestinationRestriction
 /// </summary>
 /// <typeparam name="T">Type used to uniquely identify interactions to be handled by this handler.
 /// The type is not otherwise interacted with and can be any type</typeparam>
-public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanningMoveInteraction<T>>,
-    IInteractionHandler<SetMoveDestinationInteraction<T>>,
-    IInteractionHandler<AddMoveSourceInteraction<T>>,
-    IInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
-    IInteractionHandler<PerformPlannedMoveInteraction<T>>,
+public abstract class MovementFlowHandler<T> : ISpaceWarInteractionHandler<BeginPlanningMoveInteraction<T>>,
+    ISpaceWarInteractionHandler<SetMoveDestinationInteraction<T>>,
+    ISpaceWarInteractionHandler<AddMoveSourceInteraction<T>>,
+    ISpaceWarInteractionHandler<SetMovementAmountFromSourceInteraction<T>>,
+    ISpaceWarInteractionHandler<PerformPlannedMoveInteraction<T>>,
     IEventResolvedHandler<GameEvent_MovementFlowComplete<T>>
 {
     protected MovementFlowHandler(Tech? tech)
@@ -93,7 +91,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Enters the move planning flow. Displays buttons to select a destination
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         BeginPlanningMoveInteraction<T> interactionData,
         Game game,
         IServiceProvider serviceProvider)
@@ -102,14 +100,14 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
         {
             builder?.AppendContentNewline("You can't click this right now because the game is waiting on a different decision:");
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         ArgumentNullException.ThrowIfNull(builder);
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
         await BeginPlanningMoveAsync(builder, game, player, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
     public async Task<DiscordMultiMessageBuilder> BeginPlanningMoveAsync(DiscordMultiMessageBuilder builder,
@@ -199,7 +197,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     /// <summary>
     /// Called when a move destination is selected. Displays buttons to add a source, or skips straight to amount if there is only one possible source
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SetMoveDestinationInteraction<T> interactionData,
         Game game,
         IServiceProvider serviceProvider)
@@ -248,7 +246,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
                 await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
             }
             
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
 
         // Let player specify a source
@@ -261,13 +259,13 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             interactionData.MaxAmountPerSource ?? StaticMaxAmountPerSource,
             interactionData.TriggerToMarkResolvedId);
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     /// <summary>
     /// Called when a movement source is selected to add. Shows buttons to select amount of forces to move
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         AddMoveSourceInteraction<T> interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -295,7 +293,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             if (!AllowManyToOne || sources.Count == 1)
             {
                 await PerformMoveAsync(builder, game, player, interactionData.TriggerToMarkResolvedId, serviceProvider);
-                return new SpaceWarInteractionOutcome(true);
+                return new InteractionOutcome(true);
             }
 
             await ShowSpecifyMovementSourceButtonsAsync(builder,
@@ -309,7 +307,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             
             ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
             
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
 
         var amount = await GetOrPromptMovementAmountAsync(
@@ -355,16 +353,16 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             }
             
             // Require save because of planned move data change
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
     /// <summary>
     /// Called when a movement amount from a source is selected.
     /// </summary>
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SetMovementAmountFromSourceInteraction<T> interactionData,
         Game game,
         IServiceProvider serviceProvider)
@@ -416,17 +414,17 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
             ShowConfirmMoveButton(builder, game, serviceProvider, player, interactionData.TriggerToMarkResolvedId);
         }
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         PerformPlannedMoveInteraction<T> interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
         await PerformMoveAsync(builder, game, game.GetGamePlayerForInteraction(interactionData), interactionData.TriggerToMarkResolvedId, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     protected async Task<int?> GetOrPromptMovementAmountAsync(DiscordMultiMessageBuilder builder,
@@ -538,7 +536,7 @@ public abstract class MovementFlowHandler<T> : IInteractionHandler<BeginPlanning
     protected DiscordMultiMessageBuilder ShowConfirmMoveButton(DiscordMultiMessageBuilder builder,
         Game game, IServiceProvider serviceProvider, GamePlayer player, string? triggerToMarkResolvedId)
     {
-        var confirmInteractionId = serviceProvider.AddInteractionToSetUp(new PerformPlannedMoveInteraction<T>()
+        var confirmInteractionId = serviceProvider.AddInteractionToSetUp(new PerformPlannedMoveInteraction<T>
         {
             Game = game.DocumentId,
             ForGamePlayerId = player.GamePlayerId,

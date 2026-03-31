@@ -1,15 +1,13 @@
-using System;
-using System.Threading.Tasks;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.CrustalCrutoniser;
+using SpaceWarDiscordApp.Database.Interactions.Tech.CrustalCrutoniser;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CrustalCrutoniser : Tech, IInteractionHandler<UseCrustalCrutoniserInteraction>
+public class Tech_CrustalCrutoniser : Tech, ISpaceWarInteractionHandler<UseCrustalCrutoniserInteraction>
 {
     public Tech_CrustalCrutoniser() : base("crustalCrutoniser", "Crustal Crutoniser",
         "Produce on a ready planet with at least one production (exhaust it as usual). Reduce that planet's production score by 1.",
@@ -43,7 +41,7 @@ public class Tech_CrustalCrutoniser : Tech, IInteractionHandler<UseCrustalCruton
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseCrustalCrutoniserInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseCrustalCrutoniserInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
@@ -55,7 +53,7 @@ public class Tech_CrustalCrutoniser : Tech, IInteractionHandler<UseCrustalCruton
         builder?.AppendContentNewline($"{playerName} is accelerating production by crustally crutonising {hex.Coordinates}!");
         await GameFlowOperations.PushGameEventsAndResolveAsync(builder, game, serviceProvider,
             ProduceOperations.CreateProduceEvent(game, interactionData.Target, true),
-            new GameEvent_AlterPlanet()
+            new GameEvent_AlterPlanet
             {
                 Coordinates = hex.Coordinates,
                 ResponsibleTechId = Id,
@@ -68,6 +66,6 @@ public class Tech_CrustalCrutoniser : Tech, IInteractionHandler<UseCrustalCruton
 
         hex.Planet!.Production--;
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

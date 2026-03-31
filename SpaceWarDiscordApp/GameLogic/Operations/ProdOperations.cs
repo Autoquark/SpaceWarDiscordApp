@@ -50,7 +50,7 @@ public class ProdOperations
         await Task.Delay(delay, cancellationToken);
         
         using var serviceScope = Program.DiscordClient.ServiceProvider.CreateScope();
-        if (!serviceScope.ServiceProvider.GetRequiredService<GameCache>().GetGame(gameDoc, out var game, out var nonDbGameState))
+        if (!serviceScope.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>().GetGame(gameDoc, out var game, out var nonDbGameState))
         {
             throw new Exception("Dangling prod timer for game that is not in memory cache");
         }
@@ -87,7 +87,7 @@ public class ProdOperations
         await Task.Delay(delay, cancellationToken);
         
         using var serviceScope = Program.DiscordClient.ServiceProvider.CreateScope();
-        if (!serviceScope.ServiceProvider.GetRequiredService<GameCache>().GetGame(gameDoc, out var game, out _))
+        if (!serviceScope.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>().GetGame(gameDoc, out var game, out _))
         {
             throw new Exception("Dangling prod timer for game that is not in memory cache");
         }

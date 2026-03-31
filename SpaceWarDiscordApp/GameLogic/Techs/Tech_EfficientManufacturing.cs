@@ -1,14 +1,12 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.EfficientManufacturing;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.EfficientManufacturing;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEfficientManufacturingBonusInteraction>
+public class Tech_EfficientManufacturing : Tech, ISpaceWarInteractionHandler<ApplyEfficientManufacturingBonusInteraction>
 {
     public Tech_EfficientManufacturing() : base("efficient-manufacturing",
         "Efficient Manufacturing",
@@ -50,7 +48,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
     }
 
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ApplyEfficientManufacturingBonusInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.EffectiveProductionValue++;
@@ -59,7 +57,7 @@ public class Tech_EfficientManufacturing : Tech, IInteractionHandler<ApplyEffici
         
         builder?.AppendContentNewline($"Produced 1 additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
     
     private static bool IsHexAffected(BoardHex hex) => hex.Planet?.Production <= 1;

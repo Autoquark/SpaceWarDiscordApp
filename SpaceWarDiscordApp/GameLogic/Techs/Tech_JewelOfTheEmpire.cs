@@ -1,14 +1,12 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.JewelOfTheEmpire;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.JewelOfTheEmpire;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEmpireBonusInteraction>
+public class Tech_JewelOfTheEmpire : Tech, ISpaceWarInteractionHandler<ApplyJewelOfTheEmpireBonusInteraction>
 {
     public Tech_JewelOfTheEmpire() : base("jewel-of-the-empire",
         "Jewel of the Empire",
@@ -49,7 +47,7 @@ public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEm
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyJewelOfTheEmpireBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyJewelOfTheEmpireBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.EffectiveProductionValue += 2;
@@ -58,6 +56,6 @@ public class Tech_JewelOfTheEmpire : Tech, IInteractionHandler<ApplyJewelOfTheEm
         
         builder?.AppendContentNewline($"Produced 2 additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

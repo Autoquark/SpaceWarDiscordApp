@@ -1,13 +1,11 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Setup;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Interactions.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
@@ -283,7 +281,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
     {
         await TechOperations.UpdatePinnedTechMessage(context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().Game!);
         context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
-            .AppendContentNewline($"Updated pinned tech message");
+            .AppendContentNewline("Updated pinned tech message");
     }
 
     [Command("discardMarketTech")]
@@ -721,7 +719,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, context.ServiceProvider);
         
         context.ServiceProvider.GetRequiredService<GameMessageBuilders>().GameChannelBuilder!
-            .AppendContentNewline($"Updated pinned tech message");
+            .AppendContentNewline("Updated pinned tech message");
         
         outcome.RequiresSave = false;
     }
@@ -742,7 +740,7 @@ public class FixupCommands : MovementFlowHandler<FixupCommands>
 
         if (topEvent is GameEvent_PlayersChooseStartingTech)
         {
-            await InteractionDispatcher.HandleInteractionAsync(builder, new ChoosePlayerStartingTechInteraction
+            await context.ServiceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionAsync(builder, new ChoosePlayerStartingTechInteraction
             {
                 TechId = techId,
                 ForGamePlayerId = player,

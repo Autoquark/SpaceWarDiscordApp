@@ -1,15 +1,13 @@
-using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.OptimisedWorkSchedules;
+using SpaceWarDiscordApp.Database.Interactions.Tech.OptimisedWorkSchedules;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptimisedWorkSchedulesInteraction>
+public class Tech_OptimisedWorkSchedules : Tech, ISpaceWarInteractionHandler<TargetOptimisedWorkSchedulesInteraction>
 {
     public Tech_OptimisedWorkSchedules() : base("optimisedWorkSchedules", 
         "Optimised Work Schedules",
@@ -45,7 +43,7 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         TargetOptimisedWorkSchedulesInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -59,6 +57,6 @@ public class Tech_OptimisedWorkSchedules : Tech, IInteractionHandler<TargetOptim
                 ActionType = ActionType.Main
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

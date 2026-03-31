@@ -63,7 +63,7 @@ public static partial class MessageHandler
                         await InteractionsHelper.GetGlobalDataAndIncrementInteractionGroupIdAsync();
                     
                     var outcome =
-                        await InteractionDispatcher.HandleInteractionAsync(builder, interactionData, game,
+                        await serviceProvider.GetRequiredService<InteractionDispatcher<Game>>().HandleInteractionAsync(builder, interactionData, game,
                             serviceProvider);
 
                     if (outcome.RequiresSave)

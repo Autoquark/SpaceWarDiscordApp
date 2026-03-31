@@ -32,9 +32,9 @@ public static class TransactionExtensions
         => (await transaction.GetSnapshotAsync(gameRef)).ConvertTo<Game>();
 
     public static async Task<T> GetInteractionDataAsync<T>(this Transaction transaction, Guid interactionId)
-        where T : InteractionData.InteractionData
+        where T : InteractionData
     {
-        var interactionData = await GetInteractionDataAsync(transaction, interactionId);
+        var interactionData = await transaction.GetInteractionDataAsync(interactionId);
         if (interactionData is T typedInteractionData)
         {
             return typedInteractionData;
@@ -48,14 +48,14 @@ public static class TransactionExtensions
         throw new Exception($"Expected interaction data of type {typeof(T).FullName}, but got {interactionData.GetType().FullName}");
     }
 
-    public static async Task<InteractionData.InteractionData?> GetInteractionDataAsync(this Transaction transaction,
+    public static async Task<InteractionData?> GetInteractionDataAsync(this Transaction transaction,
         Guid interactionId) =>
         (await transaction.GetSnapshotAsync(
-                new Query<InteractionData.InteractionData>(transaction.Database.InteractionData())
+                new Query<InteractionData>(transaction.Database.InteractionData())
                     .WhereEqualTo(x => x.InteractionId, interactionId.ToString())
             .Limit(1)))
         .FirstOrDefault()
-        ?.ConvertTo<InteractionData.InteractionData>();
+        ?.ConvertTo<InteractionData>();
 
     public static void Set(this Transaction transaction, FirestoreDocument document) => transaction.Set(document.DocumentId, document);
 }

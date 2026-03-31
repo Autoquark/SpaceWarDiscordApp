@@ -1,16 +1,14 @@
-using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.MegaLaser;
+using SpaceWarDiscordApp.Database.Interactions.Tech.MegaLaser;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction>
+public class Tech_MegaLaser : Tech, ISpaceWarInteractionHandler<FireMegaLaserInteraction>
 {
     public Tech_MegaLaser() : base("megaLaser",
         "Mega Laser",
@@ -53,7 +51,7 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
         return builder.AppendHexButtons(game, planets, interactions);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         FireMegaLaserInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -76,6 +74,6 @@ public class Tech_MegaLaser : Tech, IInteractionHandler<FireMegaLaserInteraction
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

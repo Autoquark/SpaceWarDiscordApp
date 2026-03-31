@@ -1,10 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
-using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Refresh;
-using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;

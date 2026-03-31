@@ -1,18 +1,16 @@
-using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.AggressiveWasteDisposal;
+using SpaceWarDiscordApp.Database.Interactions.Tech.AggressiveWasteDisposal;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggressiveWasteDisposalInteraction>,
-    IInteractionHandler<RefreshAggressiveWasteDisposalInteraction>
+public class Tech_AggressiveWasteDisposal : Tech, ISpaceWarInteractionHandler<UseAggressiveWasteDisposalInteraction>,
+    ISpaceWarInteractionHandler<RefreshAggressiveWasteDisposalInteraction>
 {
     public Tech_AggressiveWasteDisposal() : base("aggressiveWasteDisposal",
         "Aggressive Waste Disposal",
@@ -56,7 +54,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         .WhereForcesPresent()
         .DistinctBy(x => x.Coordinates);
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseAggressiveWasteDisposalInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -86,7 +84,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
@@ -101,7 +99,7 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
                     AlwaysAutoResolve = true,
                     IsMandatory = true,
                     DisplayName = DisplayName,
-                    ResolveInteractionData = new RefreshAggressiveWasteDisposalInteraction()
+                    ResolveInteractionData = new RefreshAggressiveWasteDisposalInteraction
                     {
                         Game = game.DocumentId,
                         ForGamePlayerId = player.GamePlayerId,
@@ -114,13 +112,13 @@ public class Tech_AggressiveWasteDisposal : Tech, IInteractionHandler<UseAggress
         return [];
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         RefreshAggressiveWasteDisposalInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         game.GetGamePlayerForInteraction(interactionData).GetPlayerTechById(Id).IsExhausted = false;
         builder?.AppendContentNewline($"{DisplayName} has been refreshed!");
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

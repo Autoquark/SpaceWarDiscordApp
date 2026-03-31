@@ -14,7 +14,6 @@ using Newtonsoft.Json;
 using SpaceWarDiscordApp.AI.Services;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Converters;
-using SpaceWarDiscordApp.Database.InteractionData;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic;
@@ -42,13 +41,13 @@ static class Program
     
     public static TextInfo TextInfo { get; } = new CultureInfo("en-GB", false).TextInfo;
 
-    public static bool IsTestEnvironment { get; private set; } = false;
+    public static bool IsTestEnvironment { get; private set; }
 
     private static Task? _updateEmojiTask;
 
-    private static DiscordUser? _userToMessageErrorsTo = null;
+    private static DiscordUser? _userToMessageErrorsTo;
 
-    public static bool BotReady { get; private set; } = false;
+    public static bool BotReady { get; private set; }
     
     static async Task Main()
     {
@@ -64,8 +63,8 @@ static class Program
         }
 
         IsTestEnvironment = secrets.IsTestEnvironment;
-        
-        var converterRegistry = new ConverterRegistry() { new ImageSharpColorCoordinateConverter() };
+
+        var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
         var typeDiscriminator = new TypeDiscriminator();
 
         foreach (var type in typeof(TypeDiscriminator).GetInterfaces()
@@ -79,7 +78,7 @@ static class Program
                 .MakeGenericMethod(type)
                 .Invoke(converterRegistry, [typeDiscriminator]);
         }
-        
+
         var firestoreBuilder = new FirestoreDbBuilder
         {
             //EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOnly,
@@ -88,6 +87,15 @@ static class Program
             //Credential = SslCredentials.Insecure,
         };
         FirestoreDb = await firestoreBuilder.BuildAsync();
+
+        var gameEventDispatcher = new SpaceWarGameEventDispatcher(FirestoreDb);
+        var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
+
+        void RegisterEverything(object obj)
+        {
+            interactionDispatcher.RegisterInteractionHandler(obj);
+            gameEventDispatcher.RegisterHandler(obj);
+        }
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
 
@@ -99,16 +107,19 @@ static class Program
             // List of interactions to set up
             x.AddScoped<List<InteractionData>>();
 
-            x.AddScoped<PerOperationGameState>();
+            x.AddScoped<SpaceWarPerOperationState>();
+            x.AddScoped<PerOperationState>(sp => sp.GetRequiredService<SpaceWarPerOperationState>());
             x.AddScoped<GameMessageBuilders>();
-            
+
             x.AddHttpClient();
             x.AddScoped<OpenRouterService>(serviceProvider =>
             {
                 var httpClient = serviceProvider.GetRequiredService<HttpClient>();
                 return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
             });
-            x.AddSingleton<GameCache>();
+            x.AddSingleton<GameEventDispatcher<Game>>(gameEventDispatcher);
+            x.AddSingleton(interactionDispatcher);
+            x.AddSingleton<GameCache<Game, NonDbGameState>>();
             x.AddSingleton<GameSyncManager>();
             x.AddSingleton<BackstoryGenerator>();
         });
@@ -133,7 +144,7 @@ static class Program
 
             // Add text commands with a custom prefix (?ping)
             extension.AddProcessor(textCommandProcessor);*/
-        }, new CommandsConfiguration()
+        }, new CommandsConfiguration
         {
             // The default value is true, however it's shown here for clarity
             RegisterDefaultCommandProcessors = false,
@@ -222,7 +233,7 @@ static class Program
                 continue;
             }
 
-            var cache = DiscordClient.ServiceProvider.GetRequiredService<GameCache>();
+            var cache = DiscordClient.ServiceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
             
             if (!cache.GetGame(gameDoc.Reference, out var game, out var nonDbGameState))
             {
@@ -320,9 +331,4 @@ static class Program
 
     public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
     
-    private static void RegisterEverything(object obj)
-    {
-        InteractionDispatcher.RegisterInteractionHandler(obj);
-        GameEventDispatcher.RegisterHandler(obj);
-    }
 }

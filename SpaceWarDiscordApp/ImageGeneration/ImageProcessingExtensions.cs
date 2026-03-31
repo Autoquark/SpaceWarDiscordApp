@@ -1,8 +1,6 @@
 using System.Diagnostics;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using SixLabors.Fonts;
-using SixLabors.Fonts.Unicode;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;

@@ -1,14 +1,14 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Annexation;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Annexation;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Annexation : Tech, IInteractionHandler<UseAnnexationInteraction>
+public class Tech_Annexation : Tech, ISpaceWarInteractionHandler<UseAnnexationInteraction>
 {
     public Tech_Annexation() : base("annexation", "Annexation",
         "Produce on a ready neutral planet that is next to one you control (exhaust it as usual. If it has neutral forces on it, combat will occur.)",
@@ -58,7 +58,7 @@ public class Tech_Annexation : Tech, IInteractionHandler<UseAnnexationInteractio
         .SelectMany(x => BoardUtils.GetNeighbouringHexes(game, x).Where(y => y is { IsNeutral: true, Planet.IsExhausted: false }))
         .Distinct();
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseAnnexationInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseAnnexationInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -71,6 +71,6 @@ public class Tech_Annexation : Tech, IInteractionHandler<UseAnnexationInteractio
                 {
                     ActionType = SimpleActionType
                 });
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

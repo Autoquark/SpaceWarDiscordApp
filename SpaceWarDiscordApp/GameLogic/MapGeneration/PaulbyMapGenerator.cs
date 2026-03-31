@@ -84,7 +84,7 @@ public class PaulbyMapGenerator : BaseMapGenerator
             {
                 connections.Add(HexDirection.NorthWest);
             }
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(0, -2).RotateClockwise(rotation),
                 HyperlaneConnections = connections
@@ -94,7 +94,7 @@ public class PaulbyMapGenerator : BaseMapGenerator
             };
             map.Add(system);
             
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(1, -2).RotateClockwise(rotation),
                 HyperlaneConnections = [new HyperlaneConnection(HexDirection.NorthWest.RotateClockwise(rotation), HexDirection.SouthEast.RotateClockwise(rotation))]
@@ -107,7 +107,7 @@ public class PaulbyMapGenerator : BaseMapGenerator
             {
                 connections.Add(HexDirection.NorthWest);
             }
-            system = new BoardHex()
+            system = new BoardHex
             {
                 Coordinates = new HexCoordinates(0, -1).RotateClockwise(rotation),
                 HyperlaneConnections = connections

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using SpaceWarDiscordApp.Database;
 
 namespace SpaceWarDiscordApp.GameLogic.MapGeneration;

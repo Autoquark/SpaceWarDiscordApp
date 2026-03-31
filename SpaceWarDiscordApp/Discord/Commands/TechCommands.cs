@@ -1,10 +1,9 @@
 using System.ComponentModel;
 using DSharpPlus.Commands;
 using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
+using SpaceWarDiscordApp.Database.Interactions.Tech;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic.Operations;
@@ -12,9 +11,9 @@ using SpaceWarDiscordApp.GameLogic.Techs;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class TechCommands : IInteractionHandler<UseTechActionInteraction>
+public class TechCommands : ISpaceWarInteractionHandler<UseTechActionInteraction>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseTechActionInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -24,7 +23,7 @@ public class TechCommands : IInteractionHandler<UseTechActionInteraction>
         
         await tech.UseTechActionAsync(builder, game, player, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     [Command("ShowTech")]

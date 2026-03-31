@@ -1,25 +1,23 @@
-using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Production;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Production;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 
-public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction>,
-    IInteractionHandler<ProduceInteraction>, IEventResolvedHandler<GameEvent_AlterPlanet>
+public class ProduceCommands : ISpaceWarInteractionHandler<ShowProduceOptionsInteraction>,
+    ISpaceWarInteractionHandler<ProduceInteraction>, IEventResolvedHandler<GameEvent_AlterPlanet>
 {
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ShowProduceOptionsInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         if (game.EventStack.Count > 0)
         {
             builder?.AppendContentNewline("You can't click this right now because the game is waiting on a different decision:");
             await GameFlowOperations.ContinueResolvingEventStackAsync(builder, game, serviceProvider);
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -45,10 +43,10 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
         builder?.AppendHexButtons(game, candidates, interactionIds);
         builder?.AppendCancelButton(cancelId);
 
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ProduceInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Hex);
@@ -64,7 +62,7 @@ public class ProduceCommands : IInteractionHandler<ShowProduceOptionsInteraction
                 ActionType = ActionType.Main
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     public Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_AlterPlanet gameEvent, Game game,

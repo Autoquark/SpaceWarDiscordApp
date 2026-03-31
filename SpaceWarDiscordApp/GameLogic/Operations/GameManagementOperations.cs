@@ -1,11 +1,8 @@
 using DSharpPlus.Entities;
 using Google.Cloud.Firestore;
-using Google.Cloud.Firestore.V1;
 using Microsoft.Extensions.DependencyInjection;
-using Raffinert.FuzzySharp.Extensions;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData.GameRules;
+using SpaceWarDiscordApp.Database.Interactions.GameRules;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
 
@@ -280,7 +277,7 @@ public class GameManagementOperations
 
     public static void ClearGameCache(DocumentReference gameRef, IServiceProvider serviceProvider)
     {
-        var cache = serviceProvider.GetRequiredService<GameCache>();
+        var cache = serviceProvider.GetRequiredService<GameCache<Game, NonDbGameState>>();
         cache.Clear(gameRef);
     }
 }

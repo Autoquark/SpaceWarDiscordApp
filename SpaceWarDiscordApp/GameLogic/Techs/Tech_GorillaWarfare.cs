@@ -1,14 +1,12 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.GorillaWarfare;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.GorillaWarfare;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfareBonusInteraction>
+public class Tech_GorillaWarfare : Tech, ISpaceWarInteractionHandler<ApplyGorillaWarfareBonusInteraction>
 {
     public Tech_GorillaWarfare() : base("gorillaWarfare", "Gorilla Warfare",
         "If you have only 1 forces present, +1 Combat Strength",
@@ -60,7 +58,7 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyGorillaWarfareBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyGorillaWarfareBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -82,6 +80,6 @@ public class Tech_GorillaWarfare : Tech, IInteractionHandler<ApplyGorillaWarfare
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

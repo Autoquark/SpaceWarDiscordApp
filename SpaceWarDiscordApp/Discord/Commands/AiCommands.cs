@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text;
 using DSharpPlus.Commands;
-using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.AI.Models;
 using SpaceWarDiscordApp.AI.Services;

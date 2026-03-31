@@ -1,16 +1,15 @@
 using DSharpPlus.Entities;
-using Raffinert.FuzzySharp.Extensions;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Psysploder;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Psysploder;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetInteraction>, IInteractionHandler<UsePsysploderInteraction>
+public class Tech_Psysploder : Tech, ISpaceWarInteractionHandler<ChoosePsysploderTargetInteraction>, ISpaceWarInteractionHandler<UsePsysploderInteraction>
 {
     public Tech_Psysploder() : base("psysploder", "Psysploder",
         "Destroy any number of your forces on a planet, and an equal number of enemy forces on each adjacent planet.",
@@ -52,7 +51,7 @@ public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetI
         return Task.FromResult(builder.AppendHexButtons(game, targets, interactions, cancelInteraction));
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ChoosePsysploderTargetInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ChoosePsysploderTargetInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var hex = game.GetHexAt(interactionData.Target);
@@ -87,10 +86,10 @@ public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetI
         builder?.AppendButtonRows(cancelInteraction, interactions.Index().Select(x =>
             new DiscordButtonComponent(DiscordButtonStyle.Primary, x.Item, (x.Index + 1).ToString())));
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UsePsysploderInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UsePsysploderInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -114,6 +113,6 @@ public class Tech_Psysploder : Tech, IInteractionHandler<ChoosePsysploderTargetI
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

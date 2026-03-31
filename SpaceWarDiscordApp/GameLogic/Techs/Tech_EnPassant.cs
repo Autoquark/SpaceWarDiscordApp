@@ -1,14 +1,13 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.EnPassant;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.EnPassant;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EnPassant : Tech, IInteractionHandler<ResolveEnPassantInteraction>
+public class Tech_EnPassant : Tech, ISpaceWarInteractionHandler<ResolveEnPassantInteraction>
 {
     public Tech_EnPassant() : base("en_passant", "En Passant",
         "When you complete a movement, if the destination and at least one source were both adjacent to a planet controlled by an opponent, destroy 1 forces from that planet.",
@@ -56,7 +55,7 @@ public class Tech_EnPassant : Tech, IInteractionHandler<ResolveEnPassantInteract
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ResolveEnPassantInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ResolveEnPassantInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(interactionData.Event.PlayerGameId);
@@ -70,6 +69,6 @@ public class Tech_EnPassant : Tech, IInteractionHandler<ResolveEnPassantInteract
         }
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

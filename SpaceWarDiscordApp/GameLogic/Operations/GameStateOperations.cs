@@ -1,7 +1,6 @@
 using DSharpPlus.Entities;
 using SixLabors.ImageSharp;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.Techs;
 using SpaceWarDiscordApp.ImageGeneration;
 

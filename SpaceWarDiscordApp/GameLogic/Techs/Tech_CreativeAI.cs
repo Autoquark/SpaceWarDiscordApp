@@ -1,19 +1,13 @@
 using DSharpPlus.Entities;
-using Google.Cloud.Firestore;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.CreativeAI;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.CreativeAI;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
-using System.Linq;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteraction>
+public class Tech_CreativeAI : Tech, ISpaceWarInteractionHandler<CreativeAITechInteraction>
 {
     public Tech_CreativeAI() : base(
         "creative_ai",
@@ -53,7 +47,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
             .Select(x => new DiscordButtonComponent(
                 DiscordButtonStyle.Primary,
                 x.interactionId,
-                $"{Tech.TechsById[x.techId].DisplayName}")));
+                $"{TechsById[x.techId].DisplayName}")));
 
         var declineId = serviceProvider.AddInteractionToSetUp(new CreativeAITechInteraction
         {
@@ -68,7 +62,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         CreativeAITechInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerByGameId(interactionData.ForGamePlayerId);
@@ -76,7 +70,7 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
         if (interactionData.TechId != null)
         {
             var name = await player.GetNameAsync(false);
-            var tech = Tech.TechsById[interactionData.TechId];
+            var tech = TechsById[interactionData.TechId];
 
             builder?.AppendContentNewline($"{name}'s Creative AI has discarded {tech.DisplayName} from the tech market");
 
@@ -107,6 +101,6 @@ public class Tech_CreativeAI : Tech, IInteractionHandler<CreativeAITechInteracti
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

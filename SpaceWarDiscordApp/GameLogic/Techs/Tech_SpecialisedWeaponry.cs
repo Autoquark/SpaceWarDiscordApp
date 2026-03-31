@@ -1,10 +1,9 @@
-using System.Numerics;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Database.GameEvents.Refresh;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.SpecialisedWeaponry;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.SpecialisedWeaponry;
 using SpaceWarDiscordApp.Database.Tech;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
@@ -12,8 +11,8 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialisedWeaponryInteraction>, IInteractionHandler<ApplySpecialisedWeaponryBonusInteraction>,
-    IInteractionHandler<ResetSpecialisedWeaponryInteraction>
+public class Tech_SpecialisedWeaponry : Tech, ISpaceWarInteractionHandler<UseSpecialisedWeaponryInteraction>, ISpaceWarInteractionHandler<ApplySpecialisedWeaponryBonusInteraction>,
+    ISpaceWarInteractionHandler<ResetSpecialisedWeaponryInteraction>
 {
     public Tech_SpecialisedWeaponry() : base("specialisedWeaponry",
         "Specialised Weaponry",
@@ -79,7 +78,7 @@ public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialised
         return await builder.AppendPlayerButtonsAsync(game.Players.Except(player), interactionIds, cancelId);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseSpecialisedWeaponryInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseSpecialisedWeaponryInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -97,7 +96,7 @@ public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialised
             ActionType = SimpleActionType,
         });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
     protected override IEnumerable<TriggeredEffect> GetTriggeredEffectsInternal(Game game, GameEvent gameEvent, GamePlayer player)
@@ -169,7 +168,7 @@ public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialised
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ApplySpecialisedWeaponryBonusInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -191,10 +190,10 @@ public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialised
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ResetSpecialisedWeaponryInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ResetSpecialisedWeaponryInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -202,6 +201,6 @@ public class Tech_SpecialisedWeaponry : Tech, IInteractionHandler<UseSpecialised
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

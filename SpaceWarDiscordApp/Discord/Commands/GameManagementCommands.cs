@@ -6,8 +6,8 @@ using DSharpPlus.Commands.Processors.SlashCommands.ArgumentModifiers;
 using DSharpPlus.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.GameRules;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.GameRules;
 using SpaceWarDiscordApp.Discord.ChoiceProvider;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
@@ -16,15 +16,15 @@ using SpaceWarDiscordApp.GameLogic.Operations;
 namespace SpaceWarDiscordApp.Discord.Commands;
 
 [RequireGameChannel(RequireGameChannelMode.RequiresSave, GamePhase.Setup)]
-public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, IInteractionHandler<SetStartingTechRuleInteraction>,
-    IInteractionHandler<SetMapGeneratorInteraction>,
-    IInteractionHandler<ShowRollBackConfirmInteraction>,
-    IInteractionHandler<RollBackGameInteraction>,
-    IInteractionHandler<SetMaxPlayerCountInteraction>,
-    IInteractionHandler<SetScoringRuleInteraction>,
-    IInteractionHandler<SetTechMarketRuleInteraction>,
-    IInteractionHandler<SetVictoryThresholdInteraction>,
-    IInteractionHandler<SetSingleUseTechCanBeUniversal>
+public class GameManagementCommands : ISpaceWarInteractionHandler<JoinGameInteraction>, ISpaceWarInteractionHandler<SetStartingTechRuleInteraction>,
+    ISpaceWarInteractionHandler<SetMapGeneratorInteraction>,
+    ISpaceWarInteractionHandler<ShowRollBackConfirmInteraction>,
+    ISpaceWarInteractionHandler<RollBackGameInteraction>,
+    ISpaceWarInteractionHandler<SetMaxPlayerCountInteraction>,
+    ISpaceWarInteractionHandler<SetScoringRuleInteraction>,
+    ISpaceWarInteractionHandler<SetTechMarketRuleInteraction>,
+    ISpaceWarInteractionHandler<SetVictoryThresholdInteraction>,
+    ISpaceWarInteractionHandler<SetSingleUseTechCanBeUniversal>
 {
     private class NounProjectImageCredit
     {
@@ -151,7 +151,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         await Program.FirestoreDb.RunTransactionAsync(transaction =>
         {
             transaction.Create(game.DocumentId, game);
-            InteractionsHelper.SetUpInteractions([startGameInteraction, joinGameInteraction],
+            InteractionStatics.SetUpInteractions([startGameInteraction, joinGameInteraction],
                 transaction,
                 context.ServiceProvider.GetRequiredService<SpaceWarCommandContextData>().GlobalData.InteractionGroupId);
         });
@@ -264,7 +264,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
             .GenerateBackstory(null));
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, JoinGameInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, JoinGameInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -274,19 +274,19 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (game.TryGetGamePlayerByDiscordId(userId) != null)
         {
             builders.SourceChannelBuilder.AppendContentNewline("You are already in this game!");
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
 
         if (game.Players.Count >= game.Rules.MaxPlayers)
         {
             builders.SourceChannelBuilder.AppendContentNewline("This game is full!");
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
 
         if (game.Phase != GamePhase.Setup)
         {
             builders.SourceChannelBuilder.AppendContentNewline("You can't join this game because it has already started");
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         game.Players.Add(new GamePlayer
@@ -311,75 +311,75 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetStartingTechRuleInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetStartingTechRuleInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the starting tech rule after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
         
         game.Rules.StartingTechRule = interactionData.Value;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMapGeneratorInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMapGeneratorInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the map generator after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
         
         game.Rules.MapGeneratorId = interactionData.GeneratorId;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMaxPlayerCountInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetMaxPlayerCountInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the max player count after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
 
         game.Rules.MaxPlayers = interactionData.MaxPlayerCount;
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetScoringRuleInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetScoringRuleInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the scoring rule after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
 
         if (game.Rules.ScoringRule == interactionData.Value)
         {
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         game.Rules.ScoringRule = interactionData.Value;
@@ -387,75 +387,75 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetTechMarketRuleInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetTechMarketRuleInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the scoring rule after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
 
         if (game.Rules.TechMarketRule == interactionData.Value)
         {
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         game.Rules.TechMarketRule = interactionData.Value;
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetVictoryThresholdInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetVictoryThresholdInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change the victory threshold after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
 
         game.Rules.VictoryThreshold = interactionData.VictoryThreshold;
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetSingleUseTechCanBeUniversal interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, SetSingleUseTechCanBeUniversal interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (game.Phase != GamePhase.Setup)
         {
             builder?.AppendContentNewline("You can't change game settings after the game has started");
-            return new SpaceWarInteractionOutcome(false);       
+            return new InteractionOutcome(false);       
         }
 
         game.Rules.SingleUseTechCanBeUniversal = interactionData.Value;
         
         await GameManagementOperations.CreateOrUpdateGameSettingsMessageAsync(game, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(true)
+        return new InteractionOutcome(true)
         {
             DeleteOriginalMessage = true
         };
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowRollBackConfirmInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ShowRollBackConfirmInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var rollbackInteractionId = serviceProvider.AddInteractionToSetUp(new RollBackGameInteraction
@@ -471,7 +471,7 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         if (state == null)
         {
             sourceBuilder.AppendContentNewline("That backup state seems to no longer exist");
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
 
         var turnPlayerName = await game.GetGamePlayerByGameId(state.CurrentTurnGamePlayerId).GetNameAsync(false, false);
@@ -479,10 +479,10 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         sourceBuilder.AddActionRowComponent(new DiscordButtonComponent(DiscordButtonStyle.Danger, rollbackInteractionId,
             $"Confirm roll back to start of turn {state.TurnNumber} ({turnPlayerName}'s turn)"));
 
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RollBackGameInteraction interactionData, Game game,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, RollBackGameInteraction interactionData, Game game,
         IServiceProvider serviceProvider)
     {
         var newGame = await GameManagementOperations.RollBackGameAsync(game,
@@ -495,6 +495,6 @@ public class GameManagementCommands : IInteractionHandler<JoinGameInteraction>, 
         var hasEvents = newGame.EventStack.Count > 0;
         await GameFlowOperations.ContinueResolvingEventStackAsync(builder, newGame, serviceProvider);
 
-        return new SpaceWarInteractionOutcome(hasEvents);
+        return new InteractionOutcome(hasEvents);
     }
 }

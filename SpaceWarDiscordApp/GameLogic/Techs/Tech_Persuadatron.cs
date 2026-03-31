@@ -1,17 +1,15 @@
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Persuadatron;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Persuadatron;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
-
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronInteraction>
+public class Tech_Persuadatron : Tech, ISpaceWarInteractionHandler<UsePersuadatronInteraction>
 {
     public Tech_Persuadatron(): base("persuadatron", "Persuadatron 3000", 
     "Choose a planet adjacent to one you control. Replace all forces on it with the same quantity of your forces.",
@@ -53,7 +51,7 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
         .WhereForcesPresent()
         .DistinctBy(x => x.Coordinates);
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UsePersuadatronInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -99,6 +97,6 @@ public class Tech_Persuadatron : Tech, IInteractionHandler<UsePersuadatronIntera
                 ActionType = SimpleActionType,
             });
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

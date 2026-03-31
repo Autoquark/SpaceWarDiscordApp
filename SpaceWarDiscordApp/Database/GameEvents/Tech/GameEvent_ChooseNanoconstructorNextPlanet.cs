@@ -1,5 +1,5 @@
 using Google.Cloud.Firestore;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.NanoconstructorSwarm;
+using SpaceWarDiscordApp.Database.Interactions.Tech.NanoconstructorSwarm;
 using SpaceWarDiscordApp.GameLogic;
 
 namespace SpaceWarDiscordApp.Database.GameEvents.Tech;

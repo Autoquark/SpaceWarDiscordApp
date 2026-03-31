@@ -1,14 +1,12 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.FlankingTactics;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.FlankingTactics;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacticsBonusInteraction>
+public class Tech_FlankingTactics : Tech, ISpaceWarInteractionHandler<ApplyFlankingTacticsBonusInteraction>
 {
     public Tech_FlankingTactics() : base("flanking-tactics",
         "Flanking Tactics",
@@ -46,7 +44,7 @@ public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacti
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyFlankingTacticsBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyFlankingTacticsBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.AttackerCombatStrengthSources.Add(new CombatStrengthSource
@@ -57,6 +55,6 @@ public class Tech_FlankingTactics : Tech, IInteractionHandler<ApplyFlankingTacti
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

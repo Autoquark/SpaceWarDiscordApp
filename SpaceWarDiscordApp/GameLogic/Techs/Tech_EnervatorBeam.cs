@@ -1,16 +1,14 @@
-using DSharpPlus.Entities;
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.EnervatorBeam;
+using SpaceWarDiscordApp.Database.Interactions.Tech.EnervatorBeam;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInteraction>
+public class Tech_EnervatorBeam : Tech, ISpaceWarInteractionHandler<UseEnervatorBeamInteraction>
 {
     public Tech_EnervatorBeam() : base("enervatorBeam",
         "Enervator Beam",
@@ -45,7 +43,7 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
         return builder.AppendHexButtons(game, targets, interactionIds);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseEnervatorBeamInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         game.GetHexAt(interactionData.Target).Planet!.IsExhausted = true;
@@ -66,6 +64,6 @@ public class Tech_EnervatorBeam : Tech, IInteractionHandler<UseEnervatorBeamInte
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

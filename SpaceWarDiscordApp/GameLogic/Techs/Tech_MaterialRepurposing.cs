@@ -1,13 +1,12 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.Tech_MaterialRepurposing;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.Tech_MaterialRepurposing;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRepurposingInteraction>
+public class Tech_MaterialRepurposing : Tech, ISpaceWarInteractionHandler<UseMaterialRepurposingInteraction>
 {
     public Tech_MaterialRepurposing() : base("material-repurposing", "Material Repurposing",
         "When you capture a planet, if it's ready, produce there (then exhaust it as normal)",
@@ -46,7 +45,7 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         UseMaterialRepurposingInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
@@ -62,6 +61,6 @@ public class Tech_MaterialRepurposing : Tech, IInteractionHandler<UseMaterialRep
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

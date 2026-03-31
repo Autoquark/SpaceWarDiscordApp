@@ -1,17 +1,15 @@
-using System.Collections.Generic;
 using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.CulturalExchange;
+using SpaceWarDiscordApp.Database.Interactions;
+using SpaceWarDiscordApp.Database.Interactions.Tech.CulturalExchange;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExchangeTargetPlayerInteraction>, IInteractionHandler<UseCulturalExchangeInteraction>
+public class Tech_CulturalExchange : Tech, ISpaceWarInteractionHandler<SelectCulturalExchangeTargetPlayerInteraction>, ISpaceWarInteractionHandler<UseCulturalExchangeInteraction>
 {
     public Tech_CulturalExchange() : base("culturalExchange", "Cultural Exchange",
         "Swap this tech for one of another player's techs. The exhaustion status of both techs is preserved. The target player must not own Cultural Exchange already. Does not cycle the tech market.",
@@ -63,7 +61,7 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         SelectCulturalExchangeTargetPlayerInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -74,8 +72,8 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
 
         if (targetableTechs.Count == 0)
         {
-            builder!.AppendContentNewline($"No targetable techs.");
-            return new SpaceWarInteractionOutcome(false);
+            builder!.AppendContentNewline("No targetable techs.");
+            return new InteractionOutcome(false);
         }
 
         var interactionIds = serviceProvider.AddInteractionsToSetUp(targetableTechs.Select(x =>
@@ -99,10 +97,10 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
                 x.First,
                 TechsById[x.Second.TechId].DisplayName + (x.Second.IsExhausted ? " [exhausted]" : ""))));
 
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseCulturalExchangeInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseCulturalExchangeInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -115,7 +113,7 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
             || player.TryGetPlayerTechById(interactionData.TechId) != null
             || targetPlayerTech == null)
         {
-            return new SpaceWarInteractionOutcome(false);
+            return new InteractionOutcome(false);
         }
         
         // Don't use the standard gain/lose tech events as we are doing a special swap that preserves exhaustion status
@@ -149,6 +147,6 @@ public class Tech_CulturalExchange : Tech, IInteractionHandler<SelectCulturalExc
                 PlayerTech = gainedCulturalExchangePlayerTech
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

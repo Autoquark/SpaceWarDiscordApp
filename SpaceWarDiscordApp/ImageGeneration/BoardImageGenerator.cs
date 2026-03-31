@@ -1,5 +1,4 @@
 using System.Diagnostics.Contracts;
-using System.Net.WebSockets;
 using System.Numerics;
 using System.Text;
 using SixLabors.Fonts;
@@ -223,10 +222,7 @@ public static class BoardImageGenerator
             SectionHeaderHeight = (int)TextMeasurer.MeasureSize(alphabet, new TextOptions(SectionHeaderFont)).Height;
 
             var playerAreaTitleSpacer = 12;
-            PlayerAreaTitleHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(PlayerAreaNameFont)
-            {
-                
-            }).Height + playerAreaTitleSpacer;
+            PlayerAreaTitleHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(PlayerAreaNameFont)).Height + playerAreaTitleSpacer;
             
             InfoTableLineHeight = (int)TextMeasurer.MeasureBounds(alphabet, new TextOptions(InfoTableFont)).Height;
             TechBoxMinHeight = InfoTableLineHeight * 4;
@@ -966,7 +962,7 @@ public static class BoardImageGenerator
                 var textOrigin = hexCentre + new PointF(0, HexInnerDiameter * 0.4f);
                 SizeF textAreaSize = new SizeF(100, 50);
                 image.Mutate(x =>
-                    x.Fill(new DrawingOptions() { GraphicsOptions = new GraphicsOptions() { BlendPercentage = 0.5f } },
+                    x.Fill(new DrawingOptions { GraphicsOptions = new GraphicsOptions { BlendPercentage = 0.5f } },
                         Color.White, new RectangleF(textOrigin - textAreaSize / 2, textAreaSize)));
             
                 image.Mutate(x => x.DrawText(new RichTextOptions(CoordinatesFont)

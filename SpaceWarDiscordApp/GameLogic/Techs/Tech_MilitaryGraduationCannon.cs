@@ -1,15 +1,12 @@
-using DSharpPlus.Entities;
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.MilitaryGraduationCannon;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.MilitaryGraduationCannon;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMilitaryGraduationCannonInteractionData>
+public class Tech_MilitaryGraduationCannon : Tech, ISpaceWarInteractionHandler<TriggerMilitaryGraduationCannonInteractionData>
 {
     public Tech_MilitaryGraduationCannon() : base("militaryGraduationCannon",
         "Military Graduation Cannon",
@@ -52,7 +49,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
     }
 
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, TriggerMilitaryGraduationCannonInteractionData interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, TriggerMilitaryGraduationCannonInteractionData interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -64,7 +61,7 @@ public class Tech_MilitaryGraduationCannon : Tech, IInteractionHandler<TriggerMi
             dynamicMaxAmountPerSource: interactionData.AmountProduced,
             triggerToMarkResolved: interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 }
 

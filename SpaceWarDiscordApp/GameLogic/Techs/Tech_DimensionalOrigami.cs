@@ -1,17 +1,16 @@
-using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.EventRecords;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Tech;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.DimensionalOrigami;
+using SpaceWarDiscordApp.Database.Interactions.Tech.DimensionalOrigami;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDimensionalOrigamiSystemInteraction>,
-    IInteractionHandler<UseDimensionalOrigamiInteraction>
+public class Tech_DimensionalOrigami : Tech, ISpaceWarInteractionHandler<ChooseFirstDimensionalOrigamiSystemInteraction>,
+    ISpaceWarInteractionHandler<UseDimensionalOrigamiInteraction>
 {
     public Tech_DimensionalOrigami() : base("dimensional-origami",
         "Dimensional Origami",
@@ -44,7 +43,7 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         return builder;
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         ChooseFirstDimensionalOrigamiSystemInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -70,10 +69,10 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
         builder.AppendContentNewline($"{DisplayName}: {name}, choose the second system to swap:");
         builder.AppendHexButtons(game, targets, interactions);
         
-        return new SpaceWarInteractionOutcome(false);
+        return new InteractionOutcome(false);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseDimensionalOrigamiInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, UseDimensionalOrigamiInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -108,6 +107,6 @@ public class Tech_DimensionalOrigami : Tech, IInteractionHandler<ChooseFirstDime
                 ActionType = SimpleActionType,
             });
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

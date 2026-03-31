@@ -1,15 +1,13 @@
 using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Movement;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.EliteTroops;
-using SpaceWarDiscordApp.Discord;
+using SpaceWarDiscordApp.Database.Interactions.Tech.EliteTroops;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_EliteTroops : Tech, IInteractionHandler<ApplyEliteTroopsBonusInteraction>, IInteractionHandler<ApplyEliteTroopsProductionReductionInteraction>
+public class Tech_EliteTroops : Tech, ISpaceWarInteractionHandler<ApplyEliteTroopsBonusInteraction>, ISpaceWarInteractionHandler<ApplyEliteTroopsProductionReductionInteraction>
 {
     public Tech_EliteTroops(): base("eliteTroops", "Elite Troops", 
         "You have +1 Combat Strength. Whenever you produce, produce 1 fewer forces (minimum of 1).", 
@@ -91,17 +89,17 @@ public class Tech_EliteTroops : Tech, IInteractionHandler<ApplyEliteTroopsBonusI
         return [];
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyEliteTroopsProductionReductionInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyEliteTroopsProductionReductionInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
     
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyEliteTroopsBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyEliteTroopsBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         if (interactionData.IsAttacker)
@@ -123,6 +121,6 @@ public class Tech_EliteTroops : Tech, IInteractionHandler<ApplyEliteTroopsBonusI
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }

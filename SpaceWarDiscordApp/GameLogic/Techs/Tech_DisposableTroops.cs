@@ -1,16 +1,15 @@
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.GameEvents.Produce;
-using SpaceWarDiscordApp.Database.InteractionData.Tech.DisposableTroops;
+using SpaceWarDiscordApp.Database.Interactions.Tech.DisposableTroops;
 using SpaceWarDiscordApp.Database.Tech;
-using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
-public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTroopsBonusInteraction>, IInteractionHandler<DisposableTroopsDestroyForcesInteraction>,
-    IInteractionHandler<DisposableTroopsClearPendingDestroyInteraction>
+public class Tech_DisposableTroops : Tech, ISpaceWarInteractionHandler<ApplyDisposableTroopsBonusInteraction>, ISpaceWarInteractionHandler<DisposableTroopsDestroyForcesInteraction>,
+    ISpaceWarInteractionHandler<DisposableTroopsClearPendingDestroyInteraction>
 {
     private const int ProductionBonus = 2;
     
@@ -100,7 +99,7 @@ public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTr
         return [];
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyDisposableTroopsBonusInteraction interactionData,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder, ApplyDisposableTroopsBonusInteraction interactionData,
         Game game, IServiceProvider serviceProvider)
     {
         interactionData.Event.EffectiveProductionValue += ProductionBonus;
@@ -112,10 +111,10 @@ public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTr
         
         builder?.AppendContentNewline($"Produced {ProductionBonus} additional forces due to {DisplayName}");
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         DisposableTroopsDestroyForcesInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -124,7 +123,7 @@ public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTr
             // If for some reason we didn't apply the production bonus to this produce (e.g. we gained this tech off the
             // produce), don't destroy preexisting forces.
             await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
-            return new SpaceWarInteractionOutcome(true);
+            return new InteractionOutcome(true);
         }
         
         var hex = game.GetHexAt(interactionData.Event.Location);
@@ -135,10 +134,10 @@ public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTr
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 
-    public async Task<SpaceWarInteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
+    public async Task<InteractionOutcome> HandleInteractionAsync(DiscordMultiMessageBuilder? builder,
         DisposableTroopsClearPendingDestroyInteraction interactionData, Game game, IServiceProvider serviceProvider)
     {
         var player = game.GetGamePlayerForInteraction(interactionData);
@@ -146,6 +145,6 @@ public class Tech_DisposableTroops : Tech, IInteractionHandler<ApplyDisposableTr
         
         await GameFlowOperations.TriggerResolvedAsync(game, builder, serviceProvider, interactionData.InteractionId);
         
-        return new SpaceWarInteractionOutcome(true);
+        return new InteractionOutcome(true);
     }
 }
