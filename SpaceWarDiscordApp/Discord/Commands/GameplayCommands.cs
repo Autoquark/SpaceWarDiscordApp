@@ -10,6 +10,7 @@ using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
 using SpaceWarDiscordApp.GameLogic.Techs;
+using Tumult.Discord.ContextChecks;
 
 namespace SpaceWarDiscordApp.Discord.Commands;
 

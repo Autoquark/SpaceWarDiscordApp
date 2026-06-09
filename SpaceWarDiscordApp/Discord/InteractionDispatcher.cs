@@ -209,7 +209,7 @@ public static class InteractionDispatcher
                 cache.Clear(game.DocumentId);
             }
 
-            await Program.LogExceptionAsync(game, e);
+            await Program.BotErrorReporter.LogExceptionAsync(game, e);
 
             await args.Interaction.EditOriginalResponseAsync(
                 new DiscordWebhookBuilder().WithContent(

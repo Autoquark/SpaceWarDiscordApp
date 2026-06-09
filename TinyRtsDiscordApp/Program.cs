@@ -1,5 +1,3 @@
-﻿// See https://aka.ms/new-console-template for more information
-
 using System.Globalization;
 using System.Reflection;
 using DSharpPlus;
@@ -10,17 +8,15 @@ using DSharpPlus.EventArgs;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using SpaceWarDiscordApp.AI.Services;
-using SpaceWarDiscordApp.Database;
-using SpaceWarDiscordApp.Database.Converters;
-using SpaceWarDiscordApp.Discord;
-using SpaceWarDiscordApp.Discord.Commands;
-using SpaceWarDiscordApp.GameLogic;
-using SpaceWarDiscordApp.GameLogic.MapGeneration;
-using SpaceWarDiscordApp.GameLogic.Operations;
-using SpaceWarDiscordApp.GameLogic.Techs;
+using SpaceWarDiscordApp;
+using TinyRtsDiscordApp.Database;
+using Tumult;
+using Tumult.Database;
+using Tumult.Database.Interactions;
+using Tumult.Discord;
+using Tumult.GameLogic;
 
-namespace SpaceWarDiscordApp;
+namespace TinyRtsDiscordApp;
 
 static class Program
 {
@@ -33,7 +29,7 @@ static class Program
     
     public static IReadOnlyDictionary<string, DiscordEmoji> AppEmojisByName { get; private set; }
 
-    public static CommonEmoji CommonEmoji;
+    //public static CommonEmoji CommonEmoji;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     
     public static Random Random => _random.Value!;
@@ -63,10 +59,11 @@ static class Program
 
         IsTestEnvironment = secrets.IsTestEnvironment;
 
-        var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
-        var typeDiscriminator = new TypeDiscriminator();
+        //var converterRegistry = new ConverterRegistry { new ImageSharpColorCoordinateConverter() };
+        var converterRegistry = new ConverterRegistry {};
+        var typeDiscriminator = new TinyRtsTypeDiscriminator();
 
-        foreach (var type in typeof(TypeDiscriminator).GetInterfaces()
+        foreach (var type in typeof(TinyRtsTypeDiscriminator).GetInterfaces()
                      .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IFirestoreTypeDiscriminator<>))
                      .Select(x => x.GetGenericArguments()[0]))
         {
@@ -87,7 +84,7 @@ static class Program
         };
         FirestoreDb = await firestoreBuilder.BuildAsync();
 
-        var gameEventDispatcher = new SpaceWarGameEventDispatcher(FirestoreDb);
+        var gameEventDispatcher = new TinyRtsGameEventDispatcher(FirestoreDb);
         var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
 
         void RegisterEverything(object obj)
@@ -100,27 +97,21 @@ static class Program
 
         discordBuilder.ConfigureServices(x => 
         {
-            x.AddScoped<SpaceWarCommandContextData>();
-            x.AddScoped<SpaceWarCommandOutcome>();
+            //x.AddScoped<SpaceWarCommandContextData>();
+            //x.AddScoped<SpaceWarCommandOutcome>();
             
             // List of interactions to set up
             x.AddScoped<List<InteractionData>>();
 
-            x.AddScoped<SpaceWarPerOperationState>();
-            x.AddScoped<PerOperationState>(sp => sp.GetRequiredService<SpaceWarPerOperationState>());
-            x.AddScoped<GameMessageBuilders>();
+            //x.AddScoped<SpaceWarPerOperationState>();
+            //x.AddScoped<PerOperationState>(sp => sp.GetRequiredService<SpaceWarPerOperationState>());
+            //x.AddScoped<GameMessageBuilders>();
 
             x.AddHttpClient();
-            x.AddScoped<OpenRouterService>(serviceProvider =>
-            {
-                var httpClient = serviceProvider.GetRequiredService<HttpClient>();
-                return new OpenRouterService(httpClient, secrets.OpenRouterApiKey);
-            });
             x.AddSingleton<GameEventDispatcher<Game>>(gameEventDispatcher);
             x.AddSingleton(interactionDispatcher);
-            x.AddSingleton<GameCache<Game, NonDbGameState>>();
+            //x.AddSingleton<GameCache<Game, NonDbGameState>>();
             x.AddSingleton<GameSyncManager>();
-            x.AddSingleton<BackstoryGenerator>();
         });
         discordBuilder.UseCommands((_, extension) =>
         {
@@ -133,50 +124,22 @@ static class Program
             extension.AddProcessor(commandProcessor);
         }, new CommandsConfiguration
         {
-            // The default value is true, however it's shown here for clarity
             RegisterDefaultCommandProcessors = false,
-            CommandExecutor = new SpaceWarCommandExecutor()
+            CommandExecutor = new TinyRtsCommandExecutor()
         });
         
-        RegisterEverything(new GameManagementCommands());
-        RegisterEverything(new MoveActionCommands());
-        RegisterEverything(new ProduceCommands());
-        RegisterEverything(new RefreshCommands());
-        RegisterEverything(new TechCommands());
-        RegisterEverything(new GameplayCommands());
-        RegisterEverything(new FixupCommands());
-        
-        RegisterEverything(new GameFlowOperations());
-        RegisterEverything(new ProduceOperations());
-        RegisterEverything(new MovementOperations());
-        RegisterEverything(new TechOperations());
-        RegisterEverything(new RefreshOperations());
-        
-        // Create tech singletons
-        foreach (var techType in Assembly.GetExecutingAssembly()
-                     .GetTypes()
-                     .Where(x => x.IsAssignableTo(typeof(Tech)) && !x.IsAbstract))
-        {
-            var instance = Activator.CreateInstance(techType) as Tech ?? throw new Exception();
-            RegisterEverything(instance);
-            foreach (var handler in instance.AdditionalHandlers)
-            {
-                RegisterEverything(handler);
-            }
-        }
-        
-        foreach (var mapGeneratorType in Assembly.GetExecutingAssembly()
+        /*foreach (var mapGeneratorType in Assembly.GetExecutingAssembly()
                      .GetTypes()
                      .Where(x => x.IsAssignableTo(typeof(BaseMapGenerator)) && !x.IsAbstract))
         {
             // Instance will register itself from the constructor
             var instance = Activator.CreateInstance(mapGeneratorType) as BaseMapGenerator ?? throw new Exception();
-        }
+        }*/
 
         discordBuilder.ConfigureEventHandlers(builder =>
         {
-            builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
-            builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
+            //builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
+            //builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
             builder.HandleGuildDownloadCompleted(GuildDownloadCompleted);
         });
         
@@ -184,13 +147,13 @@ static class Program
         BotErrorReporter = new BotErrorReporter(IsTestEnvironment, DiscordClient, secrets.UserToMessageErrorsTo);
         await BotErrorReporter.InitializeAsync();
         
-        CommonEmoji = new CommonEmoji(DiscordClient);
+        //CommonEmoji = new CommonEmoji(DiscordClient);
         
         await DiscordClient.ConnectAsync(new DiscordActivity("SpaceWar", DiscordActivityType.Playing));
 
         // Skip updating emoji every time in test because it makes startup slow and discord might get annoyed if we
         // spam the API that much
-        if (!IsTestEnvironment)
+        /*if (!IsTestEnvironment)
         {
             Console.WriteLine("Updating emoji...");
             _updateEmojiTask = BotManagementOperations.UpdateEmojiAsync();
@@ -201,12 +164,12 @@ static class Program
             _updateEmojiTask = RebuildEmojiCache(); 
         }
         
-        await _updateEmojiTask;
+        await _updateEmojiTask;*/
         
         BotReady = true;
 
         // Asynchronously iterate over all games and update their prod timers. This also pulls them all into the cache
-        await foreach(var gameDoc in new Query<Game>(FirestoreDb.Games()).WhereEqualTo(x => x.Phase, GamePhase.Play)
+        /*await foreach(var gameDoc in new Query<Game>(FirestoreDb.Games()).WhereEqualTo(x => x.Phase, GamePhase.Play)
                           .FirestoreQuery.StreamAsync())
         {
             using var disposable = await DiscordClient.ServiceProvider.GetRequiredService<GameSyncManager>().Locker
@@ -237,9 +200,9 @@ static class Program
             cache.AddOrUpdateGame(game, nonDbGameState);
             
             ProdOperations.UpdateProdTimers(game, nonDbGameState);
-        }
+        }*/
 
-        Console.WriteLine("Ready to go. Let's play some SpaceWar!");
+        Console.WriteLine("Ready to go. Let's play some TinyRTS!");
         
         await Task.Delay(-1);
     }
@@ -254,15 +217,14 @@ static class Program
         await _updateEmojiTask;
 
         // We keep getting rate limited by discord on editing the channel in the test server
-        if (!IsTestEnvironment)
+        /*if (!IsTestEnvironment)
         {
             foreach (var guild in arg.Guilds.Values)
             {
                 await GuildOperations.UpdateServerTechListingAsync(guild);
             }
-        }
+        }*/
     }
     
     public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
-    
 }

@@ -20,9 +20,6 @@ public class Game : BaseGame
     public List<GamePlayer> Players { get; set; } = [];
 
     public override IReadOnlyList<BaseGamePlayer> GamePlayers => Players;
-    
-    [FirestoreProperty]
-    public string Name { get; set; } = "Untitled Game";
 
     [FirestoreProperty]
     public GamePhase Phase { get; set; } = GamePhase.Setup;

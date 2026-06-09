@@ -1,15 +1,16 @@
 using Google.Cloud.Firestore;
-using Google.Cloud.Firestore.V1;
 using SpaceWarDiscordApp.Database.EventRecords;
+using Tumult.Database.Converters;
 
 namespace SpaceWarDiscordApp.Database.Converters;
 
-public class TypeDiscriminator : IFirestoreTypeDiscriminator<IPolymorphicFirestoreData>,
+public class TypeDiscriminator : TypeDiscriminatorBase,
+    IFirestoreTypeDiscriminator<IPolymorphicFirestoreData>,
     IFirestoreTypeDiscriminator<PlayerTech>,
     IFirestoreTypeDiscriminator<GameEvent>, IFirestoreTypeDiscriminator<EventRecord>,
     IFirestoreTypeDiscriminator<InteractionData>
 {
-    private static readonly Dictionary<string, string> TypeMappings = new()
+    protected override IReadOnlyDictionary<string, string> TypeMappings { get; } = new Dictionary<string, string>
     {
         {
             "SpaceWarDiscordApp.Database.GameEvents.GameEvent_BeginProduce",
@@ -40,24 +41,4 @@ public class TypeDiscriminator : IFirestoreTypeDiscriminator<IPolymorphicFiresto
             "SpaceWarDiscordApp.Database.GameEvents.Tech.GameEvent_TechPurchaseDecision"
         },
     };
-
-    public Type GetConcreteType(IDictionary<string, Value> map)
-    {
-        var descriptor = map[nameof(IPolymorphicFirestoreData.SubtypeName)].StringValue;
-        var temp = Type.GetType(descriptor);
-        if (temp == null)
-        {
-            var backtickIndex = descriptor.IndexOf('`');
-            if (backtickIndex == -1)
-            {
-                backtickIndex = descriptor.Length;
-            }
-
-            var beforeBacktick = descriptor[..backtickIndex];
-            var afterBacktick = descriptor[backtickIndex..];
-            return Type.GetType(TypeMappings[beforeBacktick] + afterBacktick)!;
-        }
-
-        return temp;
-    }
 }

@@ -11,7 +11,7 @@ public abstract class PolymorphicFirestoreModel : IPolymorphicFirestoreData
 {
     protected PolymorphicFirestoreModel()
     {
-        SubtypeName = GetType().FullName!;
+        SubtypeName = GetType().AssemblyQualifiedName!;
     }
 
     [FirestoreProperty]

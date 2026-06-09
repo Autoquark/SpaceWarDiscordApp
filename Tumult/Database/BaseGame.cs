@@ -6,11 +6,20 @@ namespace Tumult.Database;
 [FirestoreData]
 public abstract class BaseGame : FirestoreDocument
 {
+    [FirestoreProperty]
+    public string Name { get; set; } = "Untitled Game";
+    
     /// <summary>
     /// The Discord channel ID associated with this game.
     /// </summary>
     [FirestoreProperty]
     public ulong GameChannelId { get; set; } = 0;
+
+    /// <summary>
+    /// A human-readable display name for this game, used in error messages and logging.
+    /// Defaults to the channel ID if not overridden.
+    /// </summary>
+    public virtual string DisplayName => GameChannelId.ToString();
 
     /// <summary>
     /// Stack of events currently being resolved. The last event is on top.

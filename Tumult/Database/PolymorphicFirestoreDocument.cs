@@ -10,7 +10,7 @@ public abstract class PolymorphicFirestoreDocument : FirestoreDocument, IPolymor
 {
     protected PolymorphicFirestoreDocument()
     {
-        SubtypeName = GetType().FullName!;
+        SubtypeName = GetType().AssemblyQualifiedName!;
     }
 
     [FirestoreProperty]

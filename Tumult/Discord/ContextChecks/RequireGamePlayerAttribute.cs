@@ -1,4 +1,4 @@
-namespace SpaceWarDiscordApp.Discord.ContextChecks;
+namespace Tumult.Discord.ContextChecks;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public class RequireGamePlayerAttribute : Attribute

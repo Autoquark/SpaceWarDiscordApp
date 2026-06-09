@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This solution has two projects:
+This solution has three projects:
 
 - **SpaceWarDiscordApp**: A Discord bot for asynchronous play of a turn-based board game. Players interact through Discord slash commands and button interactions, with game state persisted to Google Cloud Firestore.
+- **TinyRtsDiscordApp**: A Discord bot for asynchronous play of a turn-based board game inspired by real time strategy games. Players interact through Discord slash commands and button interactions, with game state persisted to Google Cloud Firestore.
 - **Tumult**: A reusable framework library for Discord-based asynchronous games. SpaceWar depends on Tumult. Game-agnostic infrastructure (dispatchers, base classes, interfaces) lives here.
 
 Game rules summary: https://docs.google.com/document/d/1IIoz7YV6zcvvbiPRysIUc0CdXpWRXhz_eLy-mYZpRak/

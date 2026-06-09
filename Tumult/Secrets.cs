@@ -1,6 +1,6 @@
 namespace SpaceWarDiscordApp;
 
-internal class Secrets
+public class Secrets
 {
     public bool IsTestEnvironment { get; set; } = false;
     public string FirestoreProjectId { get; set; } = "";

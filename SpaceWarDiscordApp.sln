@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceWarDiscordApp", "Space
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tumult", "Tumult\Tumult.csproj", "{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TinyRtsDiscordApp", "TinyRtsDiscordApp\TinyRtsDiscordApp.csproj", "{BDA8776D-0C64-4EDB-9957-CD2DE701D24C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{343D6E21-CBD5-4C68-800E-4A864C4D3E9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDA8776D-0C64-4EDB-9957-CD2DE701D24C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDA8776D-0C64-4EDB-9957-CD2DE701D24C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDA8776D-0C64-4EDB-9957-CD2DE701D24C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDA8776D-0C64-4EDB-9957-CD2DE701D24C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
