@@ -7,6 +7,7 @@ using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Discord.ContextChecks;
 using SpaceWarDiscordApp.GameLogic;
 using SpaceWarDiscordApp.GameLogic.Operations;
+using Tumult.Discord.ContextChecks;
 
 namespace SpaceWarDiscordApp.Discord;
 
@@ -226,7 +227,7 @@ public class SpaceWarCommandExecutor : DefaultCommandExecutor
                 cache.Clear(contextData.Game.DocumentId);
             }
 
-            await Program.LogExceptionAsync(contextData.Game, e);
+            await Program.BotErrorReporter.LogExceptionAsync(contextData.Game, e);
             
             await context.EditResponseAsync("An error occurred. Please try again, or report as a bug if the problem persists");
             throw;

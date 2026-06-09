@@ -125,7 +125,7 @@ static class Program
         }, new CommandsConfiguration
         {
             RegisterDefaultCommandProcessors = false,
-            CommandExecutor = new TinyRtsCommandExecutor()
+            //CommandExecutor = new TinyRtsCommandExecutor()
         });
         
         /*foreach (var mapGeneratorType in Assembly.GetExecutingAssembly()
