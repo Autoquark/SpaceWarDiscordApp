@@ -2,7 +2,7 @@ using DSharpPlus.Entities;
 
 namespace Tumult.Discord;
 
-public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
+public class DiscordMultiMessageBuilder
 {
     public static DiscordMultiMessageBuilder Create<T>() where T : BaseDiscordMessageBuilder<T>, new()
     => new DiscordMultiMessageBuilder(() => new T());
@@ -28,22 +28,6 @@ public class DiscordMultiMessageBuilder : IDisposable, IAsyncDisposable
     private readonly Func<IDiscordMessageBuilder> _followupBuilderFactory;
 
     private IDiscordMessageBuilder CurrentBuilder => _builders.Last();
-
-    public void Dispose()
-    {
-        foreach (var builder in Builders)
-        {
-            builder.Dispose();
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        foreach (var builder in Builders)
-        {
-            await builder.DisposeAsync();
-        }
-    }
 
     /// <summary>
     /// Causes any following content to appear in a new message, separate to any preceding content.

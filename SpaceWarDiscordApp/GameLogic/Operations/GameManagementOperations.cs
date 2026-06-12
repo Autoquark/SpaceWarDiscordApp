@@ -199,7 +199,7 @@ public class GameManagementOperations
             if (messageId != 0)
             {
                 var message = await channel.TryGetMessageAsync(messageId);
-                if (message != null)
+                if (!(message == null))
                 {
                     await message.ModifyAsync(subBuilder);
                     newMessageIds.Add(messageId);
