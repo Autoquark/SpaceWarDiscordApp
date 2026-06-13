@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.GameEvents;
 using SpaceWarDiscordApp.Database.Interactions;
@@ -6,6 +7,8 @@ using SpaceWarDiscordApp.Database.Interactions.Tech.Psysploder;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.Discord.Commands;
 using SpaceWarDiscordApp.GameLogic.Operations;
+
+using Tumult;
 
 namespace SpaceWarDiscordApp.GameLogic.Techs;
 
@@ -57,7 +60,7 @@ public class Tech_Psysploder : Tech, ISpaceWarInteractionHandler<ChoosePsysplode
         var hex = game.GetHexAt(interactionData.Target);
         var player = game.GetGamePlayerForInteraction(interactionData);
         
-        var interactions = serviceProvider.AddInteractionsToSetUp(CollectionExtensions.Between(1, hex.ForcesPresent)
+        var interactions = serviceProvider.AddInteractionsToSetUp(Tumult.CollectionExtensions.Between(1, hex.ForcesPresent)
             .Select(x => new UsePsysploderInteraction
             {
                 Amount = x,

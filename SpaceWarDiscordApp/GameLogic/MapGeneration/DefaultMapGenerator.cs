@@ -6,7 +6,7 @@ public class DefaultMapGenerator : BaseMapGenerator
 {
     public static string StaticId => "default";
     
-    public DefaultMapGenerator() : base(StaticId, "Default", CollectionExtensions.Between(2, 6))
+    public DefaultMapGenerator() : base(StaticId, "Default", Tumult.CollectionExtensions.Between(2, 6))
     {
     }
     

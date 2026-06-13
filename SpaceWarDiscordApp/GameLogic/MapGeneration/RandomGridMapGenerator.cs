@@ -4,7 +4,7 @@ namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 public class RandomGridMapGenerator : BaseMapGenerator
 {
-    public RandomGridMapGenerator() : base("random-grid", "insanity", CollectionExtensions.Between(2, 6))
+    public RandomGridMapGenerator() : base("random-grid", "insanity", Tumult.CollectionExtensions.Between(2, 6))
     {
         Description = "A grid of random planets, with no special centre planet and random home system locations. Don't expect fairness.";
     }

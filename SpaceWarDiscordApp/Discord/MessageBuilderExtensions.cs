@@ -79,7 +79,7 @@ public static class MessageBuilderExtensions
 
     public static TBuilder AppendNumberButtons<TBuilder>(this TBuilder builder, int minInclusive, int maxInclusive,
         IEnumerable<string> interactionIds) where TBuilder : BaseDiscordMessageBuilder<TBuilder>
-        => builder.AppendNumberButtons(CollectionExtensions.Between(minInclusive, maxInclusive), interactionIds);
+        => builder.AppendNumberButtons(Tumult.CollectionExtensions.Between(minInclusive, maxInclusive), interactionIds);
 
     public static TBuilder AppendNumberButtons<TBuilder>(this TBuilder builder, IEnumerable<int> values,
         IEnumerable<string> interactionIds) where TBuilder : BaseDiscordMessageBuilder<TBuilder>

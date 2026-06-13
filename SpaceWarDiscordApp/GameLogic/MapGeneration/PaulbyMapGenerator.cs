@@ -1,10 +1,12 @@
 using SpaceWarDiscordApp.Database;
 
+using Tumult;
+
 namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 public class PaulbyMapGenerator : BaseMapGenerator
 {
-    public PaulbyMapGenerator() : base("space-flower", "Space Flower", CollectionExtensions.Between(2, 6))
+    public PaulbyMapGenerator() : base("space-flower", "Space Flower", Tumult.CollectionExtensions.Between(2, 6))
     {
     }
 

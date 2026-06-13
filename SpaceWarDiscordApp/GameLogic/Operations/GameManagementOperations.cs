@@ -1,10 +1,14 @@
 using DSharpPlus.Entities;
+
 using Google.Cloud.Firestore;
+
 using Microsoft.Extensions.DependencyInjection;
 using SpaceWarDiscordApp.Database;
 using SpaceWarDiscordApp.Database.Interactions.GameRules;
 using SpaceWarDiscordApp.Discord;
 using SpaceWarDiscordApp.GameLogic.MapGeneration;
+
+using Tumult;
 
 namespace SpaceWarDiscordApp.GameLogic.Operations;
 
@@ -18,7 +22,7 @@ public class GameManagementOperations
             .AppendContentNewline("Game Setup".DiscordHeading1());
         
         // Player count
-        var interactionIds = serviceProvider.AddInteractionsToSetUp(CollectionExtensions.Between(2, GameConstants.MaxPlayerCount).Select(x =>
+        var interactionIds = serviceProvider.AddInteractionsToSetUp(Tumult.CollectionExtensions.Between(2, GameConstants.MaxPlayerCount).Select(x =>
             new SetMaxPlayerCountInteraction
             {
                 Game = game.DocumentId,
