@@ -284,12 +284,16 @@ public class GameFlowOperations : IEventResolvedHandler<GameEvent_TurnBegin>, IE
     public async Task<DiscordMultiMessageBuilder?> HandleEventResolvedAsync(DiscordMultiMessageBuilder? builder, GameEvent_TurnBegin gameEvent, Game game,
         IServiceProvider serviceProvider)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
         game.LastTurnProdTime = DateTime.UtcNow;
         ProdOperations.UpdateProdTimers(game, serviceProvider.GetRequiredService<SpaceWarCommandContextData>().NonDbGameState!);
         
         await GameManagementOperations.SaveRollbackStateAsync(game);
+
+        if (builder == null)
+        {
+            return null;
+        }
+        
         return await ShowSelectActionMessageAsync(builder, game, serviceProvider);
     }
 

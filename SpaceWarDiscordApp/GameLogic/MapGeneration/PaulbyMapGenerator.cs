@@ -1,7 +1,5 @@
 using SpaceWarDiscordApp.Database;
 
-using Tumult;
-
 namespace SpaceWarDiscordApp.GameLogic.MapGeneration;
 
 public class PaulbyMapGenerator : BaseMapGenerator
