@@ -23,7 +23,7 @@ public static class GamePlayerExtensions
             try
             {
                 var user = await Program.DiscordClient.GetUserAsync(player.DiscordUserId);
-                name = mention ? user.Mention : user.GlobalName;
+                name = mention ? user.Mention : (user.GlobalName ?? "Unknown");
             }
             catch (NotFoundException)
             {

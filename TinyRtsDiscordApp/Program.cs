@@ -38,7 +38,7 @@ static class Program
 
     public static bool IsTestEnvironment { get; private set; }
 
-    private static Task? _updateEmojiTask;
+//    private static Task? _updateEmojiTask;
 
     public static BotErrorReporter BotErrorReporter { get; private set; } = null!;
 
@@ -87,11 +87,11 @@ static class Program
         var gameEventDispatcher = new TinyRtsGameEventDispatcher(FirestoreDb);
         var interactionDispatcher = new InteractionDispatcher<Game>(gameEventDispatcher);
 
-        void RegisterEverything(object obj)
-        {
-            interactionDispatcher.RegisterInteractionHandler(obj);
-            gameEventDispatcher.RegisterHandler(obj);
-        }
+        // void RegisterEverything(object obj)
+        // {
+        //     interactionDispatcher.RegisterInteractionHandler(obj);
+        //     gameEventDispatcher.RegisterHandler(obj);
+        // }
         
         var discordBuilder = DiscordClientBuilder.CreateDefault(secrets.DiscordToken, DiscordIntents.AllUnprivileged);
 
@@ -136,12 +136,12 @@ static class Program
             var instance = Activator.CreateInstance(mapGeneratorType) as BaseMapGenerator ?? throw new Exception();
         }*/
 
-        discordBuilder.ConfigureEventHandlers(builder =>
-        {
-            //builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
-            //builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
-            builder.HandleGuildDownloadCompleted(GuildDownloadCompleted);
-        });
+        // discordBuilder.ConfigureEventHandlers(builder =>
+        // {
+        //     //builder.HandleInteractionCreated(InteractionDispatcher.HandleInteractionCreated);
+        //     //builder.HandleMessageCreated(MessageHandler.HandleMessageCreated);
+        //     builder.HandleGuildDownloadCompleted(GuildDownloadCompleted);
+        // });
         
         DiscordClient = discordBuilder.Build();
         BotErrorReporter = new BotErrorReporter(IsTestEnvironment, DiscordClient, secrets.UserToMessageErrorsTo);
@@ -207,24 +207,24 @@ static class Program
         await Task.Delay(-1);
     }
 
-    private static async Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs arg)
-    {
-        // There's probably a better way to do this
-        while (_updateEmojiTask == null)
-        {
-            await Task.Delay(100);
-        }
-        await _updateEmojiTask;
-
-        // We keep getting rate limited by discord on editing the channel in the test server
-        /*if (!IsTestEnvironment)
-        {
-            foreach (var guild in arg.Guilds.Values)
-            {
-                await GuildOperations.UpdateServerTechListingAsync(guild);
-            }
-        }*/
-    }
+    // private static async Task GuildDownloadCompleted(DiscordClient client, GuildDownloadCompletedEventArgs arg)
+    // {
+    //     // There's probably a better way to do this
+    //     while (_updateEmojiTask == null)
+    //     {
+    //         await Task.Delay(100);
+    //     }
+    //     await _updateEmojiTask;
+    //
+    //     // We keep getting rate limited by discord on editing the channel in the test server
+    //     /*if (!IsTestEnvironment)
+    //     {
+    //         foreach (var guild in arg.Guilds.Values)
+    //         {
+    //             await GuildOperations.UpdateServerTechListingAsync(guild);
+    //         }
+    //     }*/
+    // }
     
     public static async Task RebuildEmojiCache() => AppEmojisByName = (await DiscordClient.GetApplicationEmojisAsync()).ToDictionary(x => x.Name);
 }

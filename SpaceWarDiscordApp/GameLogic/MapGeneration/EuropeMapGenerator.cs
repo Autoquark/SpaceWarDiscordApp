@@ -11,18 +11,18 @@ public class EuropeMapGenerator : BaseMapGenerator
 
     private void SetPlanetOwnership(List<BoardHex> hexes, int playerId)
     {
-        foreach (BoardHex hex in hexes)
+        foreach (BoardHex hex in hexes.Where(x => x.Planet != null))
         {
             int forces = 0;
             if (playerId != -1)
             {
                 forces++;
-                if (hex.Planet.IsHomeSystem)
+                if (hex.Planet!.IsHomeSystem)
                 {
                     forces++;
                 }
             }
-            hex.Planet.SetForces(forces, playerId);
+            hex.Planet!.SetForces(forces, playerId);
         }
     }
 

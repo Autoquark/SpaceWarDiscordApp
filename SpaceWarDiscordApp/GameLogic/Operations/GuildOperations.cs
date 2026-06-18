@@ -48,8 +48,8 @@ public static class GuildOperations
         }
 
         var messages = (await Task.WhenAll(guildData.TechListingMessageIds
-            .Select(async x => await channel.TryGetMessageAsync(x))
-            .WhereNonNull()))
+            .Select(async x => await channel.TryGetMessageAsync(x))))
+            .WhereNonNull()
             .ToList();
         
         foreach (var (discordMessageBuilder, message) in builder.Builders.Cast<DiscordMessageBuilder>()

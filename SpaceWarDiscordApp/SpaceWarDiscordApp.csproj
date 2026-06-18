@@ -11,10 +11,8 @@
     <ItemGroup>
       <!--<PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02507" />-->
       <PackageReference Include="AsyncKeyedLock" Version="8.0.1" />
-      <PackageReference Include="DSharpPlus" Version="5.0.0-nightly-02543" />
-      <PackageReference Include="DSharpPlus.Analyzers" Version="5.0.0-nightly-02543" />
-      <PackageReference Include="DSharpPlus.Commands" Version="5.0.0-nightly-02543" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02543" />
+      <PackageReference Include="DSharpPlus.Analyzers" Version="5.0.0-nightly-02590" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="5.0.0-nightly-02590" />
       <PackageReference Include="Google.Cloud.Firestore" Version="4.1.0" />
       <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
     </ItemGroup>

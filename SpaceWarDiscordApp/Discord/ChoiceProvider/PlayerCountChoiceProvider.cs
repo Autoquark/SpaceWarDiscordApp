@@ -8,5 +8,5 @@ namespace SpaceWarDiscordApp.Discord.ChoiceProvider;
 public class PlayerCountChoiceProvider : IChoiceProvider
 {
     public ValueTask<IEnumerable<DiscordApplicationCommandOptionChoice>> ProvideAsync(CommandParameter parameter)
-        => ValueTask.FromResult(CollectionExtensions.Between(2, GameConstants.MaxPlayerCount).Select(x => new DiscordApplicationCommandOptionChoice(x.ToString(), x)));
+        => ValueTask.FromResult(Tumult.CollectionExtensions.Between(2, GameConstants.MaxPlayerCount).Select(x => new DiscordApplicationCommandOptionChoice(x.ToString(), x)));
 }
